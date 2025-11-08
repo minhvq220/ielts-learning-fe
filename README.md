@@ -1,59 +1,87 @@
-# YouPassCopy
+# YouPassCopy - IELTS Practice Platform
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.3.7.
+## Mô tả
+Website luyện thi IELTS với 4 kỹ năng: Reading, Listening, Writing, Speaking. Sử dụng Angular 20.2.0 với AI chấm bài thông minh.
 
-## Development server
+## Tính năng chính
 
-To start a local development server, run:
+### 📖 Reading
+- Giao diện chia đôi màn hình (bài đọc + câu hỏi)
+- Timer đếm ngược 60 phút
+- Chế độ tra từ với giải thích context
+- Đa dạng bài đọc từ Cambridge 10-20
+- Chấm bài tự động với đáp án chi tiết
 
-```bash
-ng serve
-```
+### 🎧 Listening  
+- Audio player chất lượng cao
+- Giao diện tương tự Reading
+- Timer 40 phút
+- Chế độ phát lại audio
+- Điều chỉnh âm lượng
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+### ✍️ Writing
+- Task 1 & Task 2 với thời gian riêng biệt
+- AI chấm bài theo 4 tiêu chí IELTS
+- Gợi ý cải thiện chi tiết
+- Sample answers chất lượng
+- Đếm từ tự động
 
-## Code scaffolding
+### 🎤 Speaking
+- AI chấm phát âm chi tiết
+- Thanh note-taking thông minh
+- Recording với timer
+- Gợi ý từ vựng nâng cao
+- Câu trả lời mẫu
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Công nghệ sử dụng
+- Angular 20.2.0
+- TypeScript
+- CSS3 với responsive design
+- Bootstrap 5.3.0
+- Chart.js cho biểu đồ thống kê
 
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+## Cài đặt và chạy
 
 ```bash
-ng e2e
+# Cài đặt dependencies
+npm install
+
+# Chạy development server
+npm start
+
+# Build cho production
+npm run build
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## Cấu trúc dự án
+```
+src/
+├── app/
+│   ├── components/
+│   │   ├── header/
+│   │   └── sidebar/
+│   ├── pages/
+│   │   ├── home/
+│   │   ├── reading/
+│   │   ├── listening/
+│   │   ├── writing/
+│   │   └── speaking/
+│   ├── services/
+│   └── models/
+├── assets/
+└── styles/
+```
 
-## Additional Resources
+## Roadmap
+- [ ] Tích hợp AI services thực tế
+- [ ] Hệ thống đăng nhập/đăng ký
+- [ ] Lưu trữ tiến độ học tập
+- [ ] Thêm nhiều bài test
+- [ ] Mobile app với Ionic
+- [ ] Hệ thống báo cáo chi tiết
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Đóng góp
+Mọi đóng góp đều được chào đón! Vui lòng tạo issue hoặc pull request.
+
+## License
+MIT License
