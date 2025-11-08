@@ -41,3 +41,22 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Local / sensitive configuration (frontend)
+.env
+.env.*
+*.env
+*.env.*
+*.local
+*.local.*
+src/environments/environment.local.ts
+src/environments/environment.*.local.ts
+src/environments/environment.secret.ts
+src/environments/*secret*.ts
+src/assets/keys/
+src/assets/secrets/
+
+# Certificates / credentials
+*.pem
+*.key
+*.crt
