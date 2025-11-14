@@ -1,6 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { BehaviorSubject, Observable, of, catchError, tap, map } from 'rxjs';
-import { WritingHistoryApiService, WritingHistoryDto, SubmitWritingDto, UserWritingStatsDto } from './writing-history-api.service';
+import { WritingHistoryApiService, WritingHistoryDto, SubmitWritingDto, UserWritingStatsDto, AiScoringRequest } from './writing-history-api.service';
 
 @Injectable({
   providedIn: 'root'
@@ -117,6 +117,34 @@ export class WritingHistoryService {
       catchError(error => {
         console.error('Error submitting writing:', error);
         this._error.set('Không thể nộp bài viết');
+        this._loading.set(false);
+        throw error;
+      })
+    );
+  }
+
+  scoreWritingAttempt(requestDto: Omit<AiScoringRequest, 'userId'>): Observable<WritingHistoryDto> {
+    this._loading.set(true);
+    this._error.set(null);
+
+    const fullRequest: AiScoringRequest = {
+      ...requestDto,
+      userId: this.currentUserId()
+    };
+
+    return this.apiService.scoreWritingAttempt(fullRequest).pipe(
+      tap(result => {
+        const history = this._history();
+        const updated = history.some(item => item.id === result.id)
+          ? history.map(item => item.id === result.id ? { ...item, ...result } : item)
+          : [result, ...history];
+        this._history.set(updated);
+        this._loading.set(false);
+        this.loadUserStats();
+      }),
+      catchError(error => {
+        console.error('Error scoring writing:', error);
+        this._error.set('Không thể chấm bài viết bằng AI');
         this._loading.set(false);
         throw error;
       })

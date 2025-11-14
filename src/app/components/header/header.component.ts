@@ -36,6 +36,9 @@ import { RouterModule } from '@angular/router';
       color: white;
       padding: 0;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 1000; /* Highest z-index to ensure header is always on top */
     }
 
     .header-content {

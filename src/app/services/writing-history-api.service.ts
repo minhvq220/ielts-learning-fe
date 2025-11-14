@@ -2,6 +2,18 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+export interface AiCorrection {
+  id?: string;
+  issueType?: string;
+  summary?: string;
+  explanation?: string;
+  originalText?: string;
+  suggestedText?: string;
+  startIndex?: number;
+  endIndex?: number;
+  severity?: 'low' | 'medium' | 'high' | string;
+}
+
 export interface SubmitWritingDto {
   userId: string;
   taskId: number;
@@ -15,6 +27,12 @@ export interface SubmitWritingDto {
   grammaticalRange?: number;
   aiFeedback?: string;
   aiSuggestions?: string[];
+  aiCorrections?: AiCorrection[];
+  aiCorrectedAnswer?: string;
+  aiProvider?: string;
+  aiModel?: string;
+  aiEvaluatedAt?: string;
+  aiRequestId?: string;
 }
 
 export interface WritingHistoryDto {
@@ -33,6 +51,12 @@ export interface WritingHistoryDto {
   grammaticalRange?: number;
   aiFeedback?: string;
   aiSuggestions?: string[];
+  aiCorrections?: AiCorrection[];
+  aiCorrectedAnswer?: string;
+  aiProvider?: string;
+  aiModel?: string;
+  aiEvaluatedAt?: string;
+  aiRequestId?: string;
   submittedAt: string;
   createdAt: string;
   updatedAt?: string;
@@ -77,11 +101,21 @@ export interface Page<T> {
   empty: boolean;
 }
 
+export interface AiScoringRequest {
+  historyId: number;
+  userId: string;
+  taskId: number;
+  answer: string;
+  wordCount: number;
+  timeSpent: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class WritingHistoryApiService {
   private readonly apiUrl = 'http://localhost:8081/api/writing-history';
+  private readonly aiScoringUrl = 'http://localhost:8081/api/ai-scoring';
 
   constructor(private http: HttpClient) {}
 
@@ -132,6 +166,11 @@ export class WritingHistoryApiService {
   // Lấy thống kê của user
   getUserStats(userId: string): Observable<UserWritingStatsDto> {
     return this.http.get<UserWritingStatsDto>(`${this.apiUrl}/user/${userId}/stats`);
+  }
+
+  // Gửi yêu cầu chấm điểm AI cho một bài làm
+  scoreWritingAttempt(request: AiScoringRequest): Observable<WritingHistoryDto> {
+    return this.http.post<WritingHistoryDto>(`${this.aiScoringUrl}/score`, request);
   }
 
   // Xóa lịch sử làm bài

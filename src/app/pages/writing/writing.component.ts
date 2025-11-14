@@ -1,11 +1,12 @@
 import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, ActivatedRoute } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { WritingTaskService } from '../../services/writing-task.service';
 import { WritingHistoryService } from '../../services/writing-history.service';
+import { WritingHistoryDto } from '../../services/writing-history-api.service';
 import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-task.model';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, switchMap, finalize, of } from 'rxjs';
 
 interface AIEvaluation {
   overallScore: number;
@@ -16,6 +17,9 @@ interface AIEvaluation {
   feedback: string;
   suggestions: string[];
   sampleAnswer: string;
+  provider?: string;
+  model?: string;
+  evaluatedAt?: string;
 }
 
 @Component({
@@ -179,26 +183,28 @@ interface AIEvaluation {
 
       <!-- Writing Interface -->
       <div class="writing-interface" *ngIf="selectedTask()">
-        <div class="writing-main">
+        <!-- Content Container: Đề bài + Bài viết -->
+        <div class="writing-content">
+          <!-- Left Column: Đề bài và Hướng dẫn -->
           <div class="left-column">
             <!-- Tabs for switching between Question and Guide -->
             <div class="info-tabs">
-          <button 
+              <button 
                 class="tab-btn" 
                 [class.active]="activeInfoTab() === 'question'"
                 (click)="activeInfoTab.set('question')">
                 📋 Câu hỏi
-          </button>
-          <button 
+              </button>
+              <button 
                 class="tab-btn" 
                 [class.active]="activeInfoTab() === 'guide'"
                 *ngIf="selectedTask()?.writingGuide"
                 (click)="activeInfoTab.set('guide')">
                 📝 Hướng dẫn
-          </button>
-        </div>
+              </button>
+            </div>
 
-            <!-- Question Panel (Compact) -->
+            <!-- Question Panel -->
             <div class="info-panel" *ngIf="activeInfoTab() === 'question'">
               <div class="task-instruction-panel-compact">
                 <div class="task-title-compact">{{ selectedTask()!.title }}</div>
@@ -255,7 +261,7 @@ interface AIEvaluation {
               </div>
             </div>
 
-            <!-- Writing Guide Panel (Larger) -->
+            <!-- Writing Guide Panel -->
             <div class="info-panel" *ngIf="activeInfoTab() === 'guide' && selectedTask()?.writingGuide">
               <div class="writing-guide-panel-expanded">
                 <div class="writing-guide-content" [innerHTML]="selectedTask()!.writingGuide"></div>
@@ -263,46 +269,48 @@ interface AIEvaluation {
             </div>
           </div>
 
+          <!-- Right Column: Phần bài viết -->
           <div class="writing-area">
             <div class="writing-textarea-container">
-            <textarea 
+              <textarea 
                 [ngModel]="currentAnswer()"
                 (ngModelChange)="currentAnswer.set($event)"
-              placeholder="Viết bài của bạn ở đây..."
-              (input)="updateWordCount()"
-              class="writing-textarea">
-            </textarea>
+                placeholder="Viết bài của bạn ở đây..."
+                (input)="updateWordCount()"
+                class="writing-textarea">
+              </textarea>
             </div>
-            
-            <div class="writing-tools sticky-bar">
-              <div class="tools-left">
-              <div class="word-counter">
-                  <span class="current-words">{{ getCurrentWordCount() }}</span>
-                  <span class="word-target">/ {{ selectedTask()!.wordCount }} từ</span>
-                  <div class="progress-bar">
-                    <div class="progress-fill" [style.width.%]="getWordProgress()"></div>
-                  </div>
-                </div>
+          </div>
+        </div>
+
+        <!-- Actions Bar: Các nút action ở dưới -->
+        <div class="writing-actions-bar">
+          <div class="tools-left">
+            <div class="word-counter">
+              <span class="current-words">{{ getCurrentWordCount() }}</span>
+              <span class="word-target">/ {{ selectedTask()!.wordCount }} từ</span>
+              <div class="progress-bar">
+                <div class="progress-fill" [style.width.%]="getWordProgress()"></div>
               </div>
-              <div class="tools-right">
-                <div class="timer-section-compact">
-                  <div class="timer-compact" [class.warning]="timeLeft() < 300">
-                    ⏱️ {{ formatTime(timeLeft()) }}
-                  </div>
-                  <button class="btn btn-sm btn-timer" (click)="toggleTimer()">
-                    {{ isTimerRunning() ? '⏸️ Tạm dừng' : '▶️ Bắt đầu' }}
-                  </button>
+            </div>
+          </div>
+          <div class="tools-right">
+            <div class="timer-section-compact">
+              <div class="timer-compact" [class.warning]="timeLeft() < 300">
+                ⏱️ {{ formatTime(timeLeft()) }}
               </div>
-              <div class="writing-actions">
-                <button class="btn btn-secondary" (click)="saveDraft()">Lưu nháp</button>
-                  <button class="btn btn-primary" (click)="evaluateWriting()" [disabled]="!currentAnswer()">
-                    AI Chấm bài
-                  </button>
-                  <button class="btn btn-success" (click)="submitAnswer()" [disabled]="!currentAnswer()">
-                    Nộp bài
-                  </button>
-                </div>
-              </div>
+              <button class="btn btn-sm btn-timer" (click)="toggleTimer()">
+                {{ isTimerRunning() ? '⏸️ Tạm dừng' : '▶️ Bắt đầu' }}
+              </button>
+            </div>
+            <div class="writing-actions">
+              <button class="btn btn-secondary" (click)="saveDraft()">Lưu nháp</button>
+              <button class="btn btn-primary" (click)="evaluateWriting()" [disabled]="!currentAnswer() || isEvaluating()">
+                {{ isEvaluating() ? 'Đang chấm...' : 'AI Chấm bài' }}
+              </button>
+              <button class="btn btn-success" (click)="submitAnswer()" [disabled]="!currentAnswer()">
+                Nộp bài
+              </button>
             </div>
           </div>
         </div>
@@ -317,49 +325,62 @@ interface AIEvaluation {
             </div>
           </div>
 
-          <div class="criteria-scores">
-            <div class="criteria-item">
-              <span class="criteria-name">Task Achievement</span>
-              <div class="score-bar">
-                <div class="score-fill" [style.width.%]="(evaluation()!.taskAchievement / 9) * 100"></div>
-                <span class="score-text">{{ evaluation()!.taskAchievement }}/9</span>
+          <div class="evaluation-meta" *ngIf="evaluation()?.provider || evaluation()?.evaluatedAt">
+            <span *ngIf="evaluation()?.provider">
+              Nguồn AI: {{ evaluation()!.provider }}<ng-container *ngIf="evaluation()?.model"> ({{ evaluation()!.model }})</ng-container>
+            </span>
+            <span *ngIf="evaluation()?.evaluatedAt">
+              Đánh giá lúc: {{ formatDateTime(evaluation()!.evaluatedAt!) }}
+            </span>
+          </div>
+
+          <!-- Scrollable Content Area -->
+          <div class="evaluation-scrollable">
+            <div class="criteria-scores">
+              <div class="criteria-item">
+                <span class="criteria-name">Task Achievement</span>
+                <div class="score-bar">
+                  <div class="score-fill" [style.width.%]="(evaluation()!.taskAchievement / 9) * 100"></div>
+                  <span class="score-text">{{ evaluation()!.taskAchievement }}/9</span>
+                </div>
+              </div>
+              <div class="criteria-item">
+                <span class="criteria-name">Coherence & Cohesion</span>
+                <div class="score-bar">
+                  <div class="score-fill" [style.width.%]="(evaluation()!.coherenceCohesion / 9) * 100"></div>
+                  <span class="score-text">{{ evaluation()!.coherenceCohesion }}/9</span>
+                </div>
+              </div>
+              <div class="criteria-item">
+                <span class="criteria-name">Lexical Resource</span>
+                <div class="score-bar">
+                  <div class="score-fill" [style.width.%]="(evaluation()!.lexicalResource / 9) * 100"></div>
+                  <span class="score-text">{{ evaluation()!.lexicalResource }}/9</span>
+                </div>
+              </div>
+              <div class="criteria-item">
+                <span class="criteria-name">Grammatical Range</span>
+                <div class="score-bar">
+                  <div class="score-fill" [style.width.%]="(evaluation()!.grammaticalRange / 9) * 100"></div>
+                  <span class="score-text">{{ evaluation()!.grammaticalRange }}/9</span>
+                </div>
               </div>
             </div>
-            <div class="criteria-item">
-              <span class="criteria-name">Coherence & Cohesion</span>
-              <div class="score-bar">
-                <div class="score-fill" [style.width.%]="(evaluation()!.coherenceCohesion / 9) * 100"></div>
-                <span class="score-text">{{ evaluation()!.coherenceCohesion }}/9</span>
-              </div>
+
+            <div class="feedback-section">
+              <h4>Nhận xét chi tiết:</h4>
+              <p class="feedback-text">{{ evaluation()!.feedback }}</p>
             </div>
-            <div class="criteria-item">
-              <span class="criteria-name">Lexical Resource</span>
-              <div class="score-bar">
-                <div class="score-fill" [style.width.%]="(evaluation()!.lexicalResource / 9) * 100"></div>
-                <span class="score-text">{{ evaluation()!.lexicalResource }}/9</span>
-              </div>
-            </div>
-            <div class="criteria-item">
-              <span class="criteria-name">Grammatical Range</span>
-              <div class="score-bar">
-                <div class="score-fill" [style.width.%]="(evaluation()!.grammaticalRange / 9) * 100"></div>
-                <span class="score-text">{{ evaluation()!.grammaticalRange }}/9</span>
-              </div>
+
+            <div class="suggestions-section">
+              <h4>Gợi ý cải thiện:</h4>
+              <ul class="suggestions-list">
+                <li *ngFor="let suggestion of evaluation()!.suggestions">{{ suggestion }}</li>
+              </ul>
             </div>
           </div>
 
-          <div class="feedback-section">
-            <h4>Nhận xét chi tiết:</h4>
-            <p class="feedback-text">{{ evaluation()!.feedback }}</p>
-          </div>
-
-          <div class="suggestions-section">
-            <h4>Gợi ý cải thiện:</h4>
-            <ul class="suggestions-list">
-              <li *ngFor="let suggestion of evaluation()!.suggestions">{{ suggestion }}</li>
-            </ul>
-          </div>
-
+          <!-- Sample Answer - Always visible at bottom -->
           <div class="sample-answer-section" *ngIf="selectedTask()!.sampleAnswer">
             <h4>Câu trả lời mẫu:</h4>
             <div class="sample-answer" [innerHTML]="selectedTask()!.sampleAnswer"></div>
@@ -372,6 +393,8 @@ interface AIEvaluation {
     .writing-container {
       min-height: 100vh;
       background: #f8f9fa;
+      position: relative;
+      z-index: 1;
     }
 
     .task-selection-panel {
@@ -770,39 +793,52 @@ interface AIEvaluation {
       width: 100%;
       padding: 0;
       margin: 0;
-      height: 100vh;
       display: flex;
       flex-direction: column;
+      min-height: 100vh;
+      overflow: visible;
+      position: relative;
+      background: transparent;
     }
 
-    .writing-main {
-      display: grid;
-      grid-template-columns: 400px 1fr;
-      gap: 1.5rem;
+    /* Content Container: Đề bài + Bài viết */
+    .writing-content {
+      display: block;
       flex: 1;
-      padding: 1rem;
-      overflow: hidden;
+      min-height: calc(100vh - 90px - 80px); /* Full height minus header+gap and actions bar */
+      padding-bottom: 80px; /* Space for actions bar */
+      padding-top: 0; /* No padding top, writing-area will handle positioning */
+      overflow: visible;
+      position: relative;
     }
 
+    /* Left Column: Đề bài và Hướng dẫn - Full height - ALWAYS ON TOP */
     .left-column {
       display: flex;
       flex-direction: column;
-      position: sticky;
-      top: 0;
-      height: 100%;
+      position: fixed;
+      top: 90px; /* Below header bar with spacing (header ~70px + 20px gap) */
+      left: 0;
+      width: 480px;
+      height: calc(100vh - 90px); /* Full height minus header and gap */
+      max-height: calc(100vh - 90px);
       gap: 0;
       overflow: hidden;
+      background: #f8f9fa;
+      border-right: 1px solid #e5e7eb;
+      z-index: 999; /* Below header but above other content */
+      box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
     }
 
     /* Tabs */
     .info-tabs {
       display: flex;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
+      gap: 0;
+      margin: 0;
       background: white;
-      padding: 0.5rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      padding: 1rem 0.75rem;
+      border-bottom: 1px solid #e5e7eb;
+      flex-shrink: 0;
     }
 
     .tab-btn {
@@ -835,48 +871,82 @@ interface AIEvaluation {
       overflow-y: auto;
       overflow-x: hidden;
       min-height: 0;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 #f1f5f9;
+      padding: 0;
+      margin: 0;
+      background: transparent;
+      position: relative;
+    }
+
+    .info-panel::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .info-panel::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+
+    .info-panel::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    .info-panel::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
     }
 
     /* Compact Task Instruction Panel */
     .task-instruction-panel-compact {
       background: white;
-      padding: 1.25rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      font-size: 0.875rem;
-      line-height: 1.5;
+      padding: 1.5rem;
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: fit-content;
+      height: 100%;
+      position: relative;
+      z-index: 1;
+      overflow-y: auto;
     }
 
     .task-title-compact {
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 1.125rem;
+      font-weight: 700;
       color: #1f2937;
-      margin-bottom: 0.75rem;
-      padding-bottom: 0.75rem;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
       border-bottom: 2px solid #e5e7eb;
     }
 
     .instruction-content-compact {
-      margin-bottom: 1rem;
+      margin-bottom: 1.25rem;
       color: #374151;
-      font-size: 0.875rem;
+      font-size: 0.9375rem;
       white-space: pre-line;
+      line-height: 1.7;
     }
 
     .section-label {
-      font-size: 0.75rem;
-      font-weight: 600;
+      font-size: 0.8125rem;
+      font-weight: 700;
       color: #6b7280;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 0.5rem;
-      margin-top: 1rem;
+      margin-bottom: 0.75rem;
+      margin-top: 1.25rem;
     }
 
     .section-content {
       color: #1f2937;
-      font-size: 0.875rem;
-      line-height: 1.6;
+      font-size: 0.9375rem;
+      line-height: 1.7;
     }
 
     .task1-image-compact {
@@ -945,11 +1015,14 @@ interface AIEvaluation {
     .writing-guide-panel-expanded {
       background: #fff7ed;
       padding: 1.5rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
       border-left: 4px solid #f97316;
+      min-height: fit-content;
       height: 100%;
-      overflow-y: auto;
+      position: relative;
+      z-index: 1;
     }
 
     .writing-guide-content {
@@ -1008,43 +1081,51 @@ interface AIEvaluation {
 
     /* Responsive */
     @media (max-width: 1024px) {
-      .writing-main {
-        grid-template-columns: 350px 1fr;
+      .left-column {
+        width: 400px;
       }
 
-      .writing-tools.sticky-bar {
-        left: calc(350px + 1.5rem + 1rem);
-        width: calc(100vw - 350px - 1.5rem - 2rem);
+      .writing-area {
+        left: 400px;
+      }
+
+      .writing-actions-bar {
+        left: 400px;
       }
     }
 
     @media (max-width: 768px) {
-      .writing-main {
-        grid-template-columns: 1fr;
-      }
-
       .left-column {
         position: relative;
+        top: 0;
+        width: 100%;
         height: auto;
         max-height: 400px;
-        margin-bottom: 1rem;
+        border-right: none;
+        border-bottom: 1px solid #e5e7eb;
+        box-shadow: none;
+        z-index: 999;
       }
 
-      .info-panel {
-        max-height: 350px;
+      .writing-content {
+        padding-top: 0;
       }
 
-      .writing-tools {
+      .writing-area {
+        position: relative;
+        top: 0;
+        left: 0;
+        right: auto;
+        bottom: auto;
+        height: calc(100vh - 400px - 80px - 90px);
+      }
+
+      .writing-actions-bar {
+        left: 0;
         flex-direction: column;
         gap: 1rem;
         padding: 0.75rem;
-      }
-
-      .writing-tools.sticky-bar {
-        left: 0;
-        right: 0;
-        width: 100vw;
-        border-radius: 0;
+        z-index: 998;
       }
 
       .tools-left,
@@ -1106,60 +1187,62 @@ interface AIEvaluation {
       padding-left: 1.5rem;
     }
 
+    /* Right Column: Phần bài viết - Lớn hơn */
     .writing-area {
       display: flex;
       flex-direction: column;
-      height: 100%;
+      height: calc(100vh - 90px - 80px); /* Full height minus header+gap and actions bar */
       overflow: hidden;
-      position: relative;
+      position: fixed;
+      top: 90px; /* Below header and gap */
+      left: 480px; /* After left-column */
+      right: 0;
+      bottom: 80px; /* Above actions bar */
+      background: white;
+      z-index: 1;
     }
 
     .writing-textarea-container {
       flex: 1;
       background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      overflow-y: auto;
+      overflow-y: auto; /* Scroll only when content is long */
       overflow-x: hidden;
       display: flex;
       flex-direction: column;
-      min-height: 0;
-      margin-bottom: 80px; /* Space for fixed writing-tools */
+      height: 100%;
+      margin: 0;
+      padding: 0;
     }
 
     .writing-textarea {
       width: 100%;
-      height: 100%;
-      padding: 1.5rem;
+      min-height: 100%;
+      padding: 2rem;
       border: none;
-      font-size: 1rem;
-      line-height: 1.6;
+      font-size: 1.0625rem;
+      line-height: 1.8;
       resize: none;
       font-family: 'Times New Roman', serif;
       outline: none;
+      background: white;
+      box-sizing: border-box;
     }
 
-    .writing-tools {
+    /* Actions Bar: Các nút action ở dưới - Sticky */
+    .writing-actions-bar {
+      position: fixed;
+      bottom: 0;
+      left: 480px; /* Width of left-column */
+      right: 0;
       background: white;
-      padding: 1rem;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      margin-top: 1rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #e5e7eb;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 1.5rem;
-      z-index: 100;
-    }
-
-    .writing-tools.sticky-bar {
-      position: fixed;
-      bottom: 0;
-      left: calc(400px + 1.5rem + 1rem); /* left-column + gap + padding */
-      right: 1rem;
-      width: calc(100vw - 400px - 1.5rem - 2rem); /* full width - left-column - gap - paddings */
-      margin: 0;
-      border-radius: 8px 8px 0 0;
+      z-index: 998; /* Below header and left-column but above other content */
     }
 
     .tools-left {
@@ -1260,6 +1343,55 @@ interface AIEvaluation {
       border-radius: 12px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       margin-top: 2rem;
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 90px - 80px - 4rem); /* Full height minus header, actions bar, and margins */
+    }
+
+    /* Scrollable content area for criteria, feedback, and suggestions */
+    .evaluation-scrollable {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      max-height: 400px; /* Max height for scrollable area */
+      padding-right: 0.5rem;
+      margin-bottom: 1.5rem;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 #f1f5f9;
+    }
+
+    .evaluation-scrollable::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .evaluation-scrollable::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+
+    .evaluation-scrollable::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    .evaluation-scrollable::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .evaluation-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.85rem;
+      color: #4b5563;
+    }
+
+    .evaluation-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
     }
 
     .evaluation-header {
@@ -1285,6 +1417,14 @@ interface AIEvaluation {
     .score-label {
       font-size: 0.9rem;
       color: #666;
+    }
+
+    .evaluation-meta {
+      font-size: 0.85rem;
+      color: #6b7280;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e9ecef;
     }
 
     .criteria-scores {
@@ -1327,9 +1467,16 @@ interface AIEvaluation {
     }
 
     .feedback-section,
-    .suggestions-section,
+    .suggestions-section {
+      margin-bottom: 1.5rem;
+    }
+
     .sample-answer-section {
-      margin-bottom: 2rem;
+      margin-bottom: 0;
+      margin-top: 1rem;
+      padding-top: 1.5rem;
+      border-top: 2px solid #e9ecef;
+      flex-shrink: 0; /* Always visible at bottom */
     }
 
     .feedback-section h4,
@@ -1497,6 +1644,7 @@ export class WritingComponent implements OnInit, OnDestroy {
   private writingService = inject(WritingTaskService);
   private historyService = inject(WritingHistoryService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private destroy$ = new Subject<void>();
 
   // Signals
@@ -1504,6 +1652,7 @@ export class WritingComponent implements OnInit, OnDestroy {
   isTimerRunning = signal(false);
   selectedTask = signal<WritingTask | null>(null);
   evaluation = signal<AIEvaluation | null>(null);
+  isEvaluating = signal(false);
   currentAnswer = signal('');
   currentPage = signal(1);
   itemsPerPage = 9;
@@ -1642,6 +1791,35 @@ export class WritingComponent implements OnInit, OnDestroy {
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
 
+  private calculateTimeSpent(task: WritingTask): number {
+    const raw = task.timeLimit ? (task.timeLimit * 60 - this.timeLeft()) : 0;
+    return Math.max(0, raw);
+  }
+
+  private updateEvaluationFromHistory(history: WritingHistoryDto, sampleAnswer?: string | null): void {
+    this.evaluation.set({
+      overallScore: history.aiScore ?? 0,
+      taskAchievement: history.taskAchievement ?? 0,
+      coherenceCohesion: history.coherenceCohesion ?? 0,
+      lexicalResource: history.lexicalResource ?? 0,
+      grammaticalRange: history.grammaticalRange ?? 0,
+      feedback: history.aiFeedback || 'AI không trả về nhận xét chi tiết.',
+      suggestions: history.aiSuggestions && history.aiSuggestions.length ? history.aiSuggestions : [],
+      sampleAnswer: sampleAnswer || this.getDefaultSampleAnswer(),
+      provider: history.aiProvider || undefined,
+      model: history.aiModel || undefined,
+      evaluatedAt: history.aiEvaluatedAt || undefined
+    });
+  }
+
+  private getDefaultSampleAnswer(): string {
+    return this.selectedTask()?.sampleAnswer || 'Câu trả lời mẫu sẽ được hiển thị ở đây.';
+  }
+
+  formatDateTime(dateString: string): string {
+    return new Date(dateString).toLocaleString('vi-VN');
+  }
+
   toggleTimer(): void {
     this.isTimerRunning.set(!this.isTimerRunning());
     
@@ -1753,63 +1931,91 @@ export class WritingComponent implements OnInit, OnDestroy {
   }
 
   evaluateWriting(): void {
-    const answer = this.currentAnswer();
-    if (!answer.trim()) {
+    const task = this.selectedTask();
+    if (!task) {
+      alert('Vui lòng chọn một bài viết trước.');
+      return;
+    }
+
+    const trimmedAnswer = this.currentAnswer().trim();
+    if (!trimmedAnswer) {
       alert('Vui lòng viết nội dung trước khi chấm bài!');
       return;
     }
 
-    // Simulate AI evaluation
-    const mockEvaluation: AIEvaluation = {
-      overallScore: Math.floor(Math.random() * 3) + 6, // 6-8
-      taskAchievement: Math.floor(Math.random() * 3) + 6,
-      coherenceCohesion: Math.floor(Math.random() * 3) + 6,
-      lexicalResource: Math.floor(Math.random() * 3) + 6,
-      grammaticalRange: Math.floor(Math.random() * 3) + 6,
-      feedback: `Bài viết của bạn có cấu trúc tốt và đáp ứng yêu cầu của đề bài. Tuy nhiên, cần cải thiện về từ vựng và ngữ pháp để đạt điểm cao hơn.`,
-      suggestions: [
-        'Sử dụng nhiều từ vựng học thuật hơn',
-        'Cải thiện cấu trúc câu phức tạp',
-        'Thêm các liên từ để kết nối ý tưởng',
-        'Chú ý đến dấu câu và chính tả'
-      ],
-      sampleAnswer: this.selectedTask()?.sampleAnswer || 'Câu trả lời mẫu sẽ được hiển thị ở đây.'
-    };
+    const wordCount = this.getCurrentWordCount();
+    if (wordCount < (task.wordCount || 0)) {
+      alert(`Bài viết của bạn có ${wordCount} từ, cần ít nhất ${task.wordCount} từ.`);
+      return;
+    }
 
-    this.evaluation.set(mockEvaluation);
+    const latestAttempt = this.historyService.getLatestAttempt(Number(task.id));
+    const timeSpent = this.calculateTimeSpent(task);
+    // Allow re-scoring: always create new submission for AI scoring
+    const reuseExisting = false; // Always create new submission to allow multiple AI scorings
+
+    this.isEvaluating.set(true);
+
+    const submission$ = reuseExisting
+      ? of(latestAttempt as WritingHistoryDto)
+      : this.historyService.submitWriting({
+          taskId: Number(task.id),
+          answer: trimmedAnswer,
+          wordCount,
+          timeSpent
+        });
+
+    submission$
+      .pipe(
+        switchMap(history => this.historyService.scoreWritingAttempt({
+          historyId: history.id,
+          taskId: Number(task.id),
+          answer: trimmedAnswer,
+          wordCount,
+          timeSpent
+        })),
+        finalize(() => this.isEvaluating.set(false))
+      )
+      .subscribe({
+        next: result => {
+          this.updateEvaluationFromHistory(result, task.sampleAnswer);
+          this.router.navigate(['/writing/history', result.id]);
+        },
+        error: error => {
+          console.error('Error scoring writing:', error);
+          const message = error?.error?.message || 'Không thể chấm bài bằng AI lúc này. Vui lòng thử lại sau.';
+          alert(message);
+        }
+      });
   }
 
   submitAnswer(): void {
-    const answer = this.currentAnswer();
+    const task = this.selectedTask();
+    if (!task) {
+      alert('Vui lòng chọn bài viết trước khi nộp.');
+      return;
+    }
+
+    const trimmedAnswer = this.currentAnswer().trim();
     const wordCount = this.getCurrentWordCount();
-    const target = this.selectedTask()?.wordCount || 0;
-    const timeSpent = this.selectedTask()?.timeLimit ? (this.selectedTask()!.timeLimit * 60 - this.timeLeft()) : 0;
-    
+    const target = task.wordCount || 0;
+    const timeSpent = this.calculateTimeSpent(task);
+
     if (wordCount < target) {
       alert(`Bài viết của bạn có ${wordCount} từ, cần ít nhất ${target} từ.`);
       return;
     }
-    
-    const submitDto = {
-      taskId: Number(this.selectedTask()!.id),
-      answer: answer,
-      wordCount: wordCount,
-      timeSpent: timeSpent,
-      aiScore: this.evaluation()?.overallScore,
-      taskAchievement: this.evaluation()?.taskAchievement,
-      coherenceCohesion: this.evaluation()?.coherenceCohesion,
-      lexicalResource: this.evaluation()?.lexicalResource,
-      grammaticalRange: this.evaluation()?.grammaticalRange,
-      aiFeedback: this.evaluation()?.feedback,
-      aiSuggestions: this.evaluation()?.suggestions
-    };
-    
-    this.historyService.submitWriting(submitDto).subscribe({
+
+    this.historyService.submitWriting({
+      taskId: Number(task.id),
+      answer: trimmedAnswer,
+      wordCount,
+      timeSpent
+    }).subscribe({
       next: (result) => {
         console.log('Answer submitted successfully:', result);
         alert(`Bạn đã nộp bài thành công với ${wordCount} từ!`);
-        
-        // Reset form
+
         this.currentAnswer.set('');
         this.evaluation.set(null);
         this.backToSelection();
@@ -1825,7 +2031,7 @@ export class WritingComponent implements OnInit, OnDestroy {
     return this.historyService.isTaskCompleted(Number(task.id));
   }
 
-  getLatestAttempt(task: WritingTask): any {
+  getLatestAttempt(task: WritingTask): WritingHistoryDto | null {
     return this.historyService.getLatestAttempt(Number(task.id));
   }
 

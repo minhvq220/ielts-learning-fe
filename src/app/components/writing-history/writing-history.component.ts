@@ -133,12 +133,26 @@ import { WritingTask } from '../../models/writing-task.model';
                 <span class="chip meta-chip score-chip" *ngIf="item.aiScore">
                   <span class="chip-icon">🎯</span>{{ item.aiScore.toFixed(1) }}/9
                 </span>
+                <span class="chip meta-chip" *ngIf="item.aiProvider">
+                  <span class="chip-icon">🤖</span>{{ item.aiProvider }}<ng-container *ngIf="item.aiModel"> · {{ item.aiModel }}</ng-container>
+                </span>
+                <span class="chip meta-chip" *ngIf="item.aiEvaluatedAt">
+                  <span class="chip-icon">🕒</span>{{ formatDate(item.aiEvaluatedAt) }} {{ formatTime(item.aiEvaluatedAt) }}
+                </span>
               </div>
 
               <div class="evaluation-results" *ngIf="item.aiScore">
                 <div class="evaluation-header">
                   <h4>Điểm chi tiết</h4>
                   <span class="overall-score-chip">{{ item.aiScore.toFixed(1) }}/9</span>
+                </div>
+                <div class="provider-meta" *ngIf="item.aiProvider || item.aiEvaluatedAt">
+                  <span *ngIf="item.aiProvider">
+                    🤖 {{ item.aiProvider }}<ng-container *ngIf="item.aiModel"> ({{ item.aiModel }})</ng-container>
+                  </span>
+                  <span *ngIf="item.aiEvaluatedAt">
+                    🕒 {{ formatDate(item.aiEvaluatedAt) }} · {{ formatTime(item.aiEvaluatedAt) }}
+                  </span>
                 </div>
                 <div class="criteria-grid">
                   <div class="criteria-item" *ngIf="item.taskAchievement">
@@ -482,6 +496,21 @@ import { WritingTask } from '../../models/writing-task.model';
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
+    }
+
+    .provider-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      font-size: 0.8rem;
+      color: #475569;
+      margin-bottom: 0.5rem;
+    }
+
+    .provider-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
     }
 
     .evaluation-header {

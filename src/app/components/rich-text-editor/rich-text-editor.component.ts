@@ -1,7 +1,6 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import Quill from 'quill';
-import 'quill/dist/quill.snow.css';
 
 @Component({
   selector: 'app-rich-text-editor',
