@@ -12,10 +12,11 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
   private isTranslating = signal<boolean>(false);
   private clickHandler?: (e: MouseEvent) => void;
   private savedRange: Range | null = null;
-  private mouseUpTimeout?: number;
+  private selectionChangeHandler?: () => void;
   private isShowingPopup = false;
   private scrollHandler?: () => void;
   private scrollUpdateFrame: number | null = null;
+  private selectionUpdateTimeout?: number;
 
   constructor(
     private el: ElementRef<HTMLElement>,
@@ -25,17 +26,23 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
   ngOnInit(): void {
     // Setup scroll handler để cập nhật vị trí popup khi scroll
     this.setupScrollHandler();
+    
+    // Setup selection change handler - hiển thị popup ngay khi có selection
+    this.setupSelectionChangeHandler();
   }
 
   ngOnDestroy(): void {
     // Clear timeout nếu có
-    if (this.mouseUpTimeout) {
-      clearTimeout(this.mouseUpTimeout);
-      this.mouseUpTimeout = undefined;
+    if (this.selectionUpdateTimeout) {
+      clearTimeout(this.selectionUpdateTimeout);
+      this.selectionUpdateTimeout = undefined;
     }
     this.closePopup();
     if (this.clickHandler) {
       document.removeEventListener('click', this.clickHandler, true);
+    }
+    if (this.selectionChangeHandler) {
+      document.removeEventListener('selectionchange', this.selectionChangeHandler);
     }
     // Cleanup scroll handler
     if (this.scrollHandler) {
@@ -47,82 +54,118 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('mouseup', ['$event'])
-  onMouseUp(event: MouseEvent): void {
-    // Kiểm tra xem click có phải trên popup không, nếu có thì không xử lý
-    if (this.popupElement && this.popupElement.contains(event.target as Node)) {
-      return;
-    }
-
-    // Clear timeout cũ nếu có để tránh duplicate
-    if (this.mouseUpTimeout) {
-      clearTimeout(this.mouseUpTimeout);
-      this.mouseUpTimeout = undefined;
-    }
-
-    // Đợi một chút để selection được cập nhật
-    this.mouseUpTimeout = window.setTimeout(() => {
-      this.mouseUpTimeout = undefined;
-      
-      // Nếu đang hiển thị popup, không tạo mới
-      if (this.isShowingPopup) {
-        return;
+  private setupSelectionChangeHandler(): void {
+    this.selectionChangeHandler = () => {
+      // Clear timeout cũ nếu có
+      if (this.selectionUpdateTimeout) {
+        clearTimeout(this.selectionUpdateTimeout);
+        this.selectionUpdateTimeout = undefined;
       }
 
-      const selection = window.getSelection();
-      if (!selection || selection.rangeCount === 0) {
-        // Nếu click ra ngoài popup, đóng popup
-        if (this.popupElement && !this.popupElement.contains(event.target as Node)) {
-          this.closePopup();
-        }
-        return;
-      }
+      // Đợi một chút để selection được cập nhật hoàn toàn
+      this.selectionUpdateTimeout = window.setTimeout(() => {
+        this.selectionUpdateTimeout = undefined;
+        this.handleSelectionChange();
+      }, 100);
+    };
 
-      const selectedText = selection.toString().trim();
-      
-      // Chỉ xử lý nếu có text được chọn và text không rỗng
-      if (!selectedText || selectedText.length === 0) {
-        // Nếu click ra ngoài popup, đóng popup
-        if (this.popupElement && !this.popupElement.contains(event.target as Node)) {
-          this.closePopup();
-        }
-        return;
-      }
-
-      // Kiểm tra xem text được chọn có nằm trong element này không
-      const range = selection.getRangeAt(0);
-      if (!this.el.nativeElement.contains(range.commonAncestorContainer)) {
-        return;
-      }
-
-      // Lưu selected text và range để có thể restore sau
-      this.selectedText.set(selectedText);
-      this.savedRange = range.cloneRange();
-
-      // Hiển thị popup với nút dịch
-      this.showTranslateButton(event);
-    }, 100); // Delay ngắn để selection được cập nhật
+    document.addEventListener('selectionchange', this.selectionChangeHandler);
   }
 
-  private showTranslateButton(event: MouseEvent): void {
-    // Nếu đang hiển thị popup, không tạo mới
-    if (this.isShowingPopup || this.popupElement) {
+  private handleSelectionChange(): void {
+    // Nếu đang hiển thị popup result (không phải button), không xử lý
+    if (this.popupElement && this.popupElement.classList.contains('translate-result-popup')) {
       return;
     }
 
-    // Đóng popup cũ nếu có (dự phòng)
-    this.closePopup();
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+      // Không có selection, đóng popup button nếu có
+      if (this.popupElement && this.popupElement.classList.contains('translate-selection-popup')) {
+        this.closePopup();
+      }
+      this.savedRange = null;
+      return;
+    }
+
+    const selectedText = selection.toString().trim();
+    
+    // Nếu không có text được chọn
+    if (!selectedText || selectedText.length === 0) {
+      // Đóng popup button nếu có
+      if (this.popupElement && this.popupElement.classList.contains('translate-selection-popup')) {
+        this.closePopup();
+      }
+      this.savedRange = null;
+      return;
+    }
+
+    // Kiểm tra xem text được chọn có nằm trong element này không
+    const range = selection.getRangeAt(0);
+    if (!this.el.nativeElement.contains(range.commonAncestorContainer)) {
+      // Selection không nằm trong element này, đóng popup
+      if (this.popupElement && this.popupElement.classList.contains('translate-selection-popup')) {
+        this.closePopup();
+      }
+      this.savedRange = null;
+      return;
+    }
+
+    // Lưu selected text và range (giữ nguyên selection)
+    this.selectedText.set(selectedText);
+    this.savedRange = range.cloneRange();
+
+    // Hiển thị hoặc cập nhật popup button
+    if (this.popupElement && this.popupElement.classList.contains('translate-selection-popup')) {
+      // Cập nhật vị trí popup hiện có
+      this.updateTranslateButtonPosition();
+    } else {
+      // Tạo popup mới
+      this.showTranslateButton();
+    }
+  }
+
+  private updateTranslateButtonPosition(): void {
+    if (!this.popupElement || !this.savedRange) {
+      return;
+    }
+
+    try {
+      const rect = this.savedRange.getBoundingClientRect();
+      const popup = this.popupElement;
+      popup.style.left = `${rect.left + rect.width / 2 - 40}px`;
+      popup.style.top = `${rect.bottom + 8}px`;
+    } catch (error) {
+      console.warn('Error updating translate button position:', error);
+    }
+  }
+
+  private showTranslateButton(): void {
+    // Nếu đang hiển thị popup result, không tạo button
+    if (this.popupElement && this.popupElement.classList.contains('translate-result-popup')) {
+      return;
+    }
+
+    // Đóng popup button cũ nếu có
+    if (this.popupElement && this.popupElement.classList.contains('translate-selection-popup')) {
+      this.popupElement.remove();
+      this.popupElement = null;
+    }
     
     // Đánh dấu đang hiển thị popup
     this.isShowingPopup = true;
 
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) {
+    if (!this.savedRange) {
       return;
     }
 
-    const range = selection.getRangeAt(0);
-    const rect = range.getBoundingClientRect();
+    let rect: DOMRect;
+    try {
+      rect = this.savedRange.getBoundingClientRect();
+    } catch (error) {
+      console.warn('Range is no longer valid:', error);
+      return;
+    }
 
     // Tạo popup button
     const popup = document.createElement('div');
@@ -353,12 +396,24 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
     const popup = document.createElement('div');
     popup.className = 'translate-result-popup';
     
-    // Gộp bản dịch chính và các cách dịch khác vào 1 dòng
-    const allVietnameseTranslations: string[] = [result.translatedText];
-    if (result.alternativeTranslations && result.alternativeTranslations.length > 0) {
-      allVietnameseTranslations.push(...result.alternativeTranslations);
+    // Đếm số từ trong originalText (chia bởi khoảng trắng)
+    const wordCount = result.originalText.trim().split(/\s+/).filter(word => word.length > 0).length;
+    const isMultiWord = wordCount >= 2;
+    
+    // Nếu có 2 từ trở lên: chỉ hiển thị bản dịch chính (không gộp các cách dịch khác)
+    // Nếu chỉ có 1 từ: gộp bản dịch chính và các cách dịch khác
+    let vietnameseText: string;
+    if (isMultiWord) {
+      // Chỉ lấy bản dịch chính
+      vietnameseText = this.escapeHtml(result.translatedText);
+    } else {
+      // Gộp bản dịch chính và các cách dịch khác vào 1 dòng
+      const allVietnameseTranslations: string[] = [result.translatedText];
+      if (result.alternativeTranslations && result.alternativeTranslations.length > 0) {
+        allVietnameseTranslations.push(...result.alternativeTranslations);
+      }
+      vietnameseText = allVietnameseTranslations.map(text => this.escapeHtml(text)).join(', ');
     }
-    const vietnameseText = allVietnameseTranslations.map(text => this.escapeHtml(text)).join(', ');
     
     let contentHtml = `
       <div class="translate-result-header">
@@ -372,8 +427,8 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
         </div>
     `;
     
-    // Synonyms - từ đồng nghĩa tiếng Anh (nếu có)
-    if (result.synonyms && result.synonyms.length > 0) {
+    // Synonyms - từ đồng nghĩa tiếng Anh (chỉ hiển thị nếu 1 từ và có synonyms)
+    if (!isMultiWord && result.synonyms && result.synonyms.length > 0) {
       contentHtml += `
         <div class="translate-item translate-synonyms-item">
           <div class="translate-item-label">🔤 Từ đồng nghĩa</div>
@@ -537,44 +592,46 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
   }
 
   private updatePopupPosition(): void {
-    // Chỉ cập nhật nếu có popup result (không phải popup button)
-    if (!this.popupElement || !this.popupElement.classList.contains('translate-result-popup')) {
-      return;
-    }
-
-    if (!this.savedRange) {
+    if (!this.popupElement || !this.savedRange) {
       return;
     }
 
     try {
       // Lấy vị trí mới của range
       const rect = this.savedRange.getBoundingClientRect();
-      // Sử dụng cùng kích thước với createTranslationPopup
-      const popupWidth = 650;
-      const popupMaxHeight = 350;
       
-      let left = rect.left + rect.width / 2 - popupWidth / 2;
-      let top = rect.bottom + 8; // Giảm khoảng cách để gần hơn
+      // Cập nhật vị trí cho translate button
+      if (this.popupElement.classList.contains('translate-selection-popup')) {
+        this.popupElement.style.left = `${rect.left + rect.width / 2 - 40}px`;
+        this.popupElement.style.top = `${rect.bottom + 8}px`;
+        return;
+      }
+      
+      // Cập nhật vị trí cho translate result popup
+      if (this.popupElement.classList.contains('translate-result-popup')) {
+        const popupWidth = 650;
+        const popupMaxHeight = 350;
+        
+        let left = rect.left + rect.width / 2 - popupWidth / 2;
+        let top = rect.bottom + 8;
 
-      // Đảm bảo popup không vượt quá viewport
-      const padding = 16;
-      if (left < padding) {
-        left = padding;
-      }
-      if (left + popupWidth > window.innerWidth - padding) {
-        left = window.innerWidth - popupWidth - padding;
-      }
-      // Popup LUÔN hiển thị bên dưới, không được che text được bôi đậm
-      // Nếu không đủ chỗ bên dưới viewport, chỉ cắt phần dưới (scroll trong popup)
-      if (top + popupMaxHeight > window.innerHeight - padding) {
-        // Giữ nguyên top (bên dưới text), chỉ giới hạn max-height để scroll
-        // Không di chuyển lên trên để tránh che text
-        top = rect.bottom + 8;
-      }
+        // Đảm bảo popup không vượt quá viewport
+        const padding = 16;
+        if (left < padding) {
+          left = padding;
+        }
+        if (left + popupWidth > window.innerWidth - padding) {
+          left = window.innerWidth - popupWidth - padding;
+        }
+        // Popup LUÔN hiển thị bên dưới, không được che text được bôi đậm
+        if (top + popupMaxHeight > window.innerHeight - padding) {
+          top = rect.bottom + 8;
+        }
 
-      // Cập nhật vị trí popup
-      this.popupElement.style.left = `${left}px`;
-      this.popupElement.style.top = `${top}px`;
+        // Cập nhật vị trí popup
+        this.popupElement.style.left = `${left}px`;
+        this.popupElement.style.top = `${top}px`;
+      }
     } catch (error) {
       // Nếu range không còn hợp lệ (element đã bị xóa), đóng popup
       console.warn('Range is no longer valid, closing popup');
