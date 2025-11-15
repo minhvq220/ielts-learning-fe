@@ -4,10 +4,11 @@ import { CommonModule } from '@angular/common';
 import { HeaderComponent } from './components/header/header.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { LoadingService } from './services/loading.service';
+import { TranslateSelectionDirective } from './directives/translate-selection.directive';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, CommonModule, HeaderComponent, SidebarComponent],
+  imports: [RouterOutlet, CommonModule, HeaderComponent, SidebarComponent, TranslateSelectionDirective],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })

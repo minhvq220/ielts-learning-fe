@@ -264,3 +264,299 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+/* Translation Selection Popup Styles */
+.translate-selection-popup {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 0;
+  animation: translateFadeIn 0.2s ease-out;
+  transform: translateX(-50%);
+}
+
+@keyframes translateFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.translate-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.translate-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.translate-btn:active {
+  transform: translateY(0);
+}
+
+.translate-icon {
+  font-size: 1rem;
+}
+
+.translate-text {
+  font-size: 0.875rem;
+}
+
+/* Translation Result Popup Styles */
+.translate-result-popup {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  width: 650px;
+  max-height: 350px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  animation: translateFadeIn 0.2s ease-out;
+  z-index: 9999;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+  display: flex;
+  flex-direction: column;
+}
+
+.translate-result-popup::-webkit-scrollbar {
+  width: 6px;
+}
+
+.translate-result-popup::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+.translate-result-popup::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.translate-result-popup::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.translate-result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid #e9ecef;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px 12px 0 0;
+  flex-shrink: 0;
+}
+
+.translate-result-title {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: white;
+  letter-spacing: 0.3px;
+}
+
+.translate-close-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  font-size: 1.5rem;
+  color: white;
+  cursor: pointer;
+  padding: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  line-height: 1;
+}
+
+.translate-close-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Translation Result Body - New Structure */
+.translate-result-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.translate-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.translate-item-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #495057;
+  letter-spacing: 0.2px;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.translate-item-value {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #212529;
+  padding: 0.625rem 0.875rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/* Original Item */
+.translate-original-item .translate-item-value {
+  background: #f8f9fa;
+  border-left-color: #6c757d;
+  color: #495057;
+}
+
+/* Main Translation Item */
+.translate-main-item .translate-item-value {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border-left-color: #22c55e;
+  color: #166534;
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.translate-main-item .translate-item-value.highlight {
+  color: #166534;
+}
+
+/* Alternative Translations Item */
+.translate-alternatives-item .translate-item-value {
+  background: #f0f9ff;
+  border-left-color: #3b82f6;
+  color: #1e40af;
+}
+
+/* Synonyms Item */
+.translate-synonyms-item .translate-item-value {
+  background: #fffbeb;
+  border-left-color: #f59e0b;
+  color: #92400e;
+}
+
+/* Definitions */
+.translate-definitions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.translate-definition-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #667eea;
+}
+
+.translate-pos {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.translate-meaning {
+  font-size: 0.875rem;
+  color: #212529;
+  line-height: 1.5;
+}
+
+.translate-example-text {
+  font-size: 0.8rem;
+  color: #6c757d;
+  font-style: italic;
+  margin-top: 0.25rem;
+}
+
+
+/* Examples */
+.translate-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.translate-example-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #17a2b8;
+}
+
+.translate-example-original {
+  font-size: 0.875rem;
+  color: #495057;
+  font-weight: 500;
+}
+
+.translate-example-translated {
+  font-size: 0.875rem;
+  color: #17a2b8;
+}
+
+/* Translation Error Popup Styles */
+.translate-error-popup {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  border: 1px solid #dc3545;
+  padding: 0.75rem 1rem;
+  animation: translateFadeIn 0.2s ease-out;
+}
+
+.translate-error-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #721c24;
+  font-size: 0.875rem;
+}
+
+.translate-error-content .translate-close-btn {
+  color: #dc3545;
+}
+
+.translate-error-content .translate-close-btn:hover {
+  background: rgba(220, 53, 69, 0.1);
+}
