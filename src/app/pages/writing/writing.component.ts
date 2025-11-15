@@ -1944,11 +1944,6 @@ export class WritingComponent implements OnInit, OnDestroy {
     }
 
     const wordCount = this.getCurrentWordCount();
-    if (wordCount < (task.wordCount || 0)) {
-      alert(`Bài viết của bạn có ${wordCount} từ, cần ít nhất ${task.wordCount} từ.`);
-      return;
-    }
-
     const latestAttempt = this.historyService.getLatestAttempt(Number(task.id));
     const timeSpent = this.calculateTimeSpent(task);
     // Allow re-scoring: always create new submission for AI scoring
@@ -1998,13 +1993,7 @@ export class WritingComponent implements OnInit, OnDestroy {
 
     const trimmedAnswer = this.currentAnswer().trim();
     const wordCount = this.getCurrentWordCount();
-    const target = task.wordCount || 0;
     const timeSpent = this.calculateTimeSpent(task);
-
-    if (wordCount < target) {
-      alert(`Bài viết của bạn có ${wordCount} từ, cần ít nhất ${target} từ.`);
-      return;
-    }
 
     this.historyService.submitWriting({
       taskId: Number(task.id),
