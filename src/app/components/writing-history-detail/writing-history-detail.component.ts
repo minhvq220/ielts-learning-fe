@@ -1,4 +1,5 @@
-import { Component, OnInit, AfterViewInit, inject, signal, computed, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, inject, signal, computed, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Subject } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { WritingHistoryService } from '../../services/writing-history.service';
@@ -202,12 +203,8 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
                       <span class="legend-swatch swatch-style"></span>
                       Gợi ý diễn đạt hay hơn
                     </span>
-                    <span class="legend-item">
-                      <span class="legend-swatch swatch-addition"></span>
-                      Nên bổ sung nội dung
-                    </span>
                   </div>
-                  <span class="review-tip">Di chuột hoặc nhấn vào thẻ gợi ý bên dưới để xem highlight tương ứng.</span>
+                  <span class="review-tip">Nhấn vào phần gạch chân để xem gợi ý sửa bài.</span>
                 </div>
               </div>
 
@@ -232,8 +229,6 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
                       [class.active]="activeCorrectionId() === segment.correction.id"
                       #highlightRef
                       [attr.data-correction-id]="segment.correction.id"
-                      (mouseenter)="focusCorrection(segment.correction.id)"
-                      (mouseleave)="clearCorrectionFocus()"
                       (click)="onHighlightClick(segment.correction.id, $event)">
                       {{ segment.text }}
                     </span>
@@ -248,7 +243,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
                  [style.left.px]="overlappingCorrections()!.clickX"
                  [style.top.px]="overlappingCorrections()!.clickY">
               <div class="menu-header">
-                <span>Chọn phần chữa bài:</span>
+                <span class="menu-header-title">🔀 Chọn phần chữa bài:</span>
                 <button class="menu-close" (click)="overlappingCorrections.set(null)">×</button>
               </div>
               <div class="menu-items">
@@ -273,6 +268,48 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
               </div>
             </div>
 
+            <!-- Correction Details Popup -->
+            <div class="correction-popup" 
+                 *ngIf="correctionPopup() && !overlappingCorrections()"
+                 [style.left.px]="correctionPopup()!.clickX"
+                 [style.top.px]="correctionPopup()!.clickY">
+              <ng-container *ngIf="getCorrectionById(correctionPopup()!.correctionId) as correction">
+                <div class="popup-header">
+                  <div class="popup-chip-group">
+                    <span class="popup-type">{{ mapIssueType(correction.issueType) }}</span>
+                    <span class="popup-severity" [class]="correction.severity || 'low'">
+                      {{ mapSeverity(correction.severity) }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="popup-content">
+                  <div class="popup-summary" *ngIf="correction.summary">
+                    {{ correction.summary }}
+                  </div>
+
+                  <div class="popup-section" *ngIf="correction.originalText">
+                    <div class="popup-section-label">Đoạn gốc:</div>
+                    <p class="popup-section-text">{{ correction.originalText }}</p>
+                  </div>
+
+                  <div class="popup-section" *ngIf="correction.suggestedText">
+                    <div class="popup-section-label">Gợi ý viết lại:</div>
+                    <p class="popup-section-text suggested">{{ correction.suggestedText }}</p>
+                  </div>
+
+                  <div class="popup-section" *ngIf="correction.explanation">
+                    <div class="popup-section-label">Lý do:</div>
+                    <p class="popup-section-text">{{ correction.explanation }}</p>
+                  </div>
+
+                  <div class="popup-note info" *ngIf="!correction.summary && !correction.suggestedText && !correction.explanation">
+                    AI chưa cung cấp chi tiết cụ thể cho gợi ý này.
+                  </div>
+                </div>
+              </ng-container>
+            </div>
+
             <div class="writing-tools">
               <div class="tools-left">
                 <div class="word-counter">
@@ -294,68 +331,6 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
               </div>
             </div>
 
-          </div>
-        </div>
-
-        <!-- AI Corrections Panel - Full width below essay -->
-        <div class="corrections-panel-full" *ngIf="aiCorrections().length">
-          <div class="corrections-header-full">
-            <div class="corrections-title-section">
-              <h3>AI góp ý sửa bài</h3>
-              <span class="corrections-count">{{ aiCorrections().length }} gợi ý</span>
-            </div>
-          </div>
-          <!-- Scrollable corrections list -->
-          <div class="corrections-list-scrollable">
-            <div class="corrections-list-full">
-              <div
-                class="correction-card"
-                *ngFor="let correction of aiCorrections(); let idx = index"
-                [class.active]="activeCorrectionId() === correction.id"
-                [ngClass]="getCorrectionCardClasses(correction)"
-                #correctionCard
-                [attr.data-correction-id]="correction.id"
-                (mouseenter)="focusCorrection(correction.id)"
-                (mouseleave)="clearCorrectionFocus()"
-                (click)="toggleCorrectionFocus(correction.id)">
-                <div class="correction-chip-group">
-                  <span class="correction-index">#{{ idx + 1 }}</span>
-                  <span class="correction-type">{{ mapIssueType(correction.issueType) }}</span>
-                  <span
-                    class="correction-severity"
-                    [class.high]="correction.severity === 'high'"
-                    [class.medium]="correction.severity === 'medium'"
-                    [class.low]="correction.severity === 'low' || !correction.severity">
-                    {{ mapSeverity(correction.severity) }}
-                  </span>
-                </div>
-
-                <div class="correction-summary" *ngIf="correction.summary">
-                  {{ correction.summary }}
-                </div>
-
-                <div class="correction-section" *ngIf="correction.originalText">
-                  <div class="section-label">Đoạn gốc</div>
-                  <p>{{ correction.originalText }}</p>
-                </div>
-
-                <div class="correction-section" *ngIf="correction.suggestedText">
-                  <div class="section-label">Gợi ý viết lại</div>
-                  <p>{{ correction.suggestedText }}</p>
-                </div>
-
-                <div class="correction-section" *ngIf="correction.explanation">
-                  <div class="section-label">Lý do</div>
-                  <p>{{ correction.explanation }}</p>
-                </div>
-
-                <div class="correction-note info" *ngIf="!correction.summary && !correction.suggestedText && !correction.explanation">
-                  AI chưa cung cấp chi tiết cụ thể cho gợi ý này. Vui lòng tham khảo highlight trong bài viết.
-                </div>
-
-                <button class="back-to-highlight" (click)="scrollToHighlight(correction.id); $event.stopPropagation()">⬆ Quay lại đoạn tô màu</button>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -472,8 +447,8 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
     .writing-main {
       display: grid;
-      grid-template-columns: 360px 1fr;
-      gap: 1.5rem;
+      grid-template-columns: 280px 1fr;
+      gap: 1.25rem;
       align-items: start;
     }
 
@@ -719,11 +694,6 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       border-bottom-color: rgba(100, 116, 139, 0.85);
     }
 
-    .ai-highlight.highlight-addition {
-      background: rgba(167, 243, 208, 0.65);
-      border-bottom-color: rgba(22, 163, 74, 0.9);
-    }
-
     .ai-highlight:hover,
     .ai-highlight.active {
       box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
@@ -800,11 +770,6 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .swatch-style {
       background: rgba(226, 232, 240, 0.95);
       border-color: rgba(100, 116, 139, 0.7);
-    }
-
-    .swatch-addition {
-      background: rgba(167, 243, 208, 0.9);
-      border-color: rgba(34, 197, 94, 0.65);
     }
 
     .review-tip {
@@ -1021,250 +986,6 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       gap: 1.25rem;
     }
 
-    /* Full width corrections panel */
-    .corrections-panel-full {
-      width: 100%;
-      margin-top: 2rem;
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
-      padding: 2rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-      max-height: calc(100vh - 100px); /* Limit total height, allow more space */
-    }
-
-    /* Scrollable corrections list container */
-    .corrections-list-scrollable {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      max-height: 900px; /* Max height to show more corrections per screen */
-      padding-right: 0.5rem;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
-      scrollbar-color: #cbd5e1 #f1f5f9;
-    }
-
-    .corrections-list-scrollable::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .corrections-list-scrollable::-webkit-scrollbar-track {
-      background: #f1f5f9;
-      border-radius: 3px;
-    }
-
-    .corrections-list-scrollable::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 3px;
-    }
-
-    .corrections-list-scrollable::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
-    }
-
-    .corrections-header-full {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-bottom: 1.5rem;
-      border-bottom: 2px solid #e2e8f0;
-    }
-
-    .corrections-title-section {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .corrections-title-section h3 {
-      margin: 0;
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    .corrections-count {
-      font-weight: 600;
-      font-size: 0.9rem;
-      color: #2563eb;
-      background: #eff6ff;
-      padding: 0.3rem 0.8rem;
-      border-radius: 999px;
-      display: inline-block;
-    }
-
-    .corrections-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .corrections-header h3 {
-      margin: 0;
-      font-size: 1.15rem;
-      color: #0f172a;
-    }
-
-    .corrections-header span {
-      font-weight: 600;
-      font-size: 0.85rem;
-      color: #2563eb;
-    }
-
-    .corrections-list-full {
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-    }
-
-    .corrections-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      max-height: 420px;
-      overflow-y: auto;
-      padding-right: 0.5rem;
-    }
-
-    .correction-card {
-      background: #f8fafc;
-      padding: 1rem;
-      border-radius: 12px;
-      border: 1px solid transparent;
-      transition: border 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .correction-card.type-grammar {
-      border-color: rgba(220, 38, 38, 0.35);
-      background: rgba(254, 226, 226, 0.5);
-    }
-
-    .correction-card.type-style {
-      border-color: rgba(100, 116, 139, 0.25);
-      background: rgba(241, 245, 249, 0.6);
-    }
-
-    .correction-card.type-addition {
-      border-color: rgba(34, 197, 94, 0.3);
-      background: rgba(220, 252, 231, 0.55);
-    }
-
-    .correction-card:hover,
-    .correction-card.active {
-      border-color: rgba(59, 130, 246, 0.45);
-      box-shadow: 0 12px 24px rgba(59, 130, 246, 0.18);
-    }
-
-    .correction-chip-group {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      font-size: 0.8rem;
-      color: #475569;
-    }
-
-    .correction-index {
-      background: #e0f2fe;
-      color: #0369a1;
-      padding: 0.2rem 0.6rem;
-      border-radius: 999px;
-      font-weight: 700;
-    }
-
-    .correction-type {
-      background: #ede9fe;
-      color: #5b21b6;
-      padding: 0.25rem 0.6rem;
-      border-radius: 999px;
-      font-weight: 600;
-    }
-
-    .correction-severity {
-      padding: 0.25rem 0.6rem;
-      border-radius: 999px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .correction-severity.high {
-      background: #fee2e2;
-      color: #b91c1c;
-    }
-
-    .correction-severity.medium {
-      background: #fef3c7;
-      color: #b45309;
-    }
-
-    .correction-severity.low {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .correction-summary {
-      font-weight: 600;
-      color: #0f172a;
-    }
-
-    .correction-section .section-label {
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      color: #94a3b8;
-      margin-bottom: 0.3rem;
-      letter-spacing: 0.05em;
-    }
-
-    .correction-section p {
-      margin: 0;
-      font-size: 0.9rem;
-      line-height: 1.6;
-      color: #1f2937;
-    }
-
-    .correction-note.warning {
-      font-size: 0.75rem;
-      color: #b45309;
-      background: #fff7ed;
-      padding: 0.5rem 0.75rem;
-      border-radius: 8px;
-    }
-
-    .correction-note.info {
-      font-size: 0.75rem;
-      color: #1f2937;
-      background: #e2e8f0;
-      padding: 0.5rem 0.75rem;
-      border-radius: 8px;
-    }
-
-    .back-to-highlight {
-      margin-top: 0.5rem;
-      padding: 0.4rem 0.75rem;
-      border: none;
-      border-radius: 8px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      background: #e0f2fe;
-      color: #0369a1;
-      transition: background 0.2s ease, color 0.2s ease;
-    }
-
-    .back-to-highlight:hover {
-      background: #bae6fd;
-      color: #0c4a6e;
-    }
 
     .corrected-essay-panel {
       margin-top: 1.75rem;
@@ -1434,7 +1155,6 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
         grid-template-columns: 1fr;
       }
 
-      .corrections-panel-full,
       .corrected-essay-panel-full {
         padding: 1.5rem;
       }
@@ -1442,15 +1162,15 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
     .correction-selection-menu {
       position: fixed;
-      background: white;
+      background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
       border-radius: 12px;
-      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 16px 40px rgba(59, 130, 246, 0.3), 0 8px 20px rgba(59, 130, 246, 0.2);
       z-index: 1000;
       min-width: 320px;
       max-width: 500px;
       max-height: 70vh;
       overflow-y: auto;
-      border: 1px solid #e2e8f0;
+      border: 2px solid #3b82f6;
       animation: menuFadeIn 0.2s ease-out;
     }
 
@@ -1469,37 +1189,43 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 1rem;
-      border-bottom: 1px solid #e2e8f0;
-      background: #f8fafc;
+      padding: 1rem 1.25rem;
+      border-bottom: 2px solid #3b82f6;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
       border-radius: 12px 12px 0 0;
+      color: white;
     }
 
-    .menu-header span {
-      font-weight: 600;
-      color: #1f2937;
-      font-size: 0.9rem;
+    .menu-header-title {
+      font-weight: 700;
+      color: white;
+      font-size: 0.95rem;
+      letter-spacing: 0.02em;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
     }
 
     .menu-close {
-      background: transparent;
+      background: rgba(255, 255, 255, 0.2);
       border: none;
       font-size: 1.5rem;
-      color: #6b7280;
+      color: white;
       cursor: pointer;
       padding: 0;
-      width: 24px;
-      height: 24px;
+      width: 28px;
+      height: 28px;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 4px;
+      border-radius: 6px;
       transition: background 0.2s, color 0.2s;
+      font-weight: 600;
+      line-height: 1;
     }
 
     .menu-close:hover {
-      background: #e5e7eb;
-      color: #1f2937;
+      background: rgba(255, 255, 255, 0.3);
+      color: white;
+      transform: scale(1.1);
     }
 
     .menu-items {
@@ -1511,7 +1237,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
     .menu-item {
       background: white;
-      border: 1px solid #e2e8f0;
+      border: 1.5px solid #dbeafe;
       border-radius: 8px;
       padding: 0.75rem;
       cursor: pointer;
@@ -1520,13 +1246,14 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
+      box-shadow: 0 1px 3px rgba(59, 130, 246, 0.1);
     }
 
     .menu-item:hover {
-      background: #f8fafc;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
       border-color: #3b82f6;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.25);
+      transform: translateY(-2px);
     }
 
     .menu-item-header {
@@ -1596,19 +1323,178 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       border-radius: 6px;
       border-left: 3px solid #3b82f6;
     }
+
+    /* Correction Details Popup */
+    .correction-popup {
+      position: fixed;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.12);
+      z-index: 1000;
+      width: 380px;
+      max-height: 300px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      border: 1px solid #e2e8f0;
+      animation: popupFadeIn 0.15s ease-out;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 #f1f5f9;
+    }
+
+    .correction-popup::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .correction-popup::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+
+    .correction-popup::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    .correction-popup::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    @keyframes popupFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .popup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+      border-radius: 8px 8px 0 0;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      flex-shrink: 0;
+    }
+
+    .popup-chip-group {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      flex-wrap: wrap;
+    }
+
+    .popup-type {
+      background: #ede9fe;
+      color: #5b21b6;
+      padding: 0.15rem 0.4rem;
+      border-radius: 999px;
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+
+    .popup-severity {
+      padding: 0.15rem 0.4rem;
+      border-radius: 999px;
+      font-size: 0.6rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .popup-severity.high {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
+    .popup-severity.medium {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .popup-severity.low {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+
+    .popup-content {
+      padding: 0.6rem 0.75rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .popup-summary {
+      font-weight: 600;
+      color: #0f172a;
+      font-size: 0.75rem;
+      line-height: 1.3;
+    }
+
+    .popup-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      flex-shrink: 0;
+    }
+
+    .popup-section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #94a3b8;
+      letter-spacing: 0.05em;
+    }
+
+    .popup-section-text {
+      margin: 0;
+      font-size: 0.75rem;
+      line-height: 1.4;
+      color: #1f2937;
+      background: #f8fafc;
+      padding: 0.4rem 0.55rem;
+      border-radius: 4px;
+      border-left: 2px solid #3b82f6;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    .popup-section-text.suggested {
+      border-left-color: #22c55e;
+      background: #f0fdf4;
+    }
+
+    .popup-note.info {
+      font-size: 0.7rem;
+      color: #64748b;
+      background: #f1f5f9;
+      padding: 0.4rem 0.55rem;
+      border-radius: 4px;
+      text-align: center;
+      font-style: italic;
+      flex-shrink: 0;
+    }
   `]
 })
-export class WritingHistoryDetailComponent implements OnInit, AfterViewInit {
+export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   private historyService = inject(WritingHistoryService);
   private writingService = inject(WritingTaskService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private destroy$ = new Subject<void>();
 
   @ViewChildren('highlightRef', { read: ElementRef }) highlightElements!: QueryList<ElementRef<HTMLElement>>;
-  @ViewChildren('correctionCard', { read: ElementRef }) correctionCardElements!: QueryList<ElementRef<HTMLElement>>;
-
   private highlightElementMap = new Map<string, HTMLElement>();
-  private correctionElementMap = new Map<string, HTMLElement>();
+  private scrollHandler: (() => void) | null = null;
 
   historyItem = signal<WritingHistoryDto | null>(null);
   originalTask = signal<WritingTask | null>(null);
@@ -1616,7 +1502,8 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit {
   error = signal<string | null>(null);
   activeInfoTab = signal<'question' | 'guide'>('question');
   activeCorrectionId = signal<string | null>(null);
-  overlappingCorrections = signal<{ corrections: NormalizedCorrection[]; clickX: number; clickY: number } | null>(null);
+  overlappingCorrections = signal<{ corrections: NormalizedCorrection[]; correctionId: string; clickX: number; clickY: number } | null>(null);
+  correctionPopup = signal<{ correctionId: string; clickX: number; clickY: number } | null>(null);
 
   aiCorrections = computed<NormalizedCorrection[]>(() => {
     const source = this.historyItem()?.aiCorrections ?? [];
@@ -1645,18 +1532,194 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit {
   ngAfterViewInit(): void {
     setTimeout(() => {
       this.rebuildHighlightMap();
-      this.rebuildCorrectionMap();
     });
 
     this.highlightElements.changes.subscribe(() => this.rebuildHighlightMap());
-    this.correctionCardElements.changes.subscribe(() => this.rebuildCorrectionMap());
 
-    // Close menu when clicking outside
+    // Close menu and popup when clicking outside
     document.addEventListener('click', (event) => {
       const menu = document.querySelector('.correction-selection-menu');
-      if (menu && !menu.contains(event.target as Node)) {
+      const popup = document.querySelector('.correction-popup');
+      const highlight = (event.target as HTMLElement).closest('.ai-highlight');
+      
+      // Close menu if clicking outside (not on menu, not on any highlight)
+      // If clicking on a highlight, onHighlightClick will handle it
+      if (menu && !menu.contains(event.target as Node) && !highlight) {
         this.overlappingCorrections.set(null);
       }
+      
+      // Close popup if clicking outside (not on highlight or popup itself)
+      if (popup && !popup.contains(event.target as Node) && !highlight) {
+        this.correctionPopup.set(null);
+        this.activeCorrectionId.set(null);
+      }
+    });
+
+    // Update popup and menu position on scroll
+    let scrollUpdateFrame: number | null = null;
+    this.scrollHandler = () => {
+      if (scrollUpdateFrame) {
+        cancelAnimationFrame(scrollUpdateFrame);
+      }
+      
+      scrollUpdateFrame = requestAnimationFrame(() => {
+        this.updatePopupPosition();
+        this.updateMenuPosition();
+        scrollUpdateFrame = null;
+      });
+    };
+
+    window.addEventListener('scroll', this.scrollHandler, true);
+    window.addEventListener('resize', this.scrollHandler);
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+    
+    // Cleanup scroll listeners
+    if (this.scrollHandler) {
+      window.removeEventListener('scroll', this.scrollHandler, true);
+      window.removeEventListener('resize', this.scrollHandler);
+    }
+  }
+
+  private updatePopupPosition(): void {
+    const currentPopup = this.correctionPopup();
+    if (!currentPopup) {
+      return;
+    }
+
+    const correctionId = currentPopup.correctionId;
+    
+    // Find the highlight element for the current correction
+    let highlightElement = this.highlightElementMap.get(correctionId);
+    
+    // If highlight element not found (e.g., overlapping correction that wasn't highlighted),
+    // find overlapping corrections and use the first one that has a highlight element
+    if (!highlightElement) {
+      const currentCorrection = this.aiCorrections().find(c => c.id === correctionId);
+      if (currentCorrection?.originalText) {
+        const clickedText = currentCorrection.originalText;
+        const overlapping = this.aiCorrections().filter(correction => {
+          if (correction.id === correctionId) return true;
+          if (!correction.originalText) return false;
+
+          const otherText = correction.originalText;
+          const clickedLower = clickedText.toLowerCase();
+          const otherLower = otherText.toLowerCase();
+
+          return clickedLower.includes(otherLower) || otherLower.includes(clickedLower);
+        });
+
+        // Find the first overlapping correction that has a highlight element
+        for (const overlappingCorrection of overlapping) {
+          const element = this.highlightElementMap.get(overlappingCorrection.id);
+          if (element) {
+            highlightElement = element;
+            break;
+          }
+        }
+      }
+    }
+    
+    // If still no highlight element found, can't update position
+    if (!highlightElement) {
+      return;
+    }
+
+    const rect = highlightElement.getBoundingClientRect();
+    const popupWidth = 380;
+    
+    // Position popup below the underline, centered horizontally
+    // Trừ đi border 1px của popup để sát underline hơn
+    let x = rect.left + (rect.width / 2) - (popupWidth / 2);
+    let y = rect.bottom - 1; // Trừ 1px để bù border của popup
+    
+    // Adjust X if popup would overflow right
+    if (x + popupWidth > window.innerWidth - 20) {
+      x = window.innerWidth - popupWidth - 20;
+    }
+    // Adjust X if popup would overflow left
+    if (x < 20) {
+      x = 20;
+    }
+    
+    // Update popup position
+    this.correctionPopup.set({
+      correctionId: correctionId,
+      clickX: x,
+      clickY: y
+    });
+  }
+
+  private updateMenuPosition(): void {
+    const currentMenu = this.overlappingCorrections();
+    if (!currentMenu) {
+      return;
+    }
+
+    const correctionId = currentMenu.correctionId;
+    
+    // Find the highlight element for the current correction
+    let highlightElement = this.highlightElementMap.get(correctionId);
+    
+    // If highlight element not found (e.g., overlapping correction that wasn't highlighted),
+    // find overlapping corrections and use the first one that has a highlight element
+    if (!highlightElement) {
+      const currentCorrection = this.aiCorrections().find(c => c.id === correctionId);
+      if (currentCorrection?.originalText) {
+        const clickedText = currentCorrection.originalText;
+        const overlapping = this.aiCorrections().filter(correction => {
+          if (correction.id === correctionId) return true;
+          if (!correction.originalText) return false;
+
+          const otherText = correction.originalText;
+          const clickedLower = clickedText.toLowerCase();
+          const otherLower = otherText.toLowerCase();
+
+          return clickedLower.includes(otherLower) || otherLower.includes(clickedLower);
+        });
+
+        // Find the first overlapping correction that has a highlight element
+        for (const overlappingCorrection of overlapping) {
+          const element = this.highlightElementMap.get(overlappingCorrection.id);
+          if (element) {
+            highlightElement = element;
+            break;
+          }
+        }
+      }
+    }
+    
+    // If still no highlight element found, can't update position
+    if (!highlightElement) {
+      return;
+    }
+
+    const rect = highlightElement.getBoundingClientRect();
+    const menuWidth = 500;
+    
+    // Position menu below the underline, centered horizontally
+    // Trừ 1px để bù border, giống như correction popup để khoảng cách đồng nhất
+    let x = rect.left + (rect.width / 2) - (menuWidth / 2);
+    let y = rect.bottom - 1; // Trừ 1px giống correction popup
+    
+    // Adjust X if menu would overflow right
+    if (x + menuWidth > window.innerWidth - 20) {
+      x = window.innerWidth - menuWidth - 20;
+    }
+    // Adjust X if menu would overflow left
+    if (x < 20) {
+      x = 20;
+    }
+    
+    // Update menu position
+    this.overlappingCorrections.set({
+      corrections: currentMenu.corrections,
+      correctionId: correctionId,
+      clickX: x,
+      clickY: y
     });
   }
 
@@ -1818,94 +1881,194 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit {
     }
   }
 
-  onHighlightClick(correctionId: string, event?: MouseEvent): void {
+
+  private showCorrectionPopup(correctionId: string, menuData?: { corrections: NormalizedCorrection[]; correctionId: string; clickX: number; clickY: number } | null): void {
+    // Find the clicked correction
+    const correction = this.aiCorrections().find(c => c.id === correctionId);
+    if (!correction?.originalText) {
+      return;
+    }
+
+    // Find the highlight element to position popup below it
+    let highlightElement = this.highlightElementMap.get(correctionId);
+    
+    // If highlight element not found (e.g., overlapping correction that wasn't highlighted),
+    // try to find the first highlighted correction from the overlapping list
+    if (!highlightElement && menuData) {
+      for (const overlappingCorrection of menuData.corrections) {
+        const element = this.highlightElementMap.get(overlappingCorrection.id);
+        if (element) {
+          highlightElement = element;
+          break;
+        }
+      }
+    }
+    
+    // If still no highlight element found, use menu position or center of viewport
+    let x: number;
+    let y: number;
+    const popupWidth = 380;
+    const popupHeight = 300;
+    
+    if (highlightElement) {
+      const rect = highlightElement.getBoundingClientRect();
+      // Position popup below the underline - trừ 1px để bù border của popup
+      x = rect.left + (rect.width / 2) - (popupWidth / 2);
+      y = rect.bottom - 1;
+    } else if (menuData) {
+      // Use menu position as fallback
+      x = menuData.clickX;
+      y = menuData.clickY + 50; // Position below the menu
+    } else {
+      // Last resort: center of viewport
+      x = (window.innerWidth - popupWidth) / 2;
+      y = window.innerHeight / 2;
+    }
+    
+    // Adjust X if popup would overflow right
+    if (x + popupWidth > window.innerWidth - 20) {
+      x = window.innerWidth - popupWidth - 20;
+    }
+    // Adjust X if popup would overflow left
+    if (x < 20) {
+      x = 20;
+    }
+    
+    // Always keep popup below the underline - never move it above
+    // If it would overflow bottom of viewport, user can scroll to see it
+
+    this.correctionPopup.set({
+      correctionId: correctionId,
+      clickX: x,
+      clickY: y
+    });
+    this.activeCorrectionId.set(correctionId);
+  }
+
+
+  onHighlightClick(correctionId: string, event: MouseEvent): void {
+    // Prevent event propagation to avoid closing popup immediately
+    if (event) {
+      event.stopPropagation();
+    }
+
+    // Toggle popup: if clicking on the same correction, close it; otherwise, show new one
+    const currentPopup = this.correctionPopup();
+    if (currentPopup && currentPopup.correctionId === correctionId) {
+      // Clicking on the same underline - close popup
+      this.correctionPopup.set(null);
+      this.activeCorrectionId.set(null);
+      return;
+    }
+
     // Find the clicked correction
     const clickedCorrection = this.aiCorrections().find(c => c.id === correctionId);
     if (!clickedCorrection?.originalText) {
-      // If no correction found, proceed with normal flow
-      this.selectCorrection(correctionId);
       return;
     }
 
     const clickedText = clickedCorrection.originalText;
-    const essayText = this.historyItem()?.answer || '';
-
-    // Find all corrections that overlap with the clicked text
-    // A correction overlaps if:
-    // 1. Its originalText contains the clicked text, OR
-    // 2. The clicked text contains its originalText
     const overlapping = this.aiCorrections().filter(correction => {
-      if (correction.id === correctionId) return true; // Always include the clicked one
+      if (correction.id === correctionId) return true;
       if (!correction.originalText) return false;
 
       const otherText = correction.originalText;
       const clickedLower = clickedText.toLowerCase();
       const otherLower = otherText.toLowerCase();
 
-      // Check if texts overlap (one contains the other)
       return clickedLower.includes(otherLower) || otherLower.includes(clickedLower);
     });
 
     // If there are multiple overlapping corrections, show selection menu
     if (overlapping.length > 1 && event) {
-      // Adjust position to ensure menu stays within viewport
-      const menuWidth = 500; // max-width of menu
-      const menuHeight = 400; // estimated max height
-      let x = event.clientX;
-      let y = event.clientY;
+      // Close any existing popup
+      this.correctionPopup.set(null);
       
-      // Adjust X if menu would overflow right
-      if (x + menuWidth > window.innerWidth) {
-        x = window.innerWidth - menuWidth - 20;
-      }
-      // Adjust X if menu would overflow left
-      if (x < 20) {
-        x = 20;
-      }
-      
-      // Adjust Y if menu would overflow bottom
-      if (y + menuHeight > window.innerHeight) {
-        y = window.innerHeight - menuHeight - 20;
-      }
-      // Adjust Y if menu would overflow top
-      if (y < 20) {
-        y = 20;
-      }
+      // Find the highlight element to position menu below it
+      const highlightElement = this.highlightElementMap.get(correctionId);
+      if (!highlightElement) {
+        // If highlight element not found, use click position as fallback
+        const menuWidth = 500;
+        const menuHeight = 400;
+        let x = event.clientX;
+        let y = event.clientY;
+        
+        if (x + menuWidth > window.innerWidth) {
+          x = window.innerWidth - menuWidth - 20;
+        }
+        if (x < 20) {
+          x = 20;
+        }
+        
+        if (y + menuHeight > window.innerHeight) {
+          y = window.innerHeight - menuHeight - 20;
+        }
+        if (y < 20) {
+          y = 20;
+        }
 
-      this.overlappingCorrections.set({
-        corrections: overlapping,
-        clickX: x,
-        clickY: y
-      });
-      
-      // Prevent event propagation to avoid closing menu immediately
-      if (event) {
-        event.stopPropagation();
+        this.overlappingCorrections.set({
+          corrections: overlapping,
+          correctionId: correctionId,
+          clickX: x,
+          clickY: y
+        });
+      } else {
+        // Position menu below the underline, similar to correction popup
+        const rect = highlightElement.getBoundingClientRect();
+        const menuWidth = 500;
+        const menuHeight = 400;
+        
+        // Position menu below the underline - trừ 1px để bù border, giống correction popup
+        let x = rect.left + (rect.width / 2) - (menuWidth / 2);
+        let y = rect.bottom - 1; // Trừ 1px giống correction popup để khoảng cách đồng nhất
+        
+        // Adjust X if menu would overflow right
+        if (x + menuWidth > window.innerWidth - 20) {
+          x = window.innerWidth - menuWidth - 20;
+        }
+        // Adjust X if menu would overflow left
+        if (x < 20) {
+          x = 20;
+        }
+        
+        // Always keep menu below the underline - never move it above
+        // If it would overflow bottom of viewport, user can scroll to see it
+
+        this.overlappingCorrections.set({
+          corrections: overlapping,
+          correctionId: correctionId,
+          clickX: x,
+          clickY: y
+        });
       }
-      return;
+    } else {
+      // Single correction - show popup directly
+      // Close any existing menu
+      this.overlappingCorrections.set(null);
+      this.showCorrectionPopup(correctionId);
     }
-
-    // If only one correction, proceed normally
-    this.selectCorrection(correctionId);
   }
 
   selectCorrection(correctionId: string): void {
     this.activeCorrectionId.set(correctionId);
     this.overlappingCorrections.set(null);
-    
-    // Scroll to the corrections panel first, then to the specific correction card
-    this.scrollToCorrectionsPanel();
-    
-    // Small delay to ensure panel is visible before scrolling to card
-    setTimeout(() => {
-      this.scrollToSuggestion(correctionId);
-    }, 300);
   }
 
   selectCorrectionFromMenu(correctionId: string): void {
+    const menuData = this.overlappingCorrections();
     this.overlappingCorrections.set(null);
-    this.selectCorrection(correctionId);
+    
+    // Show popup for the selected correction
+    // If the selected correction doesn't have a highlight element (because it's overlapping),
+    // use the position from the menu or find the first highlighted correction's position
+    this.showCorrectionPopup(correctionId, menuData);
   }
+
+  getCorrectionById(correctionId: string): NormalizedCorrection | undefined {
+    return this.aiCorrections().find(c => c.id === correctionId);
+  }
+
 
   isCorrectionHighlightable(correctionId: string): boolean {
     return this.annotatedContent().resolvedCorrectionIds.includes(correctionId);
@@ -1948,16 +2111,14 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit {
     const base = {
       'ai-highlight': true,
       'highlight-grammar': false,
-      'highlight-style': false,
-      'highlight-addition': false
+      'highlight-style': false
     };
 
     const key = this.getIssueTypeKey(correction.issueType);
     if (key === 'grammar') {
       base['highlight-grammar'] = true;
-    } else if (key === 'addition') {
-      base['highlight-addition'] = true;
     } else {
+      // Treat addition and other types as style
       base['highlight-style'] = true;
     }
 
@@ -1967,16 +2128,14 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit {
   getCorrectionCardClasses(correction: NormalizedCorrection): Record<string, boolean> {
     const base = {
       'type-grammar': false,
-      'type-style': false,
-      'type-addition': false
+      'type-style': false
     };
 
     const key = this.getIssueTypeKey(correction.issueType);
     if (key === 'grammar') {
       base['type-grammar'] = true;
-    } else if (key === 'addition') {
-      base['type-addition'] = true;
     } else {
+      // Treat addition and other types as style
       base['type-style'] = true;
     }
 
@@ -2268,29 +2427,11 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit {
     });
   }
 
-  scrollToSuggestion(correctionId: string): void {
-    const card = this.findCorrectionCard(correctionId);
-    if (!card) {
-      setTimeout(() => this.scrollToSuggestion(correctionId), 100);
-      return;
-    }
-    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-
-  scrollToCorrectionsPanel(): void {
-    const panel = document.querySelector('.corrections-panel-full') || document.querySelector('.corrections-panel');
-    if (panel) {
-      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }
 
   private findHighlightElement(correctionId: string): HTMLElement | null {
     return this.highlightElementMap.get(correctionId) ?? null;
   }
 
-  private findCorrectionCard(correctionId: string): HTMLElement | null {
-    return this.correctionElementMap.get(correctionId) ?? null;
-  }
 
   private rebuildHighlightMap(): void {
     this.highlightElementMap.clear();
@@ -2302,15 +2443,6 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit {
     });
   }
 
-  private rebuildCorrectionMap(): void {
-    this.correctionElementMap.clear();
-    this.correctionCardElements.forEach(element => {
-      const id = element.nativeElement.dataset['correctionId'];
-      if (id) {
-        this.correctionElementMap.set(id, element.nativeElement);
-      }
-    });
-  }
 
   private getIssueTypeKey(issueType?: string | null): 'grammar' | 'style' | 'addition' | 'other' {
     if (!issueType) {
