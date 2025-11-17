@@ -9,6 +9,7 @@ export const routes: Routes = [
   { path: 'writing/history', loadComponent: () => import('./components/writing-history/writing-history.component').then(m => m.WritingHistoryComponent) },
   { path: 'writing/history/:id', loadComponent: () => import('./components/writing-history-detail/writing-history-detail.component').then(m => m.WritingHistoryDetailComponent) },
   // { path: 'speaking', loadComponent: () => import('./pages/speaking/speaking.component').then(m => m.SpeakingComponent) },
+  { path: 'login', loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent) },
   { path: 'admin/test', loadComponent: () => import('./pages/admin/admin-test.component').then(m => m.AdminTestComponent) },
   { path: 'admin/writing', loadComponent: () => import('./pages/admin/writing-admin.component').then(m => m.WritingAdminComponent) },
   { path: '**', redirectTo: '/home' }

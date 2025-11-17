@@ -1,6 +1,7 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -24,8 +25,13 @@ import { RouterModule } from '@angular/router';
         <div class="user-actions">
           <a routerLink="/admin/test" class="btn btn-secondary">Test Admin</a>
           <a routerLink="/admin/writing" class="btn btn-secondary">Writing Admin</a>
-          <button class="btn btn-primary">Đăng nhập</button>
-          <button class="btn btn-secondary">Đăng ký</button>
+          <div *ngIf="!authService.isAuthenticated()" class="auth-buttons">
+            <button class="btn btn-primary" (click)="goToLogin()">Đăng nhập</button>
+          </div>
+          <div *ngIf="authService.isAuthenticated()" class="user-info">
+            <span class="user-name">{{ authService.getAuthState().user?.name }}</span>
+            <button class="btn btn-secondary" (click)="logout()">Đăng xuất</button>
+          </div>
         </div>
       </div>
     </header>
@@ -91,6 +97,24 @@ import { RouterModule } from '@angular/router';
     .user-actions {
       display: flex;
       gap: 0.5rem;
+      align-items: center;
+    }
+
+    .auth-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .user-name {
+      font-size: 0.5rem;
+      color: white;
+      margin-right: 0.25rem;
     }
 
     .btn {
@@ -145,6 +169,11 @@ export class HeaderComponent implements OnInit, OnDestroy {
   private lastScrollTop = 0;
   private scrollHandler: (() => void) | null = null;
 
+  constructor(
+    public authService: AuthService,
+    private router: Router
+  ) {}
+
   ngOnInit(): void {
     // Initialize header visibility
     this.handleHeaderVisibility();
@@ -185,5 +214,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
     }
     
     this.lastScrollTop = scrollTop;
+  }
+
+  goToLogin(): void {
+    this.router.navigate(['/login']);
+  }
+
+  async logout(): Promise<void> {
+    try {
+      await this.authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   }
 }

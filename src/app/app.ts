@@ -5,6 +5,7 @@ import { HeaderComponent } from './components/header/header.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { LoadingService } from './services/loading.service';
 import { TranslateSelectionDirective } from './directives/translate-selection.directive';
+import { validateConfig } from './config/app.config';
 
 @Component({
   selector: 'app-root',
@@ -18,6 +19,9 @@ export class App implements OnInit {
   constructor(public loadingService: LoadingService) {}
 
   ngOnInit(): void {
+    // Validate configuration
+    validateConfig();
+    
     // Initial loading
     this.loadingService.startLoading('Đang khởi tạo ứng dụng...');
     
