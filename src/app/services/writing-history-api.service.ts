@@ -35,6 +35,41 @@ export interface SubmitWritingDto {
   aiRequestId?: string;
 }
 
+export interface LinkingWord {
+  word: string;
+  positions?: number[];
+}
+
+export interface WordRepetition {
+  word: string;
+  positions?: number[];
+}
+
+export interface WritingStatistics {
+  linkingWords?: LinkingWord[];
+  wordRepetitions?: WordRepetition[];
+}
+
+export interface DetailedIeltsScores {
+  coherenceCohesionOverall?: number;
+  logicalStructure?: number;
+  introductionConclusion?: number;
+  supportedMainPoints?: number;
+  accurateLinkingWords?: number;
+  varietyInLinkingWords?: number;
+  lexicalResourceOverall?: number;
+  variedVocabulary?: number;
+  accurateSpellingWordFormation?: number;
+  grammaticalRangeOverall?: number;
+  mixComplexSimpleSentences?: number;
+  clearCorrectGrammar?: number;
+  taskAchievementOverall?: number;
+  completeResponse?: number;
+  clearComprehensiveIdeas?: number;
+  relevantSpecificExamples?: number;
+  appropriateWordCount?: number;
+}
+
 export interface WritingHistoryDto {
   id: number;
   userId: string;
@@ -57,6 +92,8 @@ export interface WritingHistoryDto {
   aiModel?: string;
   aiEvaluatedAt?: string;
   aiRequestId?: string;
+  aiStatistics?: WritingStatistics;
+  aiDetailedScores?: DetailedIeltsScores;
   submittedAt: string;
   createdAt: string;
   updatedAt?: string;

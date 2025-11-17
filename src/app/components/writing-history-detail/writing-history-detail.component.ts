@@ -1,10 +1,10 @@
-import { Component, OnInit, AfterViewInit, OnDestroy, inject, signal, computed, ViewChildren, QueryList, ElementRef } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, inject, signal, computed, ViewChildren, QueryList, ElementRef, ViewChild } from '@angular/core';
 import { Subject } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { WritingHistoryService } from '../../services/writing-history.service';
 import { WritingTaskService } from '../../services/writing-task.service';
-import { AiCorrection, WritingHistoryDto } from '../../services/writing-history-api.service';
+import { AiCorrection, WritingHistoryDto, WritingStatistics, DetailedIeltsScores, LinkingWord, WordRepetition } from '../../services/writing-history-api.service';
 
 type NormalizedCorrection = AiCorrection & { id: string };
 
@@ -77,64 +77,131 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
           </div>
 
           <div class="criteria-scores">
+            <!-- Task Achievement -->
             <div class="criteria-item" *ngIf="historyItem()!.taskAchievement">
-              <div class="criteria-header">
+              <div class="criteria-header-main">
                 <span class="criteria-name">Task Achievement</span>
-                <span class="criteria-score-value">{{ historyItem()!.taskAchievement!.toFixed(1) }}/9</span>
+                <span class="criteria-score-main">{{ historyItem()!.taskAchievement!.toFixed(1) }}/9</span>
               </div>
               <div class="score-bar">
                 <div class="score-fill" [style.width.%]="(historyItem()!.taskAchievement! / 9) * 100"></div>
               </div>
+              <div class="detailed-subscores" *ngIf="historyItem()!.aiDetailedScores">
+                <div class="subscore-item" *ngIf="historyItem()!.aiDetailedScores!.completeResponse !== undefined">
+                  <span class="subscore-label">Complete response:</span>
+                  <span class="subscore-value">{{ historyItem()!.aiDetailedScores!.completeResponse!.toFixed(1) }}/9</span>
+                </div>
+                <div class="subscore-item" *ngIf="historyItem()!.aiDetailedScores!.clearComprehensiveIdeas !== undefined">
+                  <span class="subscore-label">Clear & comprehensive ideas:</span>
+                  <span class="subscore-value">{{ historyItem()!.aiDetailedScores!.clearComprehensiveIdeas!.toFixed(1) }}/9</span>
+                </div>
+                <div class="subscore-item" *ngIf="historyItem()!.aiDetailedScores!.relevantSpecificExamples !== undefined">
+                  <span class="subscore-label">Relevant & specific examples:</span>
+                  <span class="subscore-value">{{ historyItem()!.aiDetailedScores!.relevantSpecificExamples!.toFixed(1) }}/9</span>
+                </div>
+                <div class="subscore-item" *ngIf="historyItem()!.aiDetailedScores!.appropriateWordCount !== undefined">
+                  <span class="subscore-label">Appropriate word count:</span>
+                  <span class="subscore-value">{{ historyItem()!.aiDetailedScores!.appropriateWordCount!.toFixed(1) }}/9</span>
+                </div>
+              </div>
             </div>
+            
+            <!-- Coherence & Cohesion -->
             <div class="criteria-item" *ngIf="historyItem()!.coherenceCohesion">
-              <div class="criteria-header">
+              <div class="criteria-header-main">
                 <span class="criteria-name">Coherence & Cohesion</span>
-                <span class="criteria-score-value">{{ historyItem()!.coherenceCohesion!.toFixed(1) }}/9</span>
+                <span class="criteria-score-main">{{ historyItem()!.coherenceCohesion!.toFixed(1) }}/9</span>
               </div>
               <div class="score-bar">
                 <div class="score-fill" [style.width.%]="(historyItem()!.coherenceCohesion! / 9) * 100"></div>
               </div>
+              <div class="detailed-subscores" *ngIf="historyItem()!.aiDetailedScores">
+                <div class="subscore-item" *ngIf="historyItem()!.aiDetailedScores!.logicalStructure !== undefined">
+                  <span class="subscore-label">Logical structure:</span>
+                  <span class="subscore-value">{{ historyItem()!.aiDetailedScores!.logicalStructure!.toFixed(1) }}/9</span>
+                </div>
+                <div class="subscore-item" *ngIf="historyItem()!.aiDetailedScores!.introductionConclusion !== undefined">
+                  <span class="subscore-label">Introduction & conclusion:</span>
+                  <span class="subscore-value">{{ historyItem()!.aiDetailedScores!.introductionConclusion!.toFixed(1) }}/9</span>
+                </div>
+                <div class="subscore-item" *ngIf="historyItem()!.aiDetailedScores!.supportedMainPoints !== undefined">
+                  <span class="subscore-label">Supported main points:</span>
+                  <span class="subscore-value">{{ historyItem()!.aiDetailedScores!.supportedMainPoints!.toFixed(1) }}/9</span>
+                </div>
+                <div class="subscore-item" *ngIf="historyItem()!.aiDetailedScores!.accurateLinkingWords !== undefined">
+                  <span class="subscore-label">Accurate linking words:</span>
+                  <span class="subscore-value">{{ historyItem()!.aiDetailedScores!.accurateLinkingWords!.toFixed(1) }}/9</span>
+                </div>
+                <div class="subscore-item" *ngIf="historyItem()!.aiDetailedScores!.varietyInLinkingWords !== undefined">
+                  <span class="subscore-label">Variety in linking words:</span>
+                  <span class="subscore-value">{{ historyItem()!.aiDetailedScores!.varietyInLinkingWords!.toFixed(1) }}/9</span>
+                </div>
+              </div>
             </div>
+            
+            <!-- Lexical Resource -->
             <div class="criteria-item" *ngIf="historyItem()!.lexicalResource">
-              <div class="criteria-header">
+              <div class="criteria-header-main">
                 <span class="criteria-name">Lexical Resource</span>
-                <span class="criteria-score-value">{{ historyItem()!.lexicalResource!.toFixed(1) }}/9</span>
+                <span class="criteria-score-main">{{ historyItem()!.lexicalResource!.toFixed(1) }}/9</span>
               </div>
               <div class="score-bar">
                 <div class="score-fill" [style.width.%]="(historyItem()!.lexicalResource! / 9) * 100"></div>
               </div>
+              <div class="detailed-subscores" *ngIf="historyItem()!.aiDetailedScores">
+                <div class="subscore-item" *ngIf="historyItem()!.aiDetailedScores!.variedVocabulary !== undefined">
+                  <span class="subscore-label">Varied vocabulary:</span>
+                  <span class="subscore-value">{{ historyItem()!.aiDetailedScores!.variedVocabulary!.toFixed(1) }}/9</span>
+                </div>
+                <div class="subscore-item" *ngIf="historyItem()!.aiDetailedScores!.accurateSpellingWordFormation !== undefined">
+                  <span class="subscore-label">Accurate spelling & word formation:</span>
+                  <span class="subscore-value">{{ historyItem()!.aiDetailedScores!.accurateSpellingWordFormation!.toFixed(1) }}/9</span>
+                </div>
+              </div>
             </div>
+            
+            <!-- Grammatical Range -->
             <div class="criteria-item" *ngIf="historyItem()!.grammaticalRange">
-              <div class="criteria-header">
+              <div class="criteria-header-main">
                 <span class="criteria-name">Grammatical Range</span>
-                <span class="criteria-score-value">{{ historyItem()!.grammaticalRange!.toFixed(1) }}/9</span>
+                <span class="criteria-score-main">{{ historyItem()!.grammaticalRange!.toFixed(1) }}/9</span>
               </div>
               <div class="score-bar">
                 <div class="score-fill" [style.width.%]="(historyItem()!.grammaticalRange! / 9) * 100"></div>
+              </div>
+              <div class="detailed-subscores" *ngIf="historyItem()!.aiDetailedScores">
+                <div class="subscore-item" *ngIf="historyItem()!.aiDetailedScores!.mixComplexSimpleSentences !== undefined">
+                  <span class="subscore-label">Mix of complex & simple sentences:</span>
+                  <span class="subscore-value">{{ historyItem()!.aiDetailedScores!.mixComplexSimpleSentences!.toFixed(1) }}/9</span>
+                </div>
+                <div class="subscore-item" *ngIf="historyItem()!.aiDetailedScores!.clearCorrectGrammar !== undefined">
+                  <span class="subscore-label">Clear and correct grammar:</span>
+                  <span class="subscore-value">{{ historyItem()!.aiDetailedScores!.clearCorrectGrammar!.toFixed(1) }}/9</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <div class="writing-main">
-          <div class="left-column">
+          <div class="left-column" [class.collapsed]="isQuestionPanelCollapsed()">
             <div class="info-tabs">
               <button
                 class="tab-btn"
-                [class.active]="activeInfoTab() === 'question'"
-                (click)="setActiveInfoTab('question')">
-                📋 Câu hỏi
+                [class.active]="!isQuestionPanelCollapsed() && activeInfoTab() === 'question'"
+                (click)="toggleQuestionTab()">
+                {{ isQuestionPanelCollapsed() ? '> Câu hỏi' : '< Câu hỏi' }}
               </button>
               <button
                 class="tab-btn"
                 *ngIf="getWritingGuide()"
-                [class.active]="activeInfoTab() === 'guide'"
+                [class.active]="!isQuestionPanelCollapsed() && activeInfoTab() === 'guide'"
                 (click)="setActiveInfoTab('guide')">
                 📝 Hướng dẫn
               </button>
             </div>
 
-            <div class="info-panel" *ngIf="activeInfoTab() === 'question'">
+            <div class="info-panel" *ngIf="activeInfoTab() === 'question' && !isQuestionPanelCollapsed()">
               <div class="task-instruction-panel-compact">
                 <div class="task-title-compact">{{ getTaskTitle() }}</div>
                 <div class="instruction-content-compact" [innerHTML]="getTaskInstruction()"></div>
@@ -182,7 +249,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
               </div>
             </div>
 
-            <div class="info-panel" *ngIf="activeInfoTab() === 'guide' && getWritingGuide()">
+            <div class="info-panel" *ngIf="activeInfoTab() === 'guide' && getWritingGuide() && !isQuestionPanelCollapsed()">
               <div class="writing-guide-panel-expanded">
                 <div class="writing-guide-content" [innerHTML]="getWritingGuide()"></div>
               </div>
@@ -215,7 +282,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
                     {{ historyItem()!.wordCount }} từ
                   </span>
                 </div>
-                <div class="essay-content">
+                <div class="essay-content" #essayContent>
                   <ng-container *ngFor="let segment of annotatedContent().segments; trackBy: trackSegment">
                     <span
                       *ngIf="segment.kind === 'text'"
@@ -332,6 +399,42 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
             </div>
 
           </div>
+          
+          <!-- Statistics Panel (Right Side - Fixed Position) -->
+          <div class="statistics-panel" *ngIf="historyItem()?.aiStatistics">
+            <div class="statistics-header">
+              <h3>Thống kê</h3>
+            </div>
+            <div class="statistics-content">
+              <!-- Linking Words -->
+              <div class="stat-section" *ngIf="historyItem()!.aiStatistics!.linkingWords && historyItem()!.aiStatistics!.linkingWords!.length > 0">
+                <h4>Linking Words</h4>
+                <div class="word-list">
+                  <span 
+                    *ngFor="let item of historyItem()!.aiStatistics!.linkingWords" 
+                    class="word-tag"
+                    [class.active]="highlightedWord() === item.word"
+                    (click)="highlightWord(item.word)">
+                    {{ item.word }}
+                  </span>
+                </div>
+              </div>
+              
+              <!-- Word Repetitions -->
+              <div class="stat-section" *ngIf="historyItem()!.aiStatistics!.wordRepetitions && historyItem()!.aiStatistics!.wordRepetitions!.length > 0">
+                <h4>Word Repetition</h4>
+                <div class="word-list">
+                  <span 
+                    *ngFor="let item of historyItem()!.aiStatistics!.wordRepetitions" 
+                    class="word-tag repetition"
+                    [class.active]="highlightedWord() === item.word"
+                    (click)="highlightWord(item.word)">
+                    {{ item.word }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Corrected Essay Panel - Full width below corrections -->
@@ -351,9 +454,10 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
   `,
   styles: [`
     .history-detail-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 2rem;
+      max-width: 100%;
+      margin: 0;
+      padding: 2rem 0;
+      padding-top: calc(2rem + 40px); /* Add space for fixed header */
     }
 
     .detail-header {
@@ -361,7 +465,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       align-items: center;
       gap: 1.5rem;
       margin-bottom: 2rem;
-      padding-bottom: 1rem;
+      padding: 0 2rem 1rem 2rem;
       border-bottom: 1px solid #e2e8f0;
     }
 
@@ -447,15 +551,123 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
     .writing-main {
       display: grid;
-      grid-template-columns: 280px 1fr;
-      gap: 1.25rem;
+      gap: 0;
       align-items: start;
+      position: relative;
+      width: 100%;
+    }
+    
+    /* Default: 3 columns when statistics panel is visible */
+    .writing-main:has(.statistics-panel) {
+      grid-template-columns: 280px 1fr 320px;
+    }
+    
+    /* 2 columns when statistics panel is not visible */
+    .writing-main:not(:has(.statistics-panel)) {
+      grid-template-columns: 280px 1fr;
+    }
+    
+    /* When left column is collapsed and statistics panel is visible */
+    .writing-main:has(.left-column.collapsed):has(.statistics-panel) {
+      grid-template-columns: 60px 1fr 320px;
+    }
+    
+    /* When left column is collapsed and statistics panel is not visible */
+    .writing-main:has(.left-column.collapsed):not(:has(.statistics-panel)) {
+      grid-template-columns: 60px 1fr;
     }
 
     .left-column {
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      transition: width 0.3s ease;
+      border-radius: 0;
+    }
+    
+    .left-column.collapsed {
+      width: 60px;
+    }
+    
+    .collapse-header {
+      padding: 0.75rem;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border-radius: 12px 12px 0 0;
+    }
+    
+    .collapse-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 1.25rem;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .collapse-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    .collapse-btn:hover::before {
+      left: 100%;
+    }
+    
+    .collapse-btn:hover {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+      transform: translateY(-2px);
+    }
+    
+    .collapse-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+    
+    .collapse-btn.collapsed {
+      background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+      box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+    }
+    
+    .collapse-btn.collapsed:hover {
+      background: linear-gradient(135deg, #475569 0%, #334155 100%);
+      box-shadow: 0 6px 20px rgba(100, 116, 139, 0.4);
+    }
+    
+    .collapse-text {
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    
+    .collapse-text::first-letter {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    
+    .collapse-btn:hover .collapse-text {
+      transform: scale(1.02);
     }
 
     .info-tabs {
@@ -463,8 +675,22 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       gap: 0.5rem;
       background: #ffffff;
       padding: 0.5rem;
-      border-radius: 12px;
+      border-radius: 0 12px 12px 0;
       box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
+    }
+    
+    /* When collapsed, ensure tabs are properly aligned */
+    .left-column.collapsed .info-tabs {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+    }
+    
+    .left-column.collapsed .tab-btn {
+      width: 100%;
+      min-width: 0;
+      padding: 0.75rem 0.5rem;
+      justify-content: center;
     }
 
     .tab-btn {
@@ -478,6 +704,15 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       border-radius: 8px;
       cursor: pointer;
       transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+    }
+
+    .tab-btn::first-letter {
+      font-size: 1.1rem;
+      font-weight: 700;
     }
 
     .tab-btn:hover {
@@ -490,6 +725,21 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       color: #ffffff;
       box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
     }
+    
+    .tab-btn.active:hover {
+      background: #2563eb;
+    }
+    
+    /* Style for collapsed state - make it blue to match active state */
+    .left-column.collapsed .tab-btn:first-child {
+      background: #3b82f6;
+      color: #ffffff;
+      box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
+    }
+    
+    .left-column.collapsed .tab-btn:first-child:hover {
+      background: #2563eb;
+    }
 
     .info-panel {
       flex: 1;
@@ -498,7 +748,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .task-instruction-panel-compact {
       background: #ffffff;
       padding: 1.25rem;
-      border-radius: 14px;
+      border-radius: 0 14px 14px 0;
       box-shadow: 0 18px 35px rgba(15, 23, 42, 0.12);
       display: flex;
       flex-direction: column;
@@ -601,7 +851,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       background: #fff7ed;
       border-left: 4px solid #f97316;
       padding: 1.25rem;
-      border-radius: 14px;
+      border-radius: 0 14px 14px 0;
       box-shadow: 0 18px 35px rgba(249, 115, 22, 0.18);
       max-height: 420px;
       overflow-y: auto;
@@ -617,6 +867,120 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      position: relative;
+      min-width: 0; /* Prevent flex item from overflowing */
+    }
+    
+    /* Statistics Panel - Scrolls with page */
+    .statistics-panel {
+      width: 100%;
+      background: white;
+      border-radius: 14px 0 0 14px;
+      box-shadow: 0 18px 35px rgba(15, 23, 42, 0.12);
+      padding: 1.5rem;
+      height: fit-content;
+      position: relative;
+    }
+    
+    .statistics-header h3 {
+      margin: 0 0 1.5rem 0;
+      color: #1f2937;
+      font-size: 1.25rem;
+      font-weight: 700;
+      border-bottom: 2px solid #3b82f6;
+      padding-bottom: 0.5rem;
+    }
+    
+    .statistics-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .stat-section h4 {
+      margin: 0 0 0.75rem 0;
+      color: #374151;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    
+    .word-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    
+    .word-tag {
+      padding: 0.4rem 0.75rem;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #475569;
+    }
+    
+    .word-tag:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+      transform: translateY(-1px);
+    }
+    
+    .word-tag.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #2563eb;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+    }
+    
+    .word-tag.repetition {
+      background: #fef3c7;
+      border-color: #fbbf24;
+      color: #92400e;
+    }
+    
+    .word-tag.repetition.active {
+      background: #f59e0b;
+      color: white;
+      border-color: #d97706;
+    }
+    
+    .mistakes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    
+    /* Word highlighting in essay */
+    .essay-text.word-highlighted {
+      background: rgba(59, 130, 246, 0.2);
+      border-radius: 3px;
+      padding: 0 2px;
+    }
+    
+    .word-highlight-marker {
+      color: #f97316 !important; /* Orange color for highlighted words */
+      font-weight: 700 !important;
+      transition: all 0.2s;
+      display: inline;
+    }
+    
+    .word-highlight-marker.word-highlight-pulse {
+      animation: wordHighlightPulse 1.5s ease-in-out;
+      box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.6), 0 0 20px rgba(251, 191, 36, 0.4);
+    }
+    
+    @keyframes wordHighlightPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.6), 0 0 20px rgba(251, 191, 36, 0.4);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 0 6px rgba(251, 191, 36, 0.8), 0 0 30px rgba(251, 191, 36, 0.6);
+        transform: scale(1.05);
+      }
     }
 
     .writing-textarea-container {
@@ -624,7 +988,8 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       border-radius: 14px;
       box-shadow: 0 18px 35px rgba(15, 23, 42, 0.12);
       padding: 1.5rem;
-      flex: 0 0 auto;
+      width: 100%;
+      min-width: 0;
     }
 
     .writing-display {
@@ -697,6 +1062,25 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .ai-highlight:hover,
     .ai-highlight.active {
       box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
+    }
+    
+    /* Word highlight color for correction spans - keep underline, just change font color */
+    .ai-highlight.word-highlighted {
+      color: #dc2626 !important; /* Red color for highlighted words */
+      font-weight: 700 !important;
+      /* Keep original underline border */
+    }
+    
+    .ai-highlight.highlight-grammar.word-highlighted {
+      color: #dc2626 !important; /* Red color for highlighted words */
+      font-weight: 700 !important;
+      /* Keep red underline */
+    }
+    
+    .ai-highlight.highlight-style.word-highlighted {
+      color: #dc2626 !important; /* Red color for highlighted words */
+      font-weight: 700 !important;
+      /* Keep gray underline */
     }
 
     .ai-highlight.highlight-pulse {
@@ -942,11 +1326,27 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       align-items: center;
       margin-bottom: 0.75rem;
     }
+    
+    .criteria-header-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
 
     .criteria-name {
       font-size: 0.9rem;
       font-weight: 600;
       color: rgba(255, 255, 255, 0.95);
+    }
+    
+    .criteria-score-main {
+      font-size: 1rem;
+      font-weight: 700;
+      color: white;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
     }
 
     .criteria-score-value {
@@ -956,6 +1356,30 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       background: rgba(255, 255, 255, 0.2);
       padding: 0.3rem 0.6rem;
       border-radius: 8px;
+    }
+    
+    .detailed-subscores {
+      margin-top: 0.75rem;
+      padding-left: 1rem;
+      border-left: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .subscore-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 0;
+      font-size: 0.85rem;
+    }
+    
+    .subscore-label {
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 500;
+    }
+    
+    .subscore-value {
+      color: white;
+      font-weight: 600;
     }
 
     .score-bar {
@@ -1493,8 +1917,10 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
   private destroy$ = new Subject<void>();
 
   @ViewChildren('highlightRef', { read: ElementRef }) highlightElements!: QueryList<ElementRef<HTMLElement>>;
+  @ViewChild('essayContent', { read: ElementRef }) essayContentElement!: ElementRef<HTMLElement>;
   private highlightElementMap = new Map<string, HTMLElement>();
   private scrollHandler: (() => void) | null = null;
+  private wordHighlightMarkers: HTMLElement[] = [];
 
   historyItem = signal<WritingHistoryDto | null>(null);
   originalTask = signal<WritingTask | null>(null);
@@ -1504,6 +1930,8 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
   activeCorrectionId = signal<string | null>(null);
   overlappingCorrections = signal<{ corrections: NormalizedCorrection[]; correctionId: string; clickX: number; clickY: number } | null>(null);
   correctionPopup = signal<{ correctionId: string; clickX: number; clickY: number } | null>(null);
+  isQuestionPanelCollapsed = signal(false); // State for collapsing question panel
+  highlightedWord = signal<string | null>(null); // Currently highlighted word for statistics
 
   aiCorrections = computed<NormalizedCorrection[]>(() => {
     const source = this.historyItem()?.aiCorrections ?? [];
@@ -1532,9 +1960,15 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
   ngAfterViewInit(): void {
     setTimeout(() => {
       this.rebuildHighlightMap();
-    });
+      // Only re-apply word highlight if user has explicitly clicked on a word
+      // Don't auto-highlight on load
+    }, 300);
 
-    this.highlightElements.changes.subscribe(() => this.rebuildHighlightMap());
+    this.highlightElements.changes.subscribe(() => {
+      this.rebuildHighlightMap();
+      // Only re-apply word highlight if user has explicitly clicked on a word
+      // Don't auto-highlight when DOM changes
+    });
 
     // Close menu and popup when clicking outside
     document.addEventListener('click', (event) => {
@@ -1582,6 +2016,10 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
       window.removeEventListener('scroll', this.scrollHandler, true);
       window.removeEventListener('resize', this.scrollHandler);
     }
+    
+    // Clear word highlights
+    this.clearWordHighlights();
+    this.highlightedWord.set(null);
   }
 
   private updatePopupPosition(): void {
@@ -1745,7 +2183,25 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
   }
 
   setActiveInfoTab(tab: 'question' | 'guide'): void {
-    this.activeInfoTab.set(tab);
+    if (!this.isQuestionPanelCollapsed()) {
+      this.activeInfoTab.set(tab);
+    }
+  }
+
+  toggleQuestionTab(): void {
+    if (this.isQuestionPanelCollapsed()) {
+      // If collapsed, open and set active tab to question
+      this.isQuestionPanelCollapsed.set(false);
+      this.activeInfoTab.set('question');
+    } else {
+      // If open and active tab is question, collapse
+      if (this.activeInfoTab() === 'question') {
+        this.isQuestionPanelCollapsed.set(true);
+      } else {
+        // If open but active tab is not question, just switch to question tab
+        this.activeInfoTab.set('question');
+      }
+    }
   }
 
   getAttemptNumber(): number {
@@ -2467,6 +2923,212 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
       return 0;
     }
     return trimmed.split(/\s+/).filter(Boolean).length;
+  }
+
+  highlightWord(word: string): void {
+    // Normalize word (trim, lowercase for comparison)
+    const normalizedWord = word.trim().toLowerCase();
+    const trimmedWord = word.trim();
+    
+    console.log('[highlightWord] Clicked word:', trimmedWord);
+    
+    if (this.highlightedWord()?.toLowerCase() === normalizedWord) {
+      // Toggle off - remove highlight
+      console.log('[highlightWord] Removing highlight');
+      this.highlightedWord.set(null);
+      this.clearWordHighlights();
+    } else {
+      // Toggle on - highlight word
+      console.log('[highlightWord] Adding highlight');
+      this.highlightedWord.set(trimmedWord);
+      // Use setTimeout to ensure DOM is ready
+      setTimeout(() => {
+        this.highlightWordInEssay(trimmedWord);
+      }, 200);
+    }
+  }
+  
+  private isWordInText(text: string, word: string | null): boolean {
+    if (!word || !text) return false;
+    // Case-insensitive word boundary matching
+    const regex = new RegExp(`\\b${this.escapeRegex(word)}\\b`, 'gi');
+    return regex.test(text);
+  }
+  
+  private escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  
+  private highlightWordInEssay(word: string): void {
+    // Clear previous highlights first
+    this.clearWordHighlights();
+    
+    // Wait a bit to ensure DOM is ready
+    setTimeout(() => {
+      // Try to get essay content element
+      let essayContent: HTMLElement | null = null;
+      
+      if (this.essayContentElement?.nativeElement) {
+        essayContent = this.essayContentElement.nativeElement;
+      } else {
+        essayContent = document.querySelector('.essay-content') as HTMLElement;
+      }
+      
+      if (!essayContent) {
+        // Retry after a longer delay
+        setTimeout(() => {
+          this.highlightWordInEssay(word);
+        }, 300);
+        return;
+      }
+      
+      // Create regex that matches word boundaries, case-insensitive
+      const escapedWord = this.escapeRegex(word);
+      const regex = new RegExp(`\\b${escapedWord}\\b`, 'gi');
+      
+      // Find all text nodes in essay content (skip those already inside word-highlight-marker)
+      const allTextNodes: Array<{node: Text; parent: Node}> = [];
+      const walker = document.createTreeWalker(
+        essayContent,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode: (node) => {
+            // Skip text nodes that are already inside word-highlight-marker
+            let parent = node.parentNode;
+            while (parent && parent !== essayContent) {
+              if (parent instanceof HTMLElement) {
+                if (parent.classList.contains('word-highlight-marker')) {
+                  return NodeFilter.FILTER_REJECT;
+                }
+              }
+              parent = parent.parentNode;
+            }
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        }
+      );
+      
+      let node;
+      while (node = walker.nextNode()) {
+        if (node.textContent && node.textContent.trim()) {
+          allTextNodes.push({ node: node as Text, parent: node.parentNode! });
+        }
+      }
+      
+      console.log('[highlightWordInEssay] Found', allTextNodes.length, 'text nodes');
+      
+      // Process each text node - wrap matching words in highlight spans
+      let processedCount = 0;
+      // Process in reverse order to avoid index issues when replacing
+      const textNodesToProcess = [...allTextNodes].reverse();
+      
+      textNodesToProcess.forEach(({ node: textNode, parent }) => {
+        // Check if text node still exists and has parent
+        if (!textNode.parentNode || textNode.parentNode !== parent) {
+          return;
+        }
+        
+        const text = textNode.textContent || '';
+        const matches = [...text.matchAll(regex)];
+        
+        if (matches.length > 0) {
+          console.log('[highlightWordInEssay] Processing text node with', matches.length, 'matches');
+          processedCount++;
+          
+          // Create document fragment to hold new nodes
+          const fragment = document.createDocumentFragment();
+          let lastIndex = 0;
+          
+          matches.forEach(match => {
+            if (match.index === undefined) return;
+            
+            // Add text before match
+            if (match.index > lastIndex) {
+              fragment.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+            }
+            
+            // Create highlight span for matched word (orange color)
+            const highlightSpan = document.createElement('span');
+            highlightSpan.className = 'word-highlight-marker';
+            highlightSpan.textContent = match[0];
+            highlightSpan.style.color = '#f97316';
+            highlightSpan.style.fontWeight = '700';
+            fragment.appendChild(highlightSpan);
+            
+            lastIndex = match.index + match[0].length;
+          });
+          
+          // Add remaining text
+          if (lastIndex < text.length) {
+            fragment.appendChild(document.createTextNode(text.substring(lastIndex)));
+          }
+          
+          // Replace text node with fragment (this removes the original text node)
+          try {
+            parent.replaceChild(fragment, textNode);
+            console.log('[highlightWordInEssay] Successfully replaced text node');
+          } catch (e) {
+            console.error('[highlightWordInEssay] Error replacing text node:', e);
+          }
+        }
+      });
+      
+      console.log('[highlightWordInEssay] Processed', processedCount, 'text nodes with matches');
+      
+      // Verify highlights were created
+      setTimeout(() => {
+        const highlights = essayContent.querySelectorAll('.word-highlight-marker');
+        console.log('[highlightWordInEssay] Total highlights in DOM:', highlights.length);
+        if (highlights.length > 0) {
+          console.log('[highlightWordInEssay] First highlight:', highlights[0]);
+          console.log('[highlightWordInEssay] First highlight color:', window.getComputedStyle(highlights[0] as HTMLElement).color);
+        }
+      }, 100);
+    }, 100);
+  }
+  
+  private clearWordHighlights(): void {
+    // Try to get essay content element
+    let essayContent: HTMLElement | null = null;
+    
+    if (this.essayContentElement?.nativeElement) {
+      essayContent = this.essayContentElement.nativeElement;
+    } else {
+      essayContent = document.querySelector('.essay-content') as HTMLElement;
+    }
+    
+    if (!essayContent) {
+      return;
+    }
+    
+    // Remove word-highlight-marker spans (replace with text nodes)
+    const highlights = essayContent.querySelectorAll('.word-highlight-marker');
+    const highlightsArray = Array.from(highlights).reverse();
+    
+    highlightsArray.forEach(highlight => {
+      const parent = highlight.parentNode;
+      if (parent) {
+        try {
+          // Replace highlight span with text node
+          const textNode = document.createTextNode(highlight.textContent || '');
+          parent.replaceChild(textNode, highlight);
+        } catch (e) {
+          console.warn('Error removing highlight:', e);
+        }
+      }
+    });
+    
+    // Normalize all parent nodes to merge adjacent text nodes
+    const allParents = new Set<Node>();
+    highlightsArray.forEach(highlight => {
+      if (highlight.parentNode) {
+        allParents.add(highlight.parentNode);
+      }
+    });
+    
+    allParents.forEach(parent => {
+      parent.normalize();
+    });
   }
 
   retakeTask(): void {

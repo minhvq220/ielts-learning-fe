@@ -1,10 +1,10 @@
-import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router } from '@angular/router';
 import { WritingTaskService } from '../../services/writing-task.service';
 import { WritingHistoryService } from '../../services/writing-history.service';
-import { WritingHistoryDto } from '../../services/writing-history-api.service';
+import { WritingHistoryDto, WritingStatistics, DetailedIeltsScores, LinkingWord, WordRepetition } from '../../services/writing-history-api.service';
 import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-task.model';
 import { Subject, takeUntil, switchMap, finalize, of } from 'rxjs';
 
@@ -20,6 +20,8 @@ interface AIEvaluation {
   provider?: string;
   model?: string;
   evaluatedAt?: string;
+  statistics?: WritingStatistics;
+  detailedScores?: DetailedIeltsScores;
 }
 
 @Component({
@@ -184,28 +186,28 @@ interface AIEvaluation {
       <!-- Writing Interface -->
       <div class="writing-interface" *ngIf="selectedTask()">
         <!-- Content Container: Đề bài + Bài viết -->
-        <div class="writing-content">
+        <div class="writing-content" [class.left-collapsed]="isQuestionPanelCollapsed()">
           <!-- Left Column: Đề bài và Hướng dẫn -->
-          <div class="left-column">
+          <div class="left-column" [class.collapsed]="isQuestionPanelCollapsed()">
             <!-- Tabs for switching between Question and Guide -->
             <div class="info-tabs">
               <button 
                 class="tab-btn" 
-                [class.active]="activeInfoTab() === 'question'"
-                (click)="activeInfoTab.set('question')">
-                📋 Câu hỏi
+                [class.active]="!isQuestionPanelCollapsed() && activeInfoTab() === 'question'"
+                (click)="toggleQuestionTab()">
+                {{ isQuestionPanelCollapsed() ? '> Câu hỏi' : '< Câu hỏi' }}
               </button>
               <button 
                 class="tab-btn" 
-                [class.active]="activeInfoTab() === 'guide'"
+                [class.active]="!isQuestionPanelCollapsed() && activeInfoTab() === 'guide'"
                 *ngIf="selectedTask()?.writingGuide"
-                (click)="activeInfoTab.set('guide')">
+                (click)="setActiveInfoTab('guide')">
                 📝 Hướng dẫn
               </button>
             </div>
 
             <!-- Question Panel -->
-            <div class="info-panel" *ngIf="activeInfoTab() === 'question'">
+            <div class="info-panel" *ngIf="activeInfoTab() === 'question' && !isQuestionPanelCollapsed()">
               <div class="task-instruction-panel-compact">
                 <div class="task-title-compact">{{ selectedTask()!.title }}</div>
                 <ng-container *ngIf="selectedTask()?.instruction">
@@ -262,7 +264,7 @@ interface AIEvaluation {
             </div>
 
             <!-- Writing Guide Panel -->
-            <div class="info-panel" *ngIf="activeInfoTab() === 'guide' && selectedTask()?.writingGuide">
+            <div class="info-panel" *ngIf="activeInfoTab() === 'guide' && selectedTask()?.writingGuide && !isQuestionPanelCollapsed()">
               <div class="writing-guide-panel-expanded">
                 <div class="writing-guide-content" [innerHTML]="selectedTask()!.writingGuide"></div>
               </div>
@@ -272,13 +274,52 @@ interface AIEvaluation {
           <!-- Right Column: Phần bài viết -->
           <div class="writing-area">
             <div class="writing-textarea-container">
-              <textarea 
-                [ngModel]="currentAnswer()"
-                (ngModelChange)="currentAnswer.set($event)"
-                placeholder="Viết bài của bạn ở đây..."
-                (input)="updateWordCount()"
-                class="writing-textarea">
-              </textarea>
+              <div class="textarea-wrapper" #textareaWrapper>
+                <textarea 
+                  [ngModel]="currentAnswer()"
+                  (ngModelChange)="currentAnswer.set($event)"
+                  placeholder="Viết bài của bạn ở đây..."
+                  (input)="updateWordCount()"
+                  class="writing-textarea"
+                  #writingTextarea>
+                </textarea>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Statistics Panel (Right Side) -->
+          <div class="statistics-panel" *ngIf="evaluation() && evaluation()!.statistics">
+            <div class="statistics-header">
+              <h3>Thống kê</h3>
+            </div>
+            <div class="statistics-content">
+              <!-- Linking Words -->
+              <div class="stat-section" *ngIf="evaluation()!.statistics!.linkingWords && evaluation()!.statistics!.linkingWords!.length > 0">
+                <h4>Linking Words</h4>
+                <div class="word-list">
+                  <span 
+                    *ngFor="let item of evaluation()!.statistics!.linkingWords" 
+                    class="word-tag"
+                    [class.active]="highlightedWord() === item.word"
+                    (click)="highlightWord(item.word)">
+                    {{ item.word }}
+                  </span>
+                </div>
+              </div>
+              
+              <!-- Word Repetitions -->
+              <div class="stat-section" *ngIf="evaluation()!.statistics!.wordRepetitions && evaluation()!.statistics!.wordRepetitions!.length > 0">
+                <h4>Word Repetition</h4>
+                <div class="word-list">
+                  <span 
+                    *ngFor="let item of evaluation()!.statistics!.wordRepetitions" 
+                    class="word-tag repetition"
+                    [class.active]="highlightedWord() === item.word"
+                    (click)="highlightWord(item.word)">
+                    {{ item.word }}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -337,32 +378,107 @@ interface AIEvaluation {
           <!-- Scrollable Content Area -->
           <div class="evaluation-scrollable">
             <div class="criteria-scores">
+              <!-- Task Achievement -->
               <div class="criteria-item">
-                <span class="criteria-name">Task Achievement</span>
+                <div class="criteria-header-main">
+                  <span class="criteria-name">Task Achievement</span>
+                  <span class="criteria-score-main">{{ evaluation()!.taskAchievement }}/9</span>
+                </div>
                 <div class="score-bar">
                   <div class="score-fill" [style.width.%]="(evaluation()!.taskAchievement / 9) * 100"></div>
-                  <span class="score-text">{{ evaluation()!.taskAchievement }}/9</span>
+                </div>
+                <div class="detailed-subscores" *ngIf="evaluation()!.detailedScores">
+                  <div class="subscore-item" *ngIf="evaluation()!.detailedScores!.completeResponse !== undefined">
+                    <span class="subscore-label">Complete response:</span>
+                    <span class="subscore-value">{{ evaluation()!.detailedScores!.completeResponse!.toFixed(1) }}/9</span>
+                  </div>
+                  <div class="subscore-item" *ngIf="evaluation()!.detailedScores!.clearComprehensiveIdeas !== undefined">
+                    <span class="subscore-label">Clear & comprehensive ideas:</span>
+                    <span class="subscore-value">{{ evaluation()!.detailedScores!.clearComprehensiveIdeas!.toFixed(1) }}/9</span>
+                  </div>
+                  <div class="subscore-item" *ngIf="evaluation()!.detailedScores!.relevantSpecificExamples !== undefined">
+                    <span class="subscore-label">Relevant & specific examples:</span>
+                    <span class="subscore-value">{{ evaluation()!.detailedScores!.relevantSpecificExamples!.toFixed(1) }}/9</span>
+                  </div>
+                  <div class="subscore-item" *ngIf="evaluation()!.detailedScores!.appropriateWordCount !== undefined">
+                    <span class="subscore-label">Appropriate word count:</span>
+                    <span class="subscore-value">{{ evaluation()!.detailedScores!.appropriateWordCount!.toFixed(1) }}/9</span>
+                  </div>
                 </div>
               </div>
+              
+              <!-- Coherence & Cohesion -->
               <div class="criteria-item">
-                <span class="criteria-name">Coherence & Cohesion</span>
+                <div class="criteria-header-main">
+                  <span class="criteria-name">Coherence & Cohesion</span>
+                  <span class="criteria-score-main">{{ evaluation()!.coherenceCohesion }}/9</span>
+                </div>
                 <div class="score-bar">
                   <div class="score-fill" [style.width.%]="(evaluation()!.coherenceCohesion / 9) * 100"></div>
-                  <span class="score-text">{{ evaluation()!.coherenceCohesion }}/9</span>
+                </div>
+                <div class="detailed-subscores" *ngIf="evaluation()!.detailedScores">
+                  <div class="subscore-item" *ngIf="evaluation()!.detailedScores!.logicalStructure !== undefined">
+                    <span class="subscore-label">Logical structure:</span>
+                    <span class="subscore-value">{{ evaluation()!.detailedScores!.logicalStructure!.toFixed(1) }}/9</span>
+                  </div>
+                  <div class="subscore-item" *ngIf="evaluation()!.detailedScores!.introductionConclusion !== undefined">
+                    <span class="subscore-label">Introduction & conclusion:</span>
+                    <span class="subscore-value">{{ evaluation()!.detailedScores!.introductionConclusion!.toFixed(1) }}/9</span>
+                  </div>
+                  <div class="subscore-item" *ngIf="evaluation()!.detailedScores!.supportedMainPoints !== undefined">
+                    <span class="subscore-label">Supported main points:</span>
+                    <span class="subscore-value">{{ evaluation()!.detailedScores!.supportedMainPoints!.toFixed(1) }}/9</span>
+                  </div>
+                  <div class="subscore-item" *ngIf="evaluation()!.detailedScores!.accurateLinkingWords !== undefined">
+                    <span class="subscore-label">Accurate linking words:</span>
+                    <span class="subscore-value">{{ evaluation()!.detailedScores!.accurateLinkingWords!.toFixed(1) }}/9</span>
+                  </div>
+                  <div class="subscore-item" *ngIf="evaluation()!.detailedScores!.varietyInLinkingWords !== undefined">
+                    <span class="subscore-label">Variety in linking words:</span>
+                    <span class="subscore-value">{{ evaluation()!.detailedScores!.varietyInLinkingWords!.toFixed(1) }}/9</span>
+                  </div>
                 </div>
               </div>
+              
+              <!-- Lexical Resource -->
               <div class="criteria-item">
-                <span class="criteria-name">Lexical Resource</span>
+                <div class="criteria-header-main">
+                  <span class="criteria-name">Lexical Resource</span>
+                  <span class="criteria-score-main">{{ evaluation()!.lexicalResource }}/9</span>
+                </div>
                 <div class="score-bar">
                   <div class="score-fill" [style.width.%]="(evaluation()!.lexicalResource / 9) * 100"></div>
-                  <span class="score-text">{{ evaluation()!.lexicalResource }}/9</span>
+                </div>
+                <div class="detailed-subscores" *ngIf="evaluation()!.detailedScores">
+                  <div class="subscore-item" *ngIf="evaluation()!.detailedScores!.variedVocabulary !== undefined">
+                    <span class="subscore-label">Varied vocabulary:</span>
+                    <span class="subscore-value">{{ evaluation()!.detailedScores!.variedVocabulary!.toFixed(1) }}/9</span>
+                  </div>
+                  <div class="subscore-item" *ngIf="evaluation()!.detailedScores!.accurateSpellingWordFormation !== undefined">
+                    <span class="subscore-label">Accurate spelling & word formation:</span>
+                    <span class="subscore-value">{{ evaluation()!.detailedScores!.accurateSpellingWordFormation!.toFixed(1) }}/9</span>
+                  </div>
                 </div>
               </div>
+              
+              <!-- Grammatical Range -->
               <div class="criteria-item">
-                <span class="criteria-name">Grammatical Range</span>
+                <div class="criteria-header-main">
+                  <span class="criteria-name">Grammatical Range</span>
+                  <span class="criteria-score-main">{{ evaluation()!.grammaticalRange }}/9</span>
+                </div>
                 <div class="score-bar">
                   <div class="score-fill" [style.width.%]="(evaluation()!.grammaticalRange / 9) * 100"></div>
-                  <span class="score-text">{{ evaluation()!.grammaticalRange }}/9</span>
+                </div>
+                <div class="detailed-subscores" *ngIf="evaluation()!.detailedScores">
+                  <div class="subscore-item" *ngIf="evaluation()!.detailedScores!.mixComplexSimpleSentences !== undefined">
+                    <span class="subscore-label">Mix of complex & simple sentences:</span>
+                    <span class="subscore-value">{{ evaluation()!.detailedScores!.mixComplexSimpleSentences!.toFixed(1) }}/9</span>
+                  </div>
+                  <div class="subscore-item" *ngIf="evaluation()!.detailedScores!.clearCorrectGrammar !== undefined">
+                    <span class="subscore-label">Clear and correct grammar:</span>
+                    <span class="subscore-value">{{ evaluation()!.detailedScores!.clearCorrectGrammar!.toFixed(1) }}/9</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -828,6 +944,92 @@ interface AIEvaluation {
       border-right: 1px solid #e5e7eb;
       z-index: 999; /* Below header but above other content */
       box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+      transition: width 0.3s ease, transform 0.3s ease;
+    }
+    
+    .left-column.collapsed {
+      width: 60px;
+      transform: translateX(0);
+    }
+    
+    .collapse-header {
+      padding: 0.75rem;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .collapse-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.65rem 1.25rem;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .collapse-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    .collapse-btn:hover::before {
+      left: 100%;
+    }
+    
+    .collapse-btn:hover {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+      transform: translateY(-2px);
+    }
+    
+    .collapse-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+    
+    .collapse-btn.collapsed {
+      background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+      box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+    }
+    
+    .collapse-btn.collapsed:hover {
+      background: linear-gradient(135deg, #475569 0%, #334155 100%);
+      box-shadow: 0 6px 20px rgba(100, 116, 139, 0.4);
+    }
+    
+    .collapse-text {
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    
+    .collapse-text::first-letter {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    
+    .collapse-btn:hover .collapse-text {
+      transform: scale(1.02);
     }
 
     /* Tabs */
@@ -839,6 +1041,20 @@ interface AIEvaluation {
       padding: 1rem 0.75rem;
       border-bottom: 1px solid #e5e7eb;
       flex-shrink: 0;
+    }
+    
+    /* When collapsed, ensure tabs are properly aligned */
+    .left-column.collapsed .info-tabs {
+      flex-direction: column;
+      align-items: stretch;
+      width: 100%;
+    }
+    
+    .left-column.collapsed .tab-btn {
+      width: 100%;
+      min-width: 0;
+      padding: 0.75rem 0.5rem;
+      justify-content: center;
     }
 
     .tab-btn {
@@ -852,6 +1068,15 @@ interface AIEvaluation {
       border-radius: 6px;
       cursor: pointer;
       transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.25rem;
+    }
+
+    .tab-btn::first-letter {
+      font-size: 1.1rem;
+      font-weight: 700;
     }
 
     .tab-btn:hover {
@@ -863,6 +1088,21 @@ interface AIEvaluation {
       background: #3b82f6;
       color: white;
       box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    }
+    
+    .tab-btn.active:hover {
+      background: #2563eb;
+    }
+    
+    /* Style for collapsed state - make it blue to match active state */
+    .left-column.collapsed .tab-btn:first-child {
+      background: #3b82f6;
+      color: #ffffff;
+      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+    }
+    
+    .left-column.collapsed .tab-btn:first-child:hover {
+      background: #2563eb;
     }
 
     /* Info Panel Container */
@@ -1196,10 +1436,20 @@ interface AIEvaluation {
       position: fixed;
       top: 90px; /* Below header and gap */
       left: 480px; /* After left-column */
-      right: 0;
+      right: 0; /* Default: full width, will be adjusted when statistics panel is visible */
       bottom: 80px; /* Above actions bar */
       background: white;
       z-index: 1;
+      transition: left 0.3s ease, right 0.3s ease;
+    }
+    
+    .writing-content.left-collapsed .writing-area {
+      left: 60px;
+    }
+    
+    /* Adjust writing area when statistics panel is visible */
+    .writing-interface:has(.statistics-panel) .writing-area {
+      right: 320px;
     }
 
     .writing-textarea-container {
@@ -1212,6 +1462,13 @@ interface AIEvaluation {
       height: 100%;
       margin: 0;
       padding: 0;
+      position: relative;
+    }
+    
+    .textarea-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
     }
 
     .writing-textarea {
@@ -1227,13 +1484,17 @@ interface AIEvaluation {
       background: white;
       box-sizing: border-box;
     }
+    
+    .writing-textarea::selection {
+      background: rgba(251, 191, 36, 0.4);
+    }
 
     /* Actions Bar: Các nút action ở dưới - Sticky */
     .writing-actions-bar {
       position: fixed;
       bottom: 0;
       left: 480px; /* Width of left-column */
-      right: 0;
+      right: 0; /* Default: full width, will be adjusted when statistics panel is visible */
       background: white;
       padding: 1rem 1.5rem;
       border-top: 1px solid #e5e7eb;
@@ -1243,6 +1504,16 @@ interface AIEvaluation {
       align-items: center;
       gap: 1.5rem;
       z-index: 998; /* Below header and left-column but above other content */
+      transition: left 0.3s ease, right 0.3s ease;
+    }
+    
+    .writing-interface:has(.left-collapsed) .writing-actions-bar {
+      left: 60px;
+    }
+    
+    /* Adjust actions bar when statistics panel is visible */
+    .writing-interface:has(.statistics-panel) .writing-actions-bar {
+      right: 320px;
     }
 
     .tools-left {
@@ -1432,14 +1703,50 @@ interface AIEvaluation {
     }
 
     .criteria-item {
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .criteria-header-main {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
     }
 
     .criteria-name {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
+      font-weight: 600;
       color: #2c3e50;
+      font-size: 1rem;
+    }
+    
+    .criteria-score-main {
+      font-weight: 700;
+      color: #3b82f6;
+      font-size: 1rem;
+    }
+    
+    .detailed-subscores {
+      margin-top: 0.75rem;
+      padding-left: 1rem;
+      border-left: 2px solid #e5e7eb;
+    }
+    
+    .subscore-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 0;
+      font-size: 0.875rem;
+    }
+    
+    .subscore-label {
+      color: #64748b;
+      font-weight: 500;
+    }
+    
+    .subscore-value {
+      color: #1f2937;
+      font-weight: 600;
     }
 
     .score-bar {
@@ -1638,9 +1945,107 @@ interface AIEvaluation {
         font-size: 0.85rem;
       }
     }
+    
+    /* Statistics Panel */
+    .statistics-panel {
+      position: fixed;
+      top: 90px;
+      right: 0;
+      width: 320px;
+      height: calc(100vh - 90px - 80px);
+      background: white;
+      border-left: 1px solid #e5e7eb;
+      box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+      z-index: 998;
+      overflow-y: auto;
+      padding: 1.5rem;
+    }
+    
+    .statistics-header h3 {
+      margin: 0 0 1.5rem 0;
+      color: #1f2937;
+      font-size: 1.25rem;
+      font-weight: 700;
+      border-bottom: 2px solid #3b82f6;
+      padding-bottom: 0.5rem;
+    }
+    
+    .statistics-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    
+    .stat-section h4 {
+      margin: 0 0 0.75rem 0;
+      color: #374151;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    
+    .word-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    
+    .word-tag {
+      padding: 0.4rem 0.75rem;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #475569;
+    }
+    
+    .word-tag:hover {
+      background: #e2e8f0;
+      border-color: #94a3b8;
+      transform: translateY(-1px);
+    }
+    
+    .word-tag.active {
+      background: #3b82f6;
+      color: white;
+      border-color: #2563eb;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+    }
+    
+    .word-tag.repetition {
+      background: #fef3c7;
+      border-color: #fbbf24;
+      color: #92400e;
+    }
+    
+    .word-tag.repetition.active {
+      background: #f59e0b;
+      color: white;
+      border-color: #d97706;
+    }
+    
+    .mistakes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    
+    .mistake-item {
+      padding: 0.75rem;
+      background: #fee2e2;
+      border-left: 3px solid #ef4444;
+      border-radius: 4px;
+      font-size: 0.875rem;
+      color: #991b1b;
+    }
+    
+    .writing-textarea.highlight-word {
+      /* Highlight effect will be implemented with JavaScript */
+    }
   `]
 })
-export class WritingComponent implements OnInit, OnDestroy {
+export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   private writingService = inject(WritingTaskService);
   private historyService = inject(WritingHistoryService);
   private route = inject(ActivatedRoute);
@@ -1662,6 +2067,8 @@ export class WritingComponent implements OnInit, OnDestroy {
   selectedDifficulty = '';
   activeTab = signal<'uncompleted' | 'completed'>('uncompleted');
   activeInfoTab = signal<'question' | 'guide'>('question'); // Tab for switching between question and guide
+  isQuestionPanelCollapsed = signal(false); // State for collapsing question panel
+  highlightedWord = signal<string | null>(null); // Currently highlighted word for statistics
 
   // Computed values
   filteredTasks = computed(() => {
@@ -1808,8 +2215,60 @@ export class WritingComponent implements OnInit, OnDestroy {
       sampleAnswer: sampleAnswer || this.getDefaultSampleAnswer(),
       provider: history.aiProvider || undefined,
       model: history.aiModel || undefined,
-      evaluatedAt: history.aiEvaluatedAt || undefined
+      evaluatedAt: history.aiEvaluatedAt || undefined,
+      statistics: history.aiStatistics || undefined,
+      detailedScores: history.aiDetailedScores || undefined
     });
+  }
+  
+  @ViewChild('writingTextarea', { read: ElementRef }) writingTextareaElement!: ElementRef<HTMLTextAreaElement>;
+  
+  ngAfterViewInit(): void {
+    // Component initialized
+  }
+  
+  highlightWord(word: string): void {
+    if (this.highlightedWord() === word) {
+      this.highlightedWord.set(null);
+    } else {
+      this.highlightedWord.set(word);
+      // Scroll to first occurrence in textarea
+      setTimeout(() => {
+        this.scrollToFirstWordOccurrence(word);
+      }, 100);
+    }
+  }
+  
+  private escapeRegex(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  
+  private scrollToFirstWordOccurrence(word: string): void {
+    if (!word || !this.currentAnswer() || !this.writingTextareaElement?.nativeElement) {
+      return;
+    }
+    
+    const textarea = this.writingTextareaElement.nativeElement;
+    const text = this.currentAnswer();
+    const regex = new RegExp(`\\b${this.escapeRegex(word)}\\b`, 'gi');
+    const match = regex.exec(text);
+    
+    if (match && match.index !== undefined) {
+      // Calculate line number
+      const textBefore = text.substring(0, match.index);
+      const lines = textBefore.split('\n');
+      const lineNumber = lines.length - 1;
+      
+      // Scroll to line
+      const lineHeight = parseFloat(window.getComputedStyle(textarea).lineHeight) || 20;
+      const scrollTop = lineNumber * lineHeight;
+      
+      textarea.scrollTop = Math.max(0, scrollTop - textarea.clientHeight / 2);
+      textarea.focus();
+      
+      // Set selection to highlight the word visually
+      textarea.setSelectionRange(match.index, match.index + match[0].length);
+    }
   }
 
   private getDefaultSampleAnswer(): string {
@@ -2026,5 +2485,27 @@ export class WritingComponent implements OnInit, OnDestroy {
 
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('vi-VN');
+  }
+
+  setActiveInfoTab(tab: 'question' | 'guide'): void {
+    if (!this.isQuestionPanelCollapsed()) {
+      this.activeInfoTab.set(tab);
+    }
+  }
+
+  toggleQuestionTab(): void {
+    if (this.isQuestionPanelCollapsed()) {
+      // If collapsed, open and set active tab to question
+      this.isQuestionPanelCollapsed.set(false);
+      this.activeInfoTab.set('question');
+    } else {
+      // If open and active tab is question, collapse
+      if (this.activeInfoTab() === 'question') {
+        this.isQuestionPanelCollapsed.set(true);
+      } else {
+        // If open but active tab is not question, just switch to question tab
+        this.activeInfoTab.set('question');
+      }
+    }
   }
 }

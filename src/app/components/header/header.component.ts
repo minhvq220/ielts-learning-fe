@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 
@@ -7,7 +7,7 @@ import { RouterModule } from '@angular/router';
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <header class="header">
+    <header class="header" [class.hidden]="!isHeaderVisible()">
       <div class="header-content">
         <div class="logo">
           <a routerLink="/home" class="logo-link">
@@ -16,10 +16,10 @@ import { RouterModule } from '@angular/router';
         </div>
         <nav class="nav">
           <a routerLink="/home" routerLinkActive="active" class="nav-link">Trang chủ</a>
-          <a routerLink="/reading" routerLinkActive="active" class="nav-link">Reading</a>
-          <a routerLink="/listening" routerLinkActive="active" class="nav-link">Listening</a>
+          <!-- <a routerLink="/reading" routerLinkActive="active" class="nav-link">Reading</a> -->
+          <!-- <a routerLink="/listening" routerLinkActive="active" class="nav-link">Listening</a> -->
           <a routerLink="/writing" routerLinkActive="active" class="nav-link">Writing</a>
-          <a routerLink="/speaking" routerLinkActive="active" class="nav-link">Speaking</a>
+          <!-- <a routerLink="/speaking" routerLinkActive="active" class="nav-link">Speaking</a> -->
         </nav>
         <div class="user-actions">
           <a routerLink="/admin/test" class="btn btn-secondary">Test Admin</a>
@@ -36,16 +36,24 @@ import { RouterModule } from '@angular/router';
       color: white;
       padding: 0;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      position: sticky;
+      position: fixed;
       top: 0;
+      left: 0;
+      right: 0;
       z-index: 1000; /* Highest z-index to ensure header is always on top */
+      transition: transform 0.3s ease-in-out;
+      transform: translateY(0);
+    }
+
+    .header.hidden {
+      transform: translateY(-100%);
     }
 
     .header-content {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 1rem 2rem;
+      padding: 0.5rem 1rem;
       max-width: 1200px;
       margin: 0 auto;
     }
@@ -57,21 +65,22 @@ import { RouterModule } from '@angular/router';
 
     .logo h1 {
       margin: 0;
-      font-size: 1.8rem;
+      font-size: 0.9rem;
       font-weight: bold;
     }
 
     .nav {
       display: flex;
-      gap: 2rem;
+      gap: 1rem;
     }
 
     .nav-link {
       color: white;
       text-decoration: none;
-      padding: 0.5rem 1rem;
-      border-radius: 5px;
+      padding: 0.25rem 0.5rem;
+      border-radius: 2.5px;
       transition: background-color 0.3s;
+      font-size: 0.5rem;
     }
 
     .nav-link:hover,
@@ -81,16 +90,17 @@ import { RouterModule } from '@angular/router';
 
     .user-actions {
       display: flex;
-      gap: 1rem;
+      gap: 0.5rem;
     }
 
     .btn {
-      padding: 0.5rem 1rem;
+      padding: 0.25rem 0.5rem;
       border: none;
-      border-radius: 5px;
+      border-radius: 2.5px;
       cursor: pointer;
       font-weight: 500;
       transition: all 0.3s;
+      font-size: 0.5rem;
     }
 
     .btn-primary {
@@ -116,18 +126,64 @@ import { RouterModule } from '@angular/router';
     @media (max-width: 768px) {
       .header-content {
         flex-direction: column;
-        gap: 1rem;
-        padding: 1rem;
+        gap: 0.5rem;
+        padding: 0.5rem;
       }
 
       .nav {
-        gap: 1rem;
+        gap: 0.5rem;
       }
 
       .user-actions {
-        gap: 0.5rem;
+        gap: 0.25rem;
       }
     }
   `]
 })
-export class HeaderComponent {}
+export class HeaderComponent implements OnInit, OnDestroy {
+  isHeaderVisible = signal(true);
+  private lastScrollTop = 0;
+  private scrollHandler: (() => void) | null = null;
+
+  ngOnInit(): void {
+    // Initialize header visibility
+    this.handleHeaderVisibility();
+    
+    // Setup scroll listener
+    let scrollUpdateFrame: number | null = null;
+    this.scrollHandler = () => {
+      if (scrollUpdateFrame) {
+        cancelAnimationFrame(scrollUpdateFrame);
+      }
+      
+      scrollUpdateFrame = requestAnimationFrame(() => {
+        this.handleHeaderVisibility();
+        scrollUpdateFrame = null;
+      });
+    };
+
+    window.addEventListener('scroll', this.scrollHandler, true);
+  }
+
+  ngOnDestroy(): void {
+    // Cleanup scroll listener
+    if (this.scrollHandler) {
+      window.removeEventListener('scroll', this.scrollHandler, true);
+    }
+  }
+
+  private handleHeaderVisibility(): void {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    
+    // Hide header when scrolling down
+    if (scrollTop > this.lastScrollTop && scrollTop > 50) {
+      // Scrolling down and past 50px - hide header
+      this.isHeaderVisible.set(false);
+    } else if (scrollTop <= 50) {
+      // Near top - always show header
+      this.isHeaderVisible.set(true);
+    }
+    
+    this.lastScrollTop = scrollTop;
+  }
+}

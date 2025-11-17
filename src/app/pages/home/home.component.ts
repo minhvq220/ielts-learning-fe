@@ -11,9 +11,9 @@ import { RouterModule } from '@angular/router';
       <div class="hero-section">
         <div class="hero-content">
           <h1 class="hero-title">Luyện thi IELTS hiệu quả</h1>
-          <p class="hero-subtitle">Nâng cao 4 kỹ năng Reading, Listening, Writing, Speaking với AI chấm bài thông minh</p>
+          <p class="hero-subtitle">Nâng cao kỹ năng Writing với AI chấm bài thông minh</p>
           <div class="hero-actions">
-            <button class="btn btn-primary btn-large" routerLink="/reading">Bắt đầu luyện tập</button>
+            <button class="btn btn-primary btn-large" routerLink="/writing">Bắt đầu luyện tập</button>
             <button class="btn btn-secondary btn-large">Tìm hiểu thêm</button>
           </div>
         </div>
@@ -23,7 +23,7 @@ import { RouterModule } from '@angular/router';
         <div class="container">
           <h2 class="section-title">Tính năng nổi bật</h2>
           <div class="features-grid">
-            <div class="feature-card">
+            <!-- <div class="feature-card">
               <div class="feature-icon">📖</div>
               <h3>Reading</h3>
               <p>Giao diện chia đôi màn hình, timer đếm ngược, chế độ tra từ thông minh với giải thích context</p>
@@ -32,9 +32,9 @@ import { RouterModule } from '@angular/router';
                 <li>Chế độ thi và luyện tập</li>
                 <li>Đáp án chi tiết, dễ hiểu</li>
               </ul>
-            </div>
+            </div> -->
 
-            <div class="feature-card">
+            <!-- <div class="feature-card">
               <div class="feature-icon">🎧</div>
               <h3>Listening</h3>
               <p>Tương tự Reading với audio player chất lượng cao và giao diện thân thiện</p>
@@ -43,7 +43,7 @@ import { RouterModule } from '@angular/router';
                 <li>Giao diện trực quan</li>
                 <li>Chấm bài tự động</li>
               </ul>
-            </div>
+            </div> -->
 
             <div class="feature-card">
               <div class="feature-icon">✍️</div>
@@ -56,7 +56,7 @@ import { RouterModule } from '@angular/router';
               </ul>
             </div>
 
-            <div class="feature-card">
+            <!-- <div class="feature-card">
               <div class="feature-icon">🎤</div>
               <h3>Speaking</h3>
               <p>AI chấm phát âm, ngữ pháp với thanh note-taking và gợi ý từ vựng</p>
@@ -65,7 +65,7 @@ import { RouterModule } from '@angular/router';
                 <li>Thanh note-taking thông minh</li>
                 <li>Gợi ý từ vựng nâng cao</li>
               </ul>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>

@@ -12,49 +12,49 @@ import { RouterModule } from '@angular/router';
         <div class="skill-section" style="display: none;">
           <h3>Kỹ năng IELTS</h3>
           <ul class="skill-list">
-            <li>
+            <!-- <li>
               <a routerLink="/reading" routerLinkActive="active" class="skill-link">
                 <span class="skill-icon">📖</span>
                 <span>Reading</span>
               </a>
-            </li>
-            <li>
+            </li> -->
+            <!-- <li>
               <a routerLink="/listening" routerLinkActive="active" class="skill-link">
                 <span class="skill-icon">🎧</span>
                 <span>Listening</span>
               </a>
-            </li>
+            </li> -->
             <li>
               <a routerLink="/writing" routerLinkActive="active" class="skill-link">
                 <span class="skill-icon">✍️</span>
                 <span>Writing</span>
               </a>
             </li>
-            <li>
+            <!-- <li>
               <a routerLink="/speaking" routerLinkActive="active" class="skill-link">
                 <span class="skill-icon">🎤</span>
                 <span>Speaking</span>
               </a>
-            </li>
+            </li> -->
           </ul>
         </div>
         
         <div class="progress-section" style="display: none;">
           <h3>Tiến độ học tập</h3>
-          <div class="progress-item">
+          <!-- <div class="progress-item">
             <span>Reading</span>
             <div class="progress-bar">
               <div class="progress-fill" style="width: 75%"></div>
             </div>
             <span class="progress-text">75%</span>
-          </div>
-          <div class="progress-item">
+          </div> -->
+          <!-- <div class="progress-item">
             <span>Listening</span>
             <div class="progress-bar">
               <div class="progress-fill" style="width: 60%"></div>
             </div>
             <span class="progress-text">60%</span>
-          </div>
+          </div> -->
           <div class="progress-item">
             <span>Writing</span>
             <div class="progress-bar">
@@ -62,13 +62,13 @@ import { RouterModule } from '@angular/router';
             </div>
             <span class="progress-text">45%</span>
           </div>
-          <div class="progress-item">
+          <!-- <div class="progress-item">
             <span>Speaking</span>
             <div class="progress-bar">
               <div class="progress-fill" style="width: 30%"></div>
             </div>
             <span class="progress-text">30%</span>
-          </div>
+          </div> -->
         </div>
       </div>
     </aside>
