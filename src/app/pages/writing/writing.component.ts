@@ -6,7 +6,7 @@ import { WritingTaskService } from '../../services/writing-task.service';
 import { WritingHistoryService } from '../../services/writing-history.service';
 import { WritingHistoryDto, WritingStatistics, DetailedIeltsScores, LinkingWord, WordRepetition } from '../../services/writing-history-api.service';
 import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-task.model';
-import { Subject, takeUntil, switchMap, finalize, of } from 'rxjs';
+import { Subject, takeUntil, switchMap, finalize, of, from } from 'rxjs';
 
 interface AIEvaluation {
   overallScore: number;
@@ -2349,6 +2349,49 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     return null;
   }
 
+  /**
+   * Convert image URL to base64 format
+   */
+  private convertImageUrlToBase64(imageUrl: string): Promise<{ data: string; mimeType: string } | null> {
+    try {
+      return fetch(imageUrl)
+        .then(response => {
+          if (!response.ok) {
+            console.warn('Failed to fetch image:', response.statusText);
+            return null;
+          }
+          return response.blob();
+        })
+        .then(blob => {
+          if (!blob) return null;
+          const mimeType = blob.type || 'image/png';
+          
+          return new Promise<{ data: string; mimeType: string } | null>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const result = reader.result as string;
+              if (result && result.startsWith('data:')) {
+                // Extract base64 data (remove data URI prefix)
+                const base64Data = result.split(',')[1];
+                resolve({ data: base64Data, mimeType });
+              } else {
+                reject(new Error('Failed to convert image to base64'));
+              }
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        })
+        .catch(error => {
+          console.error('Error converting image URL to base64:', error);
+          return null;
+        });
+    } catch (error) {
+      console.error('Error converting image URL to base64:', error);
+      return Promise.resolve(null);
+    }
+  }
+
   getTask2Question(): string {
     const task = this.selectedTask();
     if (task?.type === 'task2') {
@@ -2421,13 +2464,46 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
 
     submission$
       .pipe(
-        switchMap(history => this.historyService.scoreWritingAttempt({
-          historyId: history.id,
-          taskId: Number(task.id),
-          answer: trimmedAnswer,
-          wordCount,
-          timeSpent
-        })),
+        switchMap(history => {
+          // Prepare image data for Task 1
+          const task1ImageUrl = this.getTask1ImageUrl();
+          let imageDataPromise: Promise<{ data?: string; mimeType?: string }> = Promise.resolve({});
+          
+          if (task1ImageUrl && task.type === 'task1') {
+            // Check if imageUrl is already base64 (data URI)
+            if (task1ImageUrl.startsWith('data:')) {
+              // Extract base64 data and mime type from data URI
+              const parts = task1ImageUrl.split(',');
+              if (parts.length === 2) {
+                const dataUriPrefix = parts[0]; // e.g., "data:image/jpeg;base64"
+                const mimeTypeEnd = dataUriPrefix.indexOf(';');
+                const mimeType = mimeTypeEnd > 5 ? dataUriPrefix.substring(5, mimeTypeEnd) : dataUriPrefix.substring(5);
+                imageDataPromise = Promise.resolve({ data: parts[1], mimeType });
+              }
+            } else if (task1ImageUrl.startsWith('http://') || task1ImageUrl.startsWith('https://')) {
+              // URL - fetch and convert to base64 asynchronously
+              imageDataPromise = this.convertImageUrlToBase64(task1ImageUrl).then((result: { data: string; mimeType: string } | null) => result || {});
+            } else {
+              // Assume it's already base64 without data URI prefix
+              imageDataPromise = Promise.resolve({ data: task1ImageUrl, mimeType: 'image/png' });
+            }
+          }
+          
+          // Wait for image conversion if needed, then proceed with scoring
+          return from(imageDataPromise).pipe(
+            switchMap(imageResult => {
+              return this.historyService.scoreWritingAttempt({
+                historyId: history.id,
+                taskId: Number(task.id),
+                answer: trimmedAnswer,
+                wordCount,
+                timeSpent,
+                imageData: imageResult.data,
+                imageMimeType: imageResult.mimeType
+              });
+            })
+          );
+        }),
         finalize(() => this.isEvaluating.set(false))
       )
       .subscribe({

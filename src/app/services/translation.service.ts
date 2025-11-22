@@ -17,9 +17,8 @@ export interface TranslationResult {
   providedIn: 'root'
 })
 export class TranslationService {
-  // Sử dụng Google Translate API miễn phí (có giới hạn)
-  // Hoặc có thể thay thế bằng API key nếu có
-  private readonly translateApiUrl = 'https://translate.googleapis.com/translate_a/single';
+  // Sử dụng backend proxy endpoint để tránh CORS issues
+  private readonly translateApiUrl = 'http://localhost:8081/api/translation/translate';
   
   constructor(private http: HttpClient) {}
 
@@ -62,7 +61,13 @@ export class TranslationService {
     if (maxDepth <= 0) return;
     
     if (typeof obj === 'string') {
-      const text = obj.trim();
+      let text = obj.trim();
+      // Decode URL encoded characters
+      try {
+        text = decodeURIComponent(text);
+      } catch (e) {
+        // Nếu không phải URL encoded, giữ nguyên
+      }
       if (text && text.length > 0) {
         // Loại bỏ ký tự lỗi
         const cleanText = text.replace(/[\u200B-\u200D\uFEFF\u00AD]+/g, '').trim();
@@ -176,11 +181,9 @@ export class TranslationService {
     }
 
     const params = new HttpParams()
-      .set('client', 'gtx')
-      .set('sl', 'en') // source language: English
-      .set('tl', 'vi') // target language: Vietnamese
-      .set('dt', 't')  // translate
-      .set('q', text.trim());
+      .set('text', text.trim())
+      .set('sourceLanguage', 'en')
+      .set('targetLanguage', 'vi');
 
     return this.http.get<any[]>(this.translateApiUrl, { params }).pipe(
       map((response: any) => {
@@ -236,18 +239,11 @@ export class TranslationService {
       ? trimmedText.substring(0, maxLength) 
       : trimmedText;
 
-    // Thêm dt parameters để lấy translation, alternative translations, definitions, dictionary và synonyms
-    // dt=t: translation, dt=at: alternative translations, dt=md: definitions, dt=bd: dictionary, dt=ss: synonyms
-    let params = new HttpParams()
-      .set('client', 'gtx')
-      .set('sl', sourceLanguage)
-      .set('tl', 'vi')
-      .set('q', textToTranslate);
-    
-    // Thêm nhiều dt parameters bằng cách append để lấy tất cả nghĩa
-    ['t', 'at', 'md', 'bd', 'ss'].forEach(dt => {
-      params = params.append('dt', dt);
-    });
+    // Gọi backend proxy endpoint để tránh CORS issues
+    const params = new HttpParams()
+      .set('text', textToTranslate)
+      .set('sourceLanguage', sourceLanguage)
+      .set('targetLanguage', 'vi');
 
     return this.http.get<any[]>(this.translateApiUrl, { params }).pipe(
       map((response: any) => {
@@ -262,6 +258,12 @@ export class TranslationService {
           translatedText = response[0]
             .map((item: any[]) => item[0])
             .join('');
+          // Decode URL encoded characters (nếu có)
+          try {
+            translatedText = decodeURIComponent(translatedText);
+          } catch (e) {
+            // Nếu không phải URL encoded, giữ nguyên
+          }
         }
         
         // Alternative translations (dt=at) - response[5]
@@ -276,12 +278,24 @@ export class TranslationService {
                       // Có thể có nhiều translations trong mỗi trans
                       trans.forEach((t: any) => {
                         if (t && Array.isArray(t) && t[0]) {
-                          const translation = String(t[0]).trim();
+                          let translation = String(t[0]).trim();
+                          // Decode URL encoded characters
+                          try {
+                            translation = decodeURIComponent(translation);
+                          } catch (e) {
+                            // Nếu không phải URL encoded, giữ nguyên
+                          }
                           if (translation && translation !== translatedText) {
                             alternativeTranslations.add(translation);
                           }
                         } else if (typeof t === 'string') {
-                          const translation = t.trim();
+                          let translation = t.trim();
+                          // Decode URL encoded characters
+                          try {
+                            translation = decodeURIComponent(translation);
+                          } catch (e) {
+                            // Nếu không phải URL encoded, giữ nguyên
+                          }
                           if (translation && translation !== translatedText) {
                             alternativeTranslations.add(translation);
                           }
@@ -311,13 +325,25 @@ export class TranslationService {
                           if (meaning && Array.isArray(meaning)) {
                             // meaning[0] là nghĩa tiếng Việt
                             if (meaning[0]) {
-                              const meaningText = String(meaning[0]).trim();
+                              let meaningText = String(meaning[0]).trim();
+                              // Decode URL encoded characters
+                              try {
+                                meaningText = decodeURIComponent(meaningText);
+                              } catch (e) {
+                                // Nếu không phải URL encoded, giữ nguyên
+                              }
                               if (meaningText && meaningText !== translatedText) {
                                 alternativeTranslations.add(meaningText);
                               }
                             }
                           } else if (typeof meaning === 'string') {
-                            const meaningText = meaning.trim();
+                            let meaningText = meaning.trim();
+                            // Decode URL encoded characters
+                            try {
+                              meaningText = decodeURIComponent(meaningText);
+                            } catch (e) {
+                              // Nếu không phải URL encoded, giữ nguyên
+                            }
                             if (meaningText && meaningText !== translatedText) {
                               alternativeTranslations.add(meaningText);
                             }
@@ -390,6 +416,12 @@ export class TranslationService {
                   syn.forEach((s: any) => {
                     if (s && Array.isArray(s) && s[0]) {
                       let synonym = String(s[0]).trim();
+                      // Decode URL encoded characters
+                      try {
+                        synonym = decodeURIComponent(synonym);
+                      } catch (e) {
+                        // Nếu không phải URL encoded, giữ nguyên
+                      }
                       synonym = synonym.replace(/[\u200B-\u200D\uFEFF\u00AD]+/g, '');
                       synonym = synonym.replace(/\s+$/, '');
                       if (synonym && synonym !== translatedText) {
@@ -397,6 +429,12 @@ export class TranslationService {
                       }
                     } else if (typeof s === 'string') {
                       let synonym = s.trim();
+                      // Decode URL encoded characters
+                      try {
+                        synonym = decodeURIComponent(synonym);
+                      } catch (e) {
+                        // Nếu không phải URL encoded, giữ nguyên
+                      }
                       synonym = synonym.replace(/[\u200B-\u200D\uFEFF\u00AD]+/g, '');
                       if (synonym && synonym !== translatedText) {
                         synonyms.add(synonym);
@@ -421,7 +459,13 @@ export class TranslationService {
         // Convert Sets to Arrays và lọc lại để chỉ giữ tiếng Việt hợp lệ
         const uniqueAlternatives = Array.from(alternativeTranslations)
           .filter(text => {
-            const cleanText = String(text).trim();
+            let cleanText = String(text).trim();
+            // Decode URL encoded characters
+            try {
+              cleanText = decodeURIComponent(cleanText);
+            } catch (e) {
+              // Nếu không phải URL encoded, giữ nguyên
+            }
             // Phải có ký tự tiếng Việt, không có ký tự lỗi, không phải toàn bộ là tiếng Anh
             return this.isValidVietnameseText(cleanText) && 
                    /[\u00C0-\u00FF\u0102\u0103\u1EA0-\u1EF9]/.test(cleanText) &&
@@ -430,7 +474,13 @@ export class TranslationService {
         
         const uniqueSynonyms = Array.from(synonyms)
           .filter(text => {
-            const cleanText = String(text).trim();
+            let cleanText = String(text).trim();
+            // Decode URL encoded characters
+            try {
+              cleanText = decodeURIComponent(cleanText);
+            } catch (e) {
+              // Nếu không phải URL encoded, giữ nguyên
+            }
             
             // Loại bỏ part of speech (loại từ)
             if (this.isPartOfSpeech(cleanText)) {

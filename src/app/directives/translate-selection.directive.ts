@@ -17,6 +17,7 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
   private scrollHandler?: () => void;
   private scrollUpdateFrame: number | null = null;
   private selectionUpdateTimeout?: number;
+  private addedBodyPadding: number = 0; // Track padding đã thêm vào body
 
   constructor(
     private el: ElementRef<HTMLElement>,
@@ -52,6 +53,8 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
     if (this.scrollUpdateFrame) {
       cancelAnimationFrame(this.scrollUpdateFrame);
     }
+    // Đảm bảo remove padding khi destroy
+    this.removePaddingFromBody();
   }
 
   private setupSelectionChangeHandler(): void {
@@ -109,6 +112,40 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
       }
       this.savedRange = null;
       return;
+    }
+
+    // CRITICAL: Bỏ qua nếu selection nằm trong textarea hoặc input
+    // Để tránh can thiệp vào việc gõ và paste
+    const activeElement = document.activeElement;
+    if (activeElement && (
+      activeElement.tagName === 'TEXTAREA' || 
+      activeElement.tagName === 'INPUT' ||
+      (activeElement instanceof HTMLElement && activeElement.isContentEditable)
+    )) {
+      // Nếu selection nằm trong textarea/input, không xử lý
+      // Chỉ xử lý khi user đang select text trong content (không phải đang gõ)
+      const rangeContainer = range.commonAncestorContainer;
+      if (rangeContainer.nodeType === Node.TEXT_NODE) {
+        const parent = rangeContainer.parentElement;
+        if (parent && (
+          parent.tagName === 'TEXTAREA' || 
+          parent.tagName === 'INPUT' ||
+          parent.closest('textarea') ||
+          parent.closest('input')
+        )) {
+          // Selection trong textarea/input, bỏ qua
+          return;
+        }
+      } else if (rangeContainer.nodeType === Node.ELEMENT_NODE) {
+        const element = rangeContainer as Element;
+        if (element.tagName === 'TEXTAREA' || 
+            element.tagName === 'INPUT' ||
+            element.closest('textarea') ||
+            element.closest('input')) {
+          // Selection trong textarea/input, bỏ qua
+          return;
+        }
+      }
     }
 
     // Lưu selected text và range (giữ nguyên selection)
@@ -237,6 +274,16 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
     setTimeout(() => {
       this.clickHandler = (e: MouseEvent) => {
         const target = e.target as HTMLElement;
+        
+        // CRITICAL: Bỏ qua nếu click vào textarea hoặc input
+        // Để tránh can thiệp vào việc gõ và paste
+        if (target.tagName === 'TEXTAREA' || 
+            target.tagName === 'INPUT' ||
+            target.closest('textarea') ||
+            target.closest('input')) {
+          // Click vào textarea/input, không xử lý - để user có thể gõ và paste bình thường
+          return;
+        }
         
         // Không đóng nếu click trên popup hoặc nút dịch
         if (popup && popup.contains(target)) {
@@ -464,12 +511,35 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
       if (left + popupWidth > window.innerWidth - padding) {
         left = window.innerWidth - popupWidth - padding;
       }
-      // Popup LUÔN hiển thị bên dưới, không được che text được bôi đậm
-      // Nếu không đủ chỗ bên dưới viewport, chỉ cắt phần dưới (scroll trong popup)
-      if (top + popupMaxHeight > window.innerHeight - padding) {
-        // Giữ nguyên top (bên dưới text), chỉ giới hạn max-height để scroll
-        // Không di chuyển lên trên để tránh che text
+      
+      // Kiểm tra xem có đủ chỗ bên dưới không
+      const spaceBelow = window.innerHeight - rect.bottom - padding;
+      const spaceAbove = rect.top - padding;
+      const estimatedPopupHeight = Math.min(popupMaxHeight, 200); // Ước tính chiều cao popup
+      
+      if (spaceBelow < estimatedPopupHeight) {
+        // Không đủ chỗ bên dưới - đặt popup ở phía trên văn bản
+        top = rect.top - estimatedPopupHeight - 8;
+        
+        // Đảm bảo popup không vượt quá viewport phía trên
+        if (top < padding) {
+          top = padding;
+          // Nếu vẫn không đủ chỗ, scroll để hiển thị popup
+          if (rect.top < estimatedPopupHeight + padding + 8) {
+            window.scrollTo({
+              top: window.scrollY + (rect.top - estimatedPopupHeight - padding - 8),
+              behavior: 'smooth'
+            });
+          }
+        }
+        
+        // Remove padding nếu có (không cần padding nữa)
+        this.removePaddingFromBody();
+      } else {
+        // Đủ chỗ bên dưới, đặt popup bên dưới text
         top = rect.bottom + 8;
+        // Đảm bảo remove padding nếu có
+        this.removePaddingFromBody();
       }
     } else {
       // Vị trí mặc định ở giữa màn hình
@@ -482,6 +552,40 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
     popup.style.width = `${popupWidth}px`;
     popup.style.maxHeight = `${popupMaxHeight}px`;
     popup.style.zIndex = '9999';
+    
+    // Sau khi set position, kiểm tra lại và điều chỉnh nếu cần
+    // Sử dụng requestAnimationFrame để đảm bảo popup đã được render
+    if (rect) {
+      requestAnimationFrame(() => {
+        const popupRect = popup.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const padding = 16;
+        
+        // Nếu popup bị khuất ở dưới, di chuyển lên trên
+        if (popupRect.bottom > viewportHeight - padding) {
+          const newTop = rect.top - popupRect.height - 8;
+          if (newTop >= padding) {
+            popup.style.top = `${newTop}px`;
+          } else {
+            // Nếu không đủ chỗ ở trên, scroll để hiển thị popup
+            const scrollAmount = popupRect.bottom - (viewportHeight - padding) + 20;
+            window.scrollBy({
+              top: scrollAmount,
+              behavior: 'smooth'
+            });
+          }
+        }
+        
+        // Nếu popup bị khuất ở trên, scroll để hiển thị
+        if (popupRect.top < padding) {
+          const scrollAmount = popupRect.top - padding - 20;
+          window.scrollBy({
+            top: scrollAmount,
+            behavior: 'smooth'
+          });
+        }
+      });
+    }
 
     // Thêm vào document
     document.body.appendChild(popup);
@@ -504,6 +608,18 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
     }
     setTimeout(() => {
       this.clickHandler = (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        
+        // CRITICAL: Bỏ qua nếu click vào textarea hoặc input
+        // Để tránh can thiệp vào việc gõ và paste
+        if (target.tagName === 'TEXTAREA' || 
+            target.tagName === 'INPUT' ||
+            target.closest('textarea') ||
+            target.closest('input')) {
+          // Click vào textarea/input, không xử lý - để user có thể gõ và paste bình thường
+          return;
+        }
+        
         // Không đóng nếu click trên popup
         if (popup && popup.contains(e.target as Node)) {
           return;
@@ -563,6 +679,38 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
     }
     this.isShowingPopup = false;
     this.savedRange = null;
+    // Remove padding đã thêm vào body
+    this.removePaddingFromBody();
+  }
+
+  private addPaddingToBody(padding: number): void {
+    if (this.addedBodyPadding === 0) {
+      // Lưu padding hiện tại của body (nếu có)
+      const currentPadding = parseInt(window.getComputedStyle(document.body).paddingBottom) || 0;
+      document.body.style.paddingBottom = `${currentPadding + padding}px`;
+      this.addedBodyPadding = padding;
+    } else {
+      // Nếu đã có padding, chỉ cần tăng thêm nếu cần
+      const currentPadding = parseInt(window.getComputedStyle(document.body).paddingBottom) || 0;
+      const neededPadding = Math.max(padding, this.addedBodyPadding);
+      if (neededPadding > this.addedBodyPadding) {
+        document.body.style.paddingBottom = `${currentPadding + (neededPadding - this.addedBodyPadding)}px`;
+        this.addedBodyPadding = neededPadding;
+      }
+    }
+  }
+
+  private removePaddingFromBody(): void {
+    if (this.addedBodyPadding > 0) {
+      const currentPadding = parseInt(window.getComputedStyle(document.body).paddingBottom) || 0;
+      const newPadding = Math.max(0, currentPadding - this.addedBodyPadding);
+      if (newPadding === 0) {
+        document.body.style.paddingBottom = '';
+      } else {
+        document.body.style.paddingBottom = `${newPadding}px`;
+      }
+      this.addedBodyPadding = 0;
+    }
   }
 
   private restoreSelection(): void {
@@ -623,9 +771,35 @@ export class TranslateSelectionDirective implements OnInit, OnDestroy {
         if (left + popupWidth > window.innerWidth - padding) {
           left = window.innerWidth - popupWidth - padding;
         }
-        // Popup LUÔN hiển thị bên dưới, không được che text được bôi đậm
-        if (top + popupMaxHeight > window.innerHeight - padding) {
+        
+        // Kiểm tra xem có đủ chỗ bên dưới không
+        const spaceBelow = window.innerHeight - rect.bottom - padding;
+        const spaceAbove = rect.top - padding;
+        const estimatedPopupHeight = Math.min(popupMaxHeight, 200);
+        
+        if (spaceBelow < estimatedPopupHeight) {
+          // Không đủ chỗ bên dưới - đặt popup ở phía trên văn bản
+          top = rect.top - estimatedPopupHeight - 8;
+          
+          // Đảm bảo popup không vượt quá viewport phía trên
+          if (top < padding) {
+            top = padding;
+            // Nếu vẫn không đủ chỗ, scroll để hiển thị popup
+            if (rect.top < estimatedPopupHeight + padding + 8) {
+              window.scrollTo({
+                top: window.scrollY + (rect.top - estimatedPopupHeight - padding - 8),
+                behavior: 'smooth'
+              });
+            }
+          }
+          
+          // Remove padding nếu có (không cần padding nữa)
+          this.removePaddingFromBody();
+        } else {
+          // Đủ chỗ bên dưới, đặt popup bên dưới text
           top = rect.bottom + 8;
+          // Remove padding nếu không cần
+          this.removePaddingFromBody();
         }
 
         // Cập nhật vị trí popup

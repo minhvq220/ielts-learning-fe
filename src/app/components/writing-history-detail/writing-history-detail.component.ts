@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { WritingHistoryService } from '../../services/writing-history.service';
 import { WritingTaskService } from '../../services/writing-task.service';
+import { WritingTaskApiService } from '../../services/writing-task-api.service';
 import { WritingHistoryApiService, AiCorrection, WritingHistoryDto, WritingStatistics, DetailedIeltsScores, LinkingWord, WordRepetition } from '../../services/writing-history-api.service';
 
 type NormalizedCorrection = AiCorrection & { id: string };
@@ -2085,6 +2086,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   private historyService = inject(WritingHistoryService);
   private writingService = inject(WritingTaskService);
+  private taskApiService = inject(WritingTaskApiService);
   private apiService = inject(WritingHistoryApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -2335,6 +2337,76 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
     });
   }
 
+  private loadOriginalTask(taskId: number): void {
+    // First, try to find in local state
+    const tasks = this.writingService.sortedTasks();
+    const originalTask = tasks.find(t => t.id === taskId.toString());
+    if (originalTask) {
+      this.originalTask.set(originalTask);
+      return;
+    }
+    
+    // If not found in local state, fetch from API
+    this.taskApiService.getTaskById(taskId).subscribe({
+      next: (taskDto) => {
+        if (taskDto) {
+          // Convert DTO to model
+          const task = this.convertTaskDtoToModel(taskDto);
+          if (task) {
+            this.originalTask.set(task);
+          }
+        }
+      },
+      error: (err) => {
+        console.error('Error loading task:', err);
+        // Don't set error, just log - task info is optional
+      }
+    });
+  }
+
+  private convertTaskDtoToModel(dto: any): WritingTask | null {
+    if (!dto) return null;
+    
+    // Use the same conversion logic as WritingTaskService
+    const baseTask = {
+      id: dto.id?.toString() || '',
+      title: dto.title || '',
+      instruction: dto.instruction || '',
+      difficulty: (dto.difficulty?.toLowerCase() || 'medium') as 'easy' | 'medium' | 'hard',
+      timeLimit: dto.timeLimit || 0,
+      wordCount: dto.wordCount || 0,
+      createdAt: dto.createdAt ? new Date(dto.createdAt) : new Date(),
+      updatedAt: dto.updatedAt ? new Date(dto.updatedAt) : new Date(),
+      isActive: dto.isActive !== undefined ? dto.isActive : true,
+      tags: dto.tags || [],
+      sampleAnswer: dto.sampleAnswer || '',
+      writingGuide: dto.writingGuide || '',
+      tips: dto.tips || []
+    };
+
+    // Determine if it's Task1 or Task2 based on available properties
+    if ('task1Type' in dto) {
+      return {
+        ...baseTask,
+        type: 'task1' as const,
+        task1Type: (dto.task1Type?.toLowerCase().replace('_', '-') || 'line-graph') as any,
+        description: dto.description || '',
+        imageUrl: dto.imageUrl || '',
+        data: dto.data || {}
+      } as WritingTask1;
+    } else if ('task2Type' in dto) {
+      return {
+        ...baseTask,
+        type: 'task2' as const,
+        task2Type: (dto.task2Type?.toLowerCase().replace('_', '-') || 'agree-disagree') as any,
+        question: dto.question || '',
+        additionalQuestions: dto.additionalQuestions || []
+      } as WritingTask2;
+    }
+    
+    return null;
+  }
+
   private loadHistoryItem(historyId: number): void {
     this.loading.set(true);
     this.error.set(null);
@@ -2345,22 +2417,14 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
 
     if (item) {
       this.historyItem.set(item);
-      const tasks = this.writingService.sortedTasks();
-      const originalTask = tasks.find(t => t.id === item.taskId.toString());
-      if (originalTask) {
-        this.originalTask.set(originalTask);
-      }
+      this.loadOriginalTask(item.taskId);
       this.loading.set(false);
     } else {
       // If not found in local state, fetch from API (for anonymous users or when viewing results directly)
       this.apiService.getHistoryById(historyId).subscribe({
         next: (historyItem) => {
           this.historyItem.set(historyItem);
-          const tasks = this.writingService.sortedTasks();
-          const originalTask = tasks.find(t => t.id === historyItem.taskId.toString());
-          if (originalTask) {
-            this.originalTask.set(originalTask);
-          }
+          this.loadOriginalTask(historyItem.taskId);
           this.loading.set(false);
         },
         error: (err) => {

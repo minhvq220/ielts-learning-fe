@@ -145,6 +145,8 @@ export interface AiScoringRequest {
   answer: string;
   wordCount: number;
   timeSpent: number;
+  imageData?: string; // Base64 encoded image data for Task 1
+  imageMimeType?: string; // MIME type of the image (e.g., "image/jpeg", "image/png")
 }
 
 @Injectable({
