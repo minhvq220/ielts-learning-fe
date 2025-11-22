@@ -23,8 +23,11 @@ import { AuthService } from '../../services/auth.service';
           <!-- <a routerLink="/speaking" routerLinkActive="active" class="nav-link">Speaking</a> -->
         </nav>
         <div class="user-actions">
-          <a routerLink="/admin/test" class="btn btn-secondary">Test Admin</a>
-          <a routerLink="/admin/writing" class="btn btn-secondary">Writing Admin</a>
+          <!-- Admin links - only visible to admins -->
+          <div *ngIf="authService.isAdmin()" class="admin-links">
+            <a routerLink="/admin/test" class="btn btn-secondary">Test Admin</a>
+            <a routerLink="/admin/writing" class="btn btn-secondary">Writing Admin</a>
+          </div>
           <div *ngIf="!authService.isAuthenticated()" class="auth-buttons">
             <button class="btn btn-primary" (click)="goToLogin()">Đăng nhập</button>
           </div>

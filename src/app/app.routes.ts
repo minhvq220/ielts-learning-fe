@@ -1,4 +1,6 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth.guard';
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/home', pathMatch: 'full' },
@@ -6,11 +8,11 @@ export const routes: Routes = [
   // { path: 'reading', loadComponent: () => import('./pages/reading/reading.component').then(m => m.ReadingComponent) },
   // { path: 'listening', loadComponent: () => import('./pages/listening/listening.component').then(m => m.ListeningComponent) },
   { path: 'writing', loadComponent: () => import('./pages/writing/writing.component').then(m => m.WritingComponent) },
-  { path: 'writing/history', loadComponent: () => import('./components/writing-history/writing-history.component').then(m => m.WritingHistoryComponent) },
+  { path: 'writing/history', loadComponent: () => import('./components/writing-history/writing-history.component').then(m => m.WritingHistoryComponent), canActivate: [authGuard] },
   { path: 'writing/history/:id', loadComponent: () => import('./components/writing-history-detail/writing-history-detail.component').then(m => m.WritingHistoryDetailComponent) },
   // { path: 'speaking', loadComponent: () => import('./pages/speaking/speaking.component').then(m => m.SpeakingComponent) },
   { path: 'login', loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent) },
-  { path: 'admin/test', loadComponent: () => import('./pages/admin/admin-test.component').then(m => m.AdminTestComponent) },
-  { path: 'admin/writing', loadComponent: () => import('./pages/admin/writing-admin.component').then(m => m.WritingAdminComponent) },
+  { path: 'admin/test', loadComponent: () => import('./pages/admin/admin-test.component').then(m => m.AdminTestComponent), canActivate: [adminGuard] },
+  { path: 'admin/writing', loadComponent: () => import('./pages/admin/writing-admin.component').then(m => m.WritingAdminComponent), canActivate: [adminGuard] },
   { path: '**', redirectTo: '/home' }
 ];

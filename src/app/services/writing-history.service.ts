@@ -1,15 +1,17 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { BehaviorSubject, Observable, of, catchError, tap, map } from 'rxjs';
 import { WritingHistoryApiService, WritingHistoryDto, SubmitWritingDto, UserWritingStatsDto, AiScoringRequest } from './writing-history-api.service';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class WritingHistoryService {
   private apiService = inject(WritingHistoryApiService);
+  private authService = inject(AuthService);
   
-  // Current user ID (in real app, this would come from auth service)
-  private currentUserId = signal<string>('user123'); // Default user ID
+  // Current user ID - get from AuthService
+  private currentUserId = signal<string | null>(null);
   
   // State management
   private _history = signal<WritingHistoryDto[]>([]);
@@ -47,10 +49,36 @@ export class WritingHistoryService {
   });
 
   constructor() {
-    this.loadUserData();
+    // Subscribe to auth state changes to update userId
+    this.authService.getAuthState$().subscribe(authState => {
+      const userId = authState.user?.id || null;
+      this.currentUserId.set(userId);
+      
+      // Load data when user is authenticated
+      if (userId) {
+        this.loadUserData();
+        // Clear anonymous userId when user logs in
+        localStorage.removeItem('anonymous_user_id');
+      } else {
+        // Clear data when user logs out
+        this._history.set([]);
+        this._completedTaskIds.set([]);
+        this._uncompletedTaskIds.set([]);
+        this._userStats.set(null);
+      }
+    });
+    
+    // Also check initial auth state
+    const initialAuthState = this.authService.getAuthState();
+    if (initialAuthState.isAuthenticated && initialAuthState.user?.id) {
+      this.currentUserId.set(initialAuthState.user.id);
+      this.loadUserData();
+      // Clear anonymous userId if user is authenticated
+      localStorage.removeItem('anonymous_user_id');
+    }
   }
 
-  // Set current user ID
+  // Set current user ID (kept for backward compatibility)
   setCurrentUserId(userId: string): void {
     this.currentUserId.set(userId);
     this.loadUserData();
@@ -59,7 +87,10 @@ export class WritingHistoryService {
   // Load all user data
   loadUserData(): void {
     const userId = this.currentUserId();
-    if (!userId) return;
+    if (!userId) {
+      console.warn('Cannot load user data: userId is null');
+      return;
+    }
 
     this._loading.set(true);
     this._error.set(null);
@@ -83,14 +114,32 @@ export class WritingHistoryService {
     });
   }
 
+  // Get or create anonymous user ID
+  private getOrCreateAnonymousUserId(): string {
+    const storageKey = 'anonymous_user_id';
+    let anonymousUserId = localStorage.getItem(storageKey);
+    
+    if (!anonymousUserId) {
+      // Generate a unique ID for anonymous user
+      anonymousUserId = 'anonymous_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+      localStorage.setItem(storageKey, anonymousUserId);
+    }
+    
+    return anonymousUserId;
+  }
+
   // Submit bài làm
   submitWriting(submitDto: Omit<SubmitWritingDto, 'userId'>): Observable<WritingHistoryDto> {
     this._loading.set(true);
     this._error.set(null);
 
+    // Get userId from auth service, or use anonymous userId if not authenticated
+    const authenticatedUserId = this.currentUserId();
+    const userId = authenticatedUserId || this.getOrCreateAnonymousUserId();
+
     const fullSubmitDto: SubmitWritingDto = {
       ...submitDto,
-      userId: this.currentUserId()
+      userId: userId
     };
 
     return this.apiService.submitWriting(fullSubmitDto).pipe(
@@ -127,9 +176,13 @@ export class WritingHistoryService {
     this._loading.set(true);
     this._error.set(null);
 
+    // Get userId from auth service, or use anonymous userId if not authenticated
+    const authenticatedUserId = this.currentUserId();
+    const userId = authenticatedUserId || this.getOrCreateAnonymousUserId();
+
     const fullRequest: AiScoringRequest = {
       ...requestDto,
-      userId: this.currentUserId()
+      userId: userId
     };
 
     return this.apiService.scoreWritingAttempt(fullRequest).pipe(

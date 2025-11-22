@@ -4,7 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { WritingHistoryService } from '../../services/writing-history.service';
 import { WritingTaskService } from '../../services/writing-task.service';
-import { AiCorrection, WritingHistoryDto, WritingStatistics, DetailedIeltsScores, LinkingWord, WordRepetition } from '../../services/writing-history-api.service';
+import { WritingHistoryApiService, AiCorrection, WritingHistoryDto, WritingStatistics, DetailedIeltsScores, LinkingWord, WordRepetition } from '../../services/writing-history-api.service';
 
 type NormalizedCorrection = AiCorrection & { id: string };
 
@@ -178,6 +178,38 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
                   <span class="subscore-label">Clear and correct grammar:</span>
                   <span class="subscore-value">{{ historyItem()!.aiDetailedScores!.clearCorrectGrammar!.toFixed(1) }}/9</span>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Feedback and Suggestions Section -->
+        <div class="ai-feedback-section" *ngIf="historyItem()!.aiScore && (historyItem()!.aiFeedback || historyItem()!.aiSuggestions?.length)">
+          <div class="feedback-container">
+            <!-- Nhận xét -->
+            <div class="feedback-card" *ngIf="historyItem()!.aiFeedback">
+              <div class="feedback-header">
+                <div class="feedback-icon">💬</div>
+                <h3 class="feedback-title">Nhận xét</h3>
+              </div>
+              <div class="feedback-content">
+                <p class="feedback-text">{{ historyItem()!.aiFeedback }}</p>
+              </div>
+            </div>
+
+            <!-- Gợi ý cải thiện -->
+            <div class="suggestions-card" *ngIf="historyItem()!.aiSuggestions?.length">
+              <div class="suggestions-header">
+                <div class="suggestions-icon">💡</div>
+                <h3 class="suggestions-title">Gợi ý cải thiện</h3>
+              </div>
+              <div class="suggestions-content">
+                <ul class="suggestions-list">
+                  <li *ngFor="let suggestion of historyItem()!.aiSuggestions" class="suggestion-item">
+                    <span class="suggestion-bullet">•</span>
+                    <span class="suggestion-text">{{ suggestion }}</span>
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
@@ -1399,6 +1431,147 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
     }
 
+    /* AI Feedback and Suggestions Section */
+    .ai-feedback-section {
+      margin: 2rem 0;
+      padding: 0 2rem;
+    }
+
+    .feedback-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .feedback-card,
+    .suggestions-card {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
+      padding: 1.5rem;
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+
+    .feedback-card:hover,
+    .suggestions-card:hover {
+      box-shadow: 0 15px 40px rgba(15, 23, 42, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .feedback-header,
+    .suggestions-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #f1f5f9;
+    }
+
+    .feedback-icon,
+    .suggestions-icon {
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .suggestions-icon {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    .feedback-title,
+    .suggestions-title {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .feedback-content,
+    .suggestions-content {
+      color: #334155;
+    }
+
+    .feedback-text {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1.7;
+      color: #475569;
+    }
+
+    .suggestions-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .suggestion-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem;
+      background: #f8fafc;
+      border-radius: 8px;
+      border-left: 3px solid #f59e0b;
+      transition: all 0.2s ease;
+    }
+
+    .suggestion-item:hover {
+      background: #f1f5f9;
+      border-left-color: #d97706;
+    }
+
+    .suggestion-bullet {
+      color: #f59e0b;
+      font-weight: 700;
+      font-size: 1.2rem;
+      line-height: 1.2;
+      flex-shrink: 0;
+    }
+
+    .suggestion-text {
+      flex: 1;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #475569;
+    }
+
+    @media (max-width: 768px) {
+      .ai-feedback-section {
+        padding: 0 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feedback-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .feedback-card,
+      .suggestions-card {
+        padding: 1.25rem;
+      }
+
+      .feedback-title,
+      .suggestions-title {
+        font-size: 1.1rem;
+      }
+
+      .feedback-text,
+      .suggestion-text {
+        font-size: 0.9rem;
+      }
+    }
+
     .corrections-panel {
       margin-top: 1.5rem;
       background: #ffffff;
@@ -1912,6 +2085,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnDestroy {
   private historyService = inject(WritingHistoryService);
   private writingService = inject(WritingTaskService);
+  private apiService = inject(WritingHistoryApiService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroy$ = new Subject<void>();
@@ -2165,6 +2339,7 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
     this.loading.set(true);
     this.error.set(null);
 
+    // First, try to find in local state
     const history = this.historyService.history();
     const item = history.find(h => h.id === historyId);
 
@@ -2177,8 +2352,23 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
       }
       this.loading.set(false);
     } else {
-      this.error.set('Không tìm thấy bài viết này');
-      this.loading.set(false);
+      // If not found in local state, fetch from API (for anonymous users or when viewing results directly)
+      this.apiService.getHistoryById(historyId).subscribe({
+        next: (historyItem) => {
+          this.historyItem.set(historyItem);
+          const tasks = this.writingService.sortedTasks();
+          const originalTask = tasks.find(t => t.id === historyItem.taskId.toString());
+          if (originalTask) {
+            this.originalTask.set(originalTask);
+          }
+          this.loading.set(false);
+        },
+        error: (err) => {
+          console.error('Error loading history item:', err);
+          this.error.set('Không tìm thấy bài viết này');
+          this.loading.set(false);
+        }
+      });
     }
   }
 

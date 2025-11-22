@@ -560,3 +560,38 @@ body {
 .translate-error-content .translate-close-btn:hover {
   background: rgba(220, 53, 69, 0.1);
 }
+
+/* reCAPTCHA Accessible Status - Make it visible and clear */
+.grecaptcha-badge,
+[class*="recaptcha"],
+[class*="grecaptcha"] {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Specifically target the accessible status element */
+#recaptcha-accessible-status,
+.recaptcha-accessible-status,
+[data-accessible-status] {
+  position: fixed !important;
+  bottom: 20px !important;
+  right: 20px !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  color: white !important;
+  padding: 8px 12px !important;
+  border-radius: 4px !important;
+  font-size: 12px !important;
+  z-index: 10000 !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  display: block !important;
+  min-width: 200px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Ensure reCAPTCHA badge is visible */
+.grecaptcha-badge {
+  visibility: visible !important;
+  opacity: 1 !important;
+  z-index: 9999 !important;
+}

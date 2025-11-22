@@ -15,6 +15,7 @@ export interface LoginResponse {
     email: string;
     name: string;
     picture?: string;
+    role?: string; // USER or ADMIN
   };
 }
 
@@ -70,6 +71,22 @@ export class AuthService {
    */
   isAuthenticated(): boolean {
     return this.authState().isAuthenticated;
+  }
+  
+  /**
+   * Check if user is admin
+   */
+  isAdmin(): boolean {
+    const user = this.authState().user;
+    return user?.role === 'ADMIN';
+  }
+  
+  /**
+   * Get current user role
+   */
+  getUserRole(): string | null {
+    const user = this.authState().user;
+    return user?.role || null;
   }
 
   /**

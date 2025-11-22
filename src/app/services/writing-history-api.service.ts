@@ -210,6 +210,11 @@ export class WritingHistoryApiService {
     return this.http.post<WritingHistoryDto>(`${this.aiScoringUrl}/score`, request);
   }
 
+  // Lấy chi tiết một bài làm theo ID (public, không cần authentication)
+  getHistoryById(historyId: number): Observable<WritingHistoryDto> {
+    return this.http.get<WritingHistoryDto>(`${this.apiUrl}/${historyId}`);
+  }
+
   // Xóa lịch sử làm bài
   deleteHistory(historyId: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${historyId}`);

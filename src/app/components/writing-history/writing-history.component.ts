@@ -184,18 +184,6 @@ import { WritingTask } from '../../models/writing-task.model';
                     </div>
                   </div>
                 </div>
-
-                <div class="feedback-section" *ngIf="item.aiFeedback">
-                  <div class="section-title">Nhận xét</div>
-                  <p class="feedback-text">{{ item.aiFeedback }}</p>
-                </div>
-
-                <div class="suggestions-section" *ngIf="item.aiSuggestions?.length">
-                  <div class="section-title">Gợi ý cải thiện</div>
-                  <ul class="suggestions-list">
-                    <li *ngFor="let suggestion of item.aiSuggestions">{{ suggestion }}</li>
-                  </ul>
-                </div>
               </div>
 
               <div class="history-actions">
@@ -579,42 +567,6 @@ import { WritingTask } from '../../models/writing-task.model';
       background: linear-gradient(90deg, #3b82f6, #2563eb);
     }
 
-    .feedback-section,
-    .suggestions-section {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 0.75rem 0.85rem;
-    }
-
-    .section-title {
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #475569;
-      margin-bottom: 0.5rem;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-    }
-
-    .feedback-text {
-      margin: 0;
-      color: #334155;
-      line-height: 1.45;
-      font-size: 0.85rem;
-    }
-
-    .suggestions-list {
-      margin: 0;
-      padding-left: 1.1rem;
-      color: #334155;
-      font-size: 0.85rem;
-      line-height: 1.4;
-    }
-
-    .suggestions-list li {
-      margin-bottom: 0.35rem;
-    }
-
     .history-actions {
       display: flex;
       gap: 0.6rem;
@@ -808,7 +760,10 @@ export class WritingHistoryComponent implements OnInit {
     return data.slice(start, start + this.itemsPerPage);
   });
 
-  ngOnInit() {}
+  ngOnInit() {
+    // Refresh data when component loads
+    this.historyService.refresh();
+  }
 
   onFilterChange(): void {
     this.resetPagination();
