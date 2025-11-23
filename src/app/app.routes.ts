@@ -14,5 +14,8 @@ export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent) },
   { path: 'admin/test', loadComponent: () => import('./pages/admin/admin-test.component').then(m => m.AdminTestComponent), canActivate: [adminGuard] },
   { path: 'admin/writing', loadComponent: () => import('./pages/admin/writing-admin.component').then(m => m.WritingAdminComponent), canActivate: [adminGuard] },
+  { path: 'writing/self-check', loadComponent: () => import('./pages/writing-self-check/writing-self-check.component').then(m => m.WritingSelfCheckComponent) },
+  { path: 'writing-self-check/history', loadComponent: () => import('./pages/writing-self-check/writing-self-check-history.component').then(m => m.WritingSelfCheckHistoryComponent), canActivate: [authGuard] },
+  { path: 'writing-self-check/history/:id', loadComponent: () => import('./pages/writing-self-check/writing-self-check-history-detail.component').then(m => m.WritingSelfCheckHistoryDetailComponent) },
   { path: '**', redirectTo: '/home' }
 ];

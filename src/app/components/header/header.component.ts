@@ -20,6 +20,7 @@ import { AuthService } from '../../services/auth.service';
           <!-- <a routerLink="/reading" routerLinkActive="active" class="nav-link">Reading</a> -->
           <!-- <a routerLink="/listening" routerLinkActive="active" class="nav-link">Listening</a> -->
           <a routerLink="/writing" routerLinkActive="active" class="nav-link">Writing</a>
+          <a routerLink="/writing/self-check" routerLinkActive="active" class="nav-link">Tự kiểm tra Writing</a>
           <!-- <a routerLink="/speaking" routerLinkActive="active" class="nav-link">Speaking</a> -->
         </nav>
         <div class="user-actions">

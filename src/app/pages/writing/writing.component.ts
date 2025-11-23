@@ -2129,7 +2129,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
         console.log('Tasks updated:', tasks);
         this.ensurePaginationBounds();
         
-        // Check if there's a taskId in URL parameters for retaking
+        // Check if there's a taskId in URL parameters
         this.route.queryParams.subscribe(params => {
           if (params['taskId']) {
             const taskId = params['taskId'];
@@ -2140,6 +2140,17 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
           }
         });
       });
+  }
+
+  /**
+   * Extract numeric task ID from task.id string.
+   */
+  private extractTaskId(taskIdString: string): number {
+    const id = Number(taskIdString);
+    if (isNaN(id)) {
+      throw new Error(`Invalid task ID: ${taskIdString}`);
+    }
+    return id;
   }
 
   ngOnDestroy() {
@@ -2445,8 +2456,10 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
+    // Extract task ID - handle both regular tasks and user tasks
+    const taskId = this.extractTaskId(task.id);
     const wordCount = this.getCurrentWordCount();
-    const latestAttempt = this.historyService.getLatestAttempt(Number(task.id));
+    const latestAttempt = this.historyService.getLatestAttempt(taskId);
     const timeSpent = this.calculateTimeSpent(task);
     // Allow re-scoring: always create new submission for AI scoring
     const reuseExisting = false; // Always create new submission to allow multiple AI scorings
@@ -2456,7 +2469,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     const submission$ = reuseExisting
       ? of(latestAttempt as WritingHistoryDto)
       : this.historyService.submitWriting({
-          taskId: Number(task.id),
+          taskId: taskId,
           answer: trimmedAnswer,
           wordCount,
           timeSpent
@@ -2494,7 +2507,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
             switchMap(imageResult => {
               return this.historyService.scoreWritingAttempt({
                 historyId: history.id,
-                taskId: Number(task.id),
+                taskId: this.extractTaskId(task.id),
                 answer: trimmedAnswer,
                 wordCount,
                 timeSpent,
@@ -2529,9 +2542,10 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     const trimmedAnswer = this.currentAnswer().trim();
     const wordCount = this.getCurrentWordCount();
     const timeSpent = this.calculateTimeSpent(task);
+    const taskId = this.extractTaskId(task.id);
 
     this.historyService.submitWriting({
-      taskId: Number(task.id),
+      taskId: taskId,
       answer: trimmedAnswer,
       wordCount,
       timeSpent
@@ -2552,11 +2566,11 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   isTaskCompleted(task: WritingTask): boolean {
-    return this.historyService.isTaskCompleted(Number(task.id));
+    return this.historyService.isTaskCompleted(this.extractTaskId(task.id));
   }
 
   getLatestAttempt(task: WritingTask): WritingHistoryDto | null {
-    return this.historyService.getLatestAttempt(Number(task.id));
+    return this.historyService.getLatestAttempt(this.extractTaskId(task.id));
   }
 
   formatDate(dateString: string): string {
