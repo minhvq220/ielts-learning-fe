@@ -34,7 +34,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         authService.logout().catch((err) => {
           console.error('Error during logout:', err);
         });
-        router.navigate(['/home']);
+        router.navigate(['/writing']);
       }
 
       // Handle 403 Forbidden

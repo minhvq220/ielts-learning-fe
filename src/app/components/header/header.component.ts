@@ -11,15 +11,14 @@ import { AuthService } from '../../services/auth.service';
     <header class="header" [class.hidden]="!isHeaderVisible()">
       <div class="header-content">
         <div class="logo">
-          <a routerLink="/home" class="logo-link">
+          <a routerLink="/writing" class="logo-link">
             <h1>YouPassCopy</h1>
           </a>
         </div>
         <nav class="nav">
-          <a routerLink="/home" routerLinkActive="active" class="nav-link">Trang chủ</a>
           <!-- <a routerLink="/reading" routerLinkActive="active" class="nav-link">Reading</a> -->
           <!-- <a routerLink="/listening" routerLinkActive="active" class="nav-link">Listening</a> -->
-          <a routerLink="/writing" routerLinkActive="active" class="nav-link">Writing</a>
+          <a routerLink="/writing" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">Đề Writing</a>
           <a routerLink="/writing/self-check" routerLinkActive="active" class="nav-link">Tự kiểm tra Writing</a>
           <!-- <a routerLink="/speaking" routerLinkActive="active" class="nav-link">Speaking</a> -->
         </nav>

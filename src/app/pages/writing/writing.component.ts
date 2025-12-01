@@ -2523,8 +2523,59 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
         },
         error: error => {
           console.error('Error scoring writing:', error);
-          const message = error?.error?.message || 'Không thể chấm bài bằng AI lúc này. Vui lòng thử lại sau.';
-          alert(message);
+          console.error('Error details:', {
+            status: error.status,
+            statusText: error.statusText,
+            error: error.error,
+            errorType: typeof error.error,
+            errorKeys: error.error ? Object.keys(error.error) : null,
+            message: error.message
+          });
+          
+          // Log full error object to see structure
+          console.error('Full error.error object:', JSON.stringify(error.error, null, 2));
+          
+          let errorMessage = 'Không thể chấm bài bằng AI lúc này. Vui lòng thử lại sau.';
+          
+          // Handle different error response formats
+          if (typeof error.error === 'string') {
+            // ResponseStatusException returns message as string
+            errorMessage = error.error;
+          } else if (error.error && typeof error.error === 'object') {
+            // Error object - try multiple possible fields
+            if (error.error.message) {
+              errorMessage = error.error.message;
+            } else if (error.error.error) {
+              // Some APIs nest error in error.error
+              errorMessage = typeof error.error.error === 'string' ? error.error.error : error.error.error.message || errorMessage;
+            } else if (error.error.title) {
+              // Spring Boot default error format sometimes has title
+              errorMessage = error.error.title;
+            } else if (error.error.detail) {
+              // Spring Boot default error format sometimes has detail
+              errorMessage = error.error.detail;
+            } else {
+              // Try to get first property value that looks like a message
+              const errorObj = error.error;
+              for (const key in errorObj) {
+                if (typeof errorObj[key] === 'string' && errorObj[key].length > 0) {
+                  errorMessage = errorObj[key];
+                  break;
+                }
+              }
+            }
+          }
+          
+          // Override with status-specific messages if needed
+          if (error.status === 0) {
+            errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+          } else if (error.status === 401 && errorMessage === 'Không thể chấm bài bằng AI lúc này. Vui lòng thử lại sau.') {
+            // If we couldn't extract message from 401, use default
+            errorMessage = 'Bạn đã hết lượt chấm bài miễn phí. Vui lòng đăng nhập.';
+          }
+          
+          console.log('Extracted error message:', errorMessage);
+          alert(errorMessage);
         }
       });
   }

@@ -1,7 +1,7 @@
 import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { WritingHistoryService } from '../../services/writing-history.service';
 import { WritingHistoryDto } from '../../services/writing-history-api.service';
@@ -45,7 +45,7 @@ interface FileValidationConfig {
 @Component({
   selector: 'app-writing-self-check',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="self-check-container">
       <div class="self-check-header">
@@ -53,9 +53,10 @@ interface FileValidationConfig {
           <h2>Tự kiểm tra Writing</h2>
           <p>Nhập đề bài và bài viết của bạn để được AI chấm điểm</p>
         </div>
-        <button class="btn btn-secondary" (click)="router.navigate(['/writing-self-check/history'])">
-          Lịch sử tự kiểm tra
-        </button>
+        <a routerLink="/writing-self-check/history" class="history-btn">
+          <span class="history-icon">📚</span>
+          <span>Lịch sử tự kiểm tra</span>
+        </a>
       </div>
 
       <form (ngSubmit)="onSubmit()" class="self-check-form">
@@ -178,6 +179,34 @@ interface FileValidationConfig {
     .self-check-header p {
       color: #666;
       margin: 0;
+    }
+
+    .history-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: #f8fafc;
+      padding: 0.7rem 1.4rem;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.28);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      letter-spacing: 0.02em;
+      border: none;
+    }
+
+    .history-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 30px rgba(37, 99, 235, 0.32);
+      color: #fff;
+    }
+
+    .history-icon {
+      font-size: 1.15rem;
+      line-height: 1;
     }
 
     .self-check-form {
@@ -319,6 +348,13 @@ interface FileValidationConfig {
     .btn-primary:disabled {
       background: #ccc;
       cursor: not-allowed;
+    }
+
+    @media (max-width: 768px) {
+      .history-btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.85rem;
+      }
     }
   `]
 })
@@ -514,25 +550,60 @@ export class WritingSelfCheckComponent {
           status: err.status,
           statusText: err.statusText,
           error: err.error,
+          errorType: typeof err.error,
+          errorKeys: err.error ? Object.keys(err.error) : null,
           message: err.message,
           url: err.url
         });
         
+        // Log full error object to see structure
+        console.error('Full error.error object:', JSON.stringify(err.error, null, 2));
+        
         let errorMessage = 'Không thể chấm bài lúc này. Vui lòng thử lại sau.';
-        if (err.error?.message) {
-          errorMessage = err.error.message;
-        } else if (err.status === 0) {
-          errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
-        } else if (err.status === 400) {
-          errorMessage = err.error?.message || 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.';
-        } else if (err.status === 401) {
-          errorMessage = err.error?.message || 'Bạn đã hết lượt chấm bài miễn phí. Vui lòng đăng nhập.';
-        } else if (err.status === 500) {
-          errorMessage = err.error?.message || 'Lỗi server. Vui lòng thử lại sau.';
+        
+        // Handle different error response formats
+        if (typeof err.error === 'string') {
+          // ResponseStatusException returns message as string
+          errorMessage = err.error;
+        } else if (err.error && typeof err.error === 'object') {
+          // Error object - try multiple possible fields
+          if (err.error.message) {
+            errorMessage = err.error.message;
+          } else if (err.error.error) {
+            // Some APIs nest error in error.error
+            errorMessage = typeof err.error.error === 'string' ? err.error.error : err.error.error.message || errorMessage;
+          } else if (err.error.title) {
+            // Spring Boot default error format sometimes has title
+            errorMessage = err.error.title;
+          } else if (err.error.detail) {
+            // Spring Boot default error format sometimes has detail
+            errorMessage = err.error.detail;
+          } else {
+            // Try to get first property value that looks like a message
+            const errorObj = err.error;
+            for (const key in errorObj) {
+              if (typeof errorObj[key] === 'string' && errorObj[key].length > 0) {
+                errorMessage = errorObj[key];
+                break;
+              }
+            }
+          }
         }
         
+        // Override with status-specific messages if needed
+        if (err.status === 0) {
+          errorMessage = 'Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.';
+        } else if (err.status === 401 && errorMessage === 'Không thể chấm bài lúc này. Vui lòng thử lại sau.') {
+          // If we couldn't extract message from 401, use default
+          errorMessage = 'Bạn đã hết lượt chấm bài miễn phí. Vui lòng đăng nhập.';
+        }
+        
+        console.log('Extracted error message:', errorMessage);
         this.error.set(errorMessage);
         this.isSubmitting.set(false);
+        
+        // Also show alert popup like in "Đề writing" screen
+        alert(errorMessage);
       }
     });
   }

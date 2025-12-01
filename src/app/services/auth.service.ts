@@ -202,8 +202,8 @@ export class AuthService {
 
       this.clearAuthStateFromStorage();
 
-      // Redirect to home
-      this.router.navigate(['/home']);
+      // Redirect to writing
+      this.router.navigate(['/writing']);
     } catch (error) {
       console.error('Logout error:', error);
       throw error;

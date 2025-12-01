@@ -17,8 +17,8 @@ export const adminGuard: CanActivateFn = (route, state) => {
   }
 
   if (!authService.isAdmin()) {
-    // Redirect to home if not admin
-    router.navigate(['/home'], { queryParams: { error: 'unauthorized' } });
+    // Redirect to writing if not admin
+    router.navigate(['/writing'], { queryParams: { error: 'unauthorized' } });
     return false;
   }
 

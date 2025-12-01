@@ -155,8 +155,8 @@ export class LoginComponent {
       this.loadingService.stopLoading();
       this.isLoading.set(false);
 
-      // Redirect to home or previous page
-      this.router.navigate(['/home']);
+      // Redirect to writing or previous page
+      this.router.navigate(['/writing']);
     } catch (error: any) {
       this.loadingService.stopLoading();
       this.isLoading.set(false);
