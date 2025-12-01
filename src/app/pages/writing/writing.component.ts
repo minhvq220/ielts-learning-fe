@@ -366,10 +366,7 @@ interface AIEvaluation {
             </div>
           </div>
 
-          <div class="evaluation-meta" *ngIf="evaluation()?.provider || evaluation()?.evaluatedAt">
-            <span *ngIf="evaluation()?.provider">
-              Nguồn AI: {{ evaluation()!.provider }}<ng-container *ngIf="evaluation()?.model"> ({{ evaluation()!.model }})</ng-container>
-            </span>
+          <div class="evaluation-meta" *ngIf="evaluation()?.evaluatedAt">
             <span *ngIf="evaluation()?.evaluatedAt">
               Đánh giá lúc: {{ formatDateTime(evaluation()!.evaluatedAt!) }}
             </span>
@@ -2224,8 +2221,8 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
       feedback: history.aiFeedback || 'AI không trả về nhận xét chi tiết.',
       suggestions: history.aiSuggestions && history.aiSuggestions.length ? history.aiSuggestions : [],
       sampleAnswer: sampleAnswer || this.getDefaultSampleAnswer(),
-      provider: history.aiProvider || undefined,
-      model: history.aiModel || undefined,
+      provider: undefined, // AI provider information hidden
+      model: undefined, // AI model information hidden
       evaluatedAt: history.aiEvaluatedAt || undefined,
       statistics: history.aiStatistics || undefined,
       detailedScores: history.aiDetailedScores || undefined

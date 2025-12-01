@@ -90,10 +90,7 @@ interface WritingSelfCheckHistoryDto {
           <div class="evaluation-header">
             <div class="evaluation-title-section">
               <h3>Kết quả AI Chấm bài</h3>
-              <div class="evaluation-meta" *ngIf="historyItem()!.aiProvider || historyItem()!.aiEvaluatedAt">
-                <span *ngIf="historyItem()!.aiProvider">
-                  🤖 {{ historyItem()!.aiProvider }}<ng-container *ngIf="historyItem()!.aiModel"> ({{ historyItem()!.aiModel }})</ng-container>
-                </span>
+              <div class="evaluation-meta" *ngIf="historyItem()!.aiEvaluatedAt">
                 <span *ngIf="historyItem()!.aiEvaluatedAt">
                   🕒 {{ formatDate(historyItem()!.aiEvaluatedAt!) }}
                 </span>

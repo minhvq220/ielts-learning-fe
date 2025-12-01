@@ -133,9 +133,6 @@ import { WritingTask } from '../../models/writing-task.model';
                 <span class="chip meta-chip score-chip" *ngIf="item.aiScore">
                   <span class="chip-icon">🎯</span>{{ item.aiScore.toFixed(1) }}/9
                 </span>
-                <span class="chip meta-chip" *ngIf="item.aiProvider">
-                  <span class="chip-icon">🤖</span>{{ item.aiProvider }}<ng-container *ngIf="item.aiModel"> · {{ item.aiModel }}</ng-container>
-                </span>
                 <span class="chip meta-chip" *ngIf="item.aiEvaluatedAt">
                   <span class="chip-icon">🕒</span>{{ formatDate(item.aiEvaluatedAt) }} {{ formatTime(item.aiEvaluatedAt) }}
                 </span>
@@ -146,10 +143,7 @@ import { WritingTask } from '../../models/writing-task.model';
                   <h4>Điểm chi tiết</h4>
                   <span class="overall-score-chip">{{ item.aiScore.toFixed(1) }}/9</span>
                 </div>
-                <div class="provider-meta" *ngIf="item.aiProvider || item.aiEvaluatedAt">
-                  <span *ngIf="item.aiProvider">
-                    🤖 {{ item.aiProvider }}<ng-container *ngIf="item.aiModel"> ({{ item.aiModel }})</ng-container>
-                  </span>
+                <div class="provider-meta" *ngIf="item.aiEvaluatedAt">
                   <span *ngIf="item.aiEvaluatedAt">
                     🕒 {{ formatDate(item.aiEvaluatedAt) }} · {{ formatTime(item.aiEvaluatedAt) }}
                   </span>
