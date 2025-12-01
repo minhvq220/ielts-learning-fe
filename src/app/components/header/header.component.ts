@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -24,11 +24,9 @@ import { AuthService } from '../../services/auth.service';
           <!-- <a routerLink="/speaking" routerLinkActive="active" class="nav-link">Speaking</a> -->
         </nav>
         <div class="user-actions">
-          <!-- Admin links - only visible to admins -->
-          <div *ngIf="authService.isAdmin()" class="admin-links">
-            <a routerLink="/admin/test" class="btn btn-secondary">Test Admin</a>
-            <a routerLink="/admin/writing" class="btn btn-secondary">Writing Admin</a>
-            <a routerLink="/admin/writing-self-check" class="btn btn-secondary">Self-Check Admin</a>
+          <!-- Admin link - only visible to admins -->
+          <div *ngIf="authService.isAdmin()">
+            <a routerLink="/admin/writing" class="btn btn-secondary">Admin</a>
           </div>
           <div *ngIf="!authService.isAuthenticated()" class="auth-buttons">
             <button class="btn btn-primary" (click)="goToLogin()">Đăng nhập</button>
