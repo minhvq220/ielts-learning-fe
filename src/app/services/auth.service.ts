@@ -50,6 +50,8 @@ export class AuthService {
     private recaptchaService: RecaptchaService
   ) {
     this.loadAuthStateFromStorage();
+    // Check for redirect result when service is initialized
+    this.handleRedirectResult();
   }
 
   /**
@@ -107,6 +109,17 @@ export class AuthService {
       }
 
       const firebaseResult = await this.firebaseService.signInWithGoogle();
+      
+      // If redirect flow was used, firebaseResult will be null
+      // The redirect will have already navigated away
+      if (!firebaseResult) {
+        // User is being redirected, throw special error to indicate redirect
+        // The actual login will happen when the page loads after redirect
+        const redirectError = new Error('Redirecting to Google for authentication...');
+        (redirectError as any).code = 'auth/redirect-initiated';
+        throw redirectError;
+      }
+
       const firebaseUser = firebaseResult.user;
 
       // Step 2: Get Firebase ID Token
@@ -246,6 +259,59 @@ export class AuthService {
   private clearAuthStateFromStorage(): void {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('auth_user');
+  }
+
+  /**
+   * Handle redirect result after returning from Google OAuth
+   */
+  private async handleRedirectResult(): Promise<void> {
+    try {
+      // Wait a bit for Firebase to initialize
+      if (!this.firebaseService.isReady()) {
+        setTimeout(() => this.handleRedirectResult(), 500);
+        return;
+      }
+
+      const redirectResult = await this.firebaseService.getRedirectResult();
+      if (redirectResult && redirectResult.user) {
+        console.log('✅ Redirect sign-in successful, processing...');
+        
+        // Process the login
+        const firebaseUser = redirectResult.user;
+        const firebaseIdToken = await firebaseUser.getIdToken();
+        
+        if (firebaseIdToken) {
+          // Get reCAPTCHA token if available
+          let recaptchaToken: string | null = null;
+          try {
+            if (this.recaptchaService.isReady()) {
+              recaptchaToken = await this.recaptchaService.execute('login');
+            }
+          } catch (error) {
+            console.warn('⚠️ reCAPTCHA failed during redirect, continuing without it:', error);
+          }
+
+          // Verify with backend
+          const loginResponse = await this.verifyWithBackend(firebaseIdToken, recaptchaToken || '').toPromise();
+          
+          if (loginResponse) {
+            // Save auth state
+            this.updateAuthState({
+              isAuthenticated: true,
+              user: loginResponse.user,
+              token: loginResponse.accessToken,
+            });
+            this.saveAuthStateToStorage();
+            
+            // Redirect to home
+            this.router.navigate(['/home']);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error handling redirect result:', error);
+      // Don't throw, just log the error
+    }
   }
 
   /**

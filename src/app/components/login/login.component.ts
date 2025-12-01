@@ -161,9 +161,26 @@ export class LoginComponent {
       this.loadingService.stopLoading();
       this.isLoading.set(false);
 
-      const message = error?.error?.message || error?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
-      this.errorMessage.set(message);
+      let message = 'Đăng nhập thất bại. Vui lòng thử lại.';
+      
+      // Handle specific error cases
+      if (error?.code === 'auth/redirect-initiated') {
+        // Redirect is in progress, show loading message
+        this.errorMessage.set('');
+        message = '';
+        return; // Don't show error, redirect is happening
+      } else if (error?.code === 'auth/popup-blocked') {
+        message = 'Trình duyệt đã chặn popup đăng nhập. Hệ thống sẽ tự động chuyển sang chế độ redirect...';
+        // Note: The redirect should happen automatically from the service
+      } else if (error?.code === 'auth/popup-closed-by-user') {
+        message = 'Bạn đã đóng cửa sổ đăng nhập. Vui lòng thử lại.';
+      } else if (error?.message) {
+        message = error.message;
+      } else if (error?.error?.message) {
+        message = error.error.message;
+      }
 
+      this.errorMessage.set(message);
       console.error('Login error:', error);
     }
   }
