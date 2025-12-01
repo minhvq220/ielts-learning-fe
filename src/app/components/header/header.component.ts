@@ -28,6 +28,7 @@ import { AuthService } from '../../services/auth.service';
           <div *ngIf="authService.isAdmin()" class="admin-links">
             <a routerLink="/admin/test" class="btn btn-secondary">Test Admin</a>
             <a routerLink="/admin/writing" class="btn btn-secondary">Writing Admin</a>
+            <a routerLink="/admin/writing-self-check" class="btn btn-secondary">Self-Check Admin</a>
           </div>
           <div *ngIf="!authService.isAuthenticated()" class="auth-buttons">
             <button class="btn btn-primary" (click)="goToLogin()">Đăng nhập</button>

@@ -21,6 +21,8 @@ interface AnnotatedContent {
 interface WritingSelfCheckHistoryDto {
   id: number;
   userId: string;
+  userName?: string; // User's name (for admin view)
+  userEmail?: string; // User's email (for admin view)
   taskType: string;
   taskQuestion: string;
   userAnswer: string;
@@ -54,7 +56,7 @@ interface WritingSelfCheckHistoryDto {
   template: `
     <div class="history-detail-container">
       <div class="detail-header">
-        <button class="btn-back" (click)="goBack()">← Quay lại lịch sử</button>
+        <button class="btn-back" (click)="goBack()">← Quay lại</button>
         <div class="header-content">
           <h1>{{ getTaskTitle() }}</h1>
           <div class="header-badges">
@@ -62,6 +64,10 @@ interface WritingSelfCheckHistoryDto {
               {{ historyItem()?.taskType === 'TASK1' ? 'Task 1' : 'Task 2' }}
             </span>
             <span class="badge date-badge">{{ formatDate(historyItem()?.submittedAt || '') }}</span>
+            <span class="badge user-badge" *ngIf="historyItem()?.userName || historyItem()?.userEmail">
+              👤 {{ historyItem()?.userName || '' }}<ng-container *ngIf="historyItem()?.userName && historyItem()?.userEmail"> · </ng-container>{{ historyItem()?.userEmail || '' }}
+              <ng-container *ngIf="!historyItem()?.userName && !historyItem()?.userEmail">Anonymous</ng-container>
+            </span>
           </div>
         </div>
       </div>
@@ -547,6 +553,12 @@ interface WritingSelfCheckHistoryDto {
     .badge.date-badge {
       background: #cffafe;
       color: #0f766e;
+    }
+
+    .badge.user-badge {
+      background: #e0f2fe;
+      color: #0369a1;
+      font-weight: 600;
     }
 
     .writing-main {
@@ -2304,7 +2316,13 @@ export class WritingSelfCheckHistoryDetailComponent implements OnInit, AfterView
     this.loading.set(true);
     this.error.set(null);
 
-    this.http.get<WritingSelfCheckHistoryDto>(`http://localhost:8081/api/writing-self-check/history/${historyId}`).subscribe({
+    // Check if this is an admin route
+    const isAdminRoute = this.router.url.includes('/admin/');
+    const apiUrl = isAdminRoute 
+      ? `http://localhost:8081/api/admin/writing-self-check/history/${historyId}`
+      : `http://localhost:8081/api/writing-self-check/history/${historyId}`;
+
+    this.http.get<WritingSelfCheckHistoryDto>(apiUrl).subscribe({
       next: (historyItem) => {
         this.historyItem.set(historyItem);
         this.loading.set(false);
@@ -3193,6 +3211,12 @@ export class WritingSelfCheckHistoryDetailComponent implements OnInit, AfterView
   }
 
   goBack(): void {
-    this.router.navigate(['/writing-self-check/history']);
+    // Check if this is an admin route
+    const isAdminRoute = this.router.url.includes('/admin/');
+    if (isAdminRoute) {
+      this.router.navigate(['/admin/writing-self-check']);
+    } else {
+      this.router.navigate(['/writing-self-check/history']);
+    }
   }
 }
