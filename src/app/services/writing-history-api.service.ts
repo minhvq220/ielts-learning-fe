@@ -170,11 +170,82 @@ export class WritingHistoryApiService {
 
   // Lấy lịch sử làm bài của user với phân trang
   getUserHistoryPage(userId: string, page: number = 0, size: number = 10): Observable<Page<WritingHistoryDto>> {
+    return this.getUserHistoryPageWithFilters(userId, page, size);
+  }
+
+  // Lấy lịch sử làm bài của user với phân trang và filters
+  getUserHistoryPageWithFilters(
+    userId: string, 
+    page: number = 0, 
+    size: number = 10,
+    search?: string,
+    taskType?: string,
+    fromDate?: string,
+    toDate?: string,
+    fromAiDate?: string,
+    toAiDate?: string
+  ): Observable<Page<WritingHistoryDto>> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('size', size.toString());
     
+    if (search) {
+      params = params.set('search', search);
+    }
+    if (taskType) {
+      params = params.set('taskType', taskType);
+    }
+    if (fromDate) {
+      params = params.set('fromDate', fromDate);
+    }
+    if (toDate) {
+      params = params.set('toDate', toDate);
+    }
+    if (fromAiDate) {
+      params = params.set('fromAiDate', fromAiDate);
+    }
+    if (toAiDate) {
+      params = params.set('toAiDate', toAiDate);
+    }
+    
     return this.http.get<Page<WritingHistoryDto>>(`${this.apiUrl}/user/${userId}/page`, { params });
+  }
+
+  // Lấy lịch sử làm bài của current user với phân trang và filters
+  getMyHistoryPageWithFilters(
+    page: number = 0, 
+    size: number = 10,
+    search?: string,
+    taskType?: string,
+    fromDate?: string,
+    toDate?: string,
+    fromAiDate?: string,
+    toAiDate?: string
+  ): Observable<Page<WritingHistoryDto>> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    
+    if (search) {
+      params = params.set('search', search);
+    }
+    if (taskType) {
+      params = params.set('taskType', taskType);
+    }
+    if (fromDate) {
+      params = params.set('fromDate', fromDate);
+    }
+    if (toDate) {
+      params = params.set('toDate', toDate);
+    }
+    if (fromAiDate) {
+      params = params.set('fromAiDate', fromAiDate);
+    }
+    if (toAiDate) {
+      params = params.set('toAiDate', toAiDate);
+    }
+    
+    return this.http.get<Page<WritingHistoryDto>>(`${this.apiUrl}/my-history/page`, { params });
   }
 
   // Lấy lịch sử làm bài của một task cụ thể

@@ -59,6 +59,11 @@ interface FileValidationConfig {
         </a>
       </div>
 
+      <!-- Search Box for Self-Check History Reference -->
+      <div class="search-reference" *ngIf="false">
+        <p>💡 <strong>Mẹo:</strong> Sau khi chấm bài, bạn có thể tìm kiếm lại bài viết trong <a routerLink="/writing-self-check/history">Lịch sử tự kiểm tra</a> để xem chi tiết.</p>
+      </div>
+
       <form (ngSubmit)="onSubmit()" class="self-check-form">
         <!-- Task Type Selection -->
         <div class="form-group">

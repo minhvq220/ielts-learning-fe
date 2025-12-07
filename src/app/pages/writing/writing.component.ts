@@ -96,9 +96,25 @@ interface AIEvaluation {
           </div>
         
         <div class="task-filters">
+          <!-- Search Box -->
+          <div class="filter-group search-group">
+            <label>🔍 Tìm kiếm:</label>
+            <div class="search-input-wrapper">
+              <input 
+                type="text" 
+                [(ngModel)]="searchQuery" 
+                (keyup.enter)="triggerSearch()"
+                placeholder="Tìm theo tiêu đề, hướng dẫn, loại bài..."
+                class="search-input">
+              <button class="btn btn-primary btn-search" (click)="triggerSearch()" type="button">
+                🔍 Tìm kiếm
+              </button>
+            </div>
+          </div>
+          
           <div class="filter-group">
             <label>Loại bài:</label>
-            <select [(ngModel)]="selectedType" (change)="onFilterChange()">
+            <select [(ngModel)]="selectedType">
               <option value="">Tất cả</option>
               <option value="task1">Task 1</option>
               <option value="task2">Task 2</option>
@@ -106,14 +122,18 @@ interface AIEvaluation {
           </div>
           <div class="filter-group">
             <label>Độ khó:</label>
-            <select [(ngModel)]="selectedDifficulty" (change)="onFilterChange()">
+            <select [(ngModel)]="selectedDifficulty">
               <option value="">Tất cả</option>
               <option value="easy">Dễ</option>
               <option value="medium">Trung bình</option>
               <option value="hard">Khó</option>
             </select>
+          </div>
+          
+          <div class="filter-group">
+            <button class="btn btn-secondary btn-clear" (click)="clearFilters()" *ngIf="searchQuery || selectedType || selectedDifficulty">Xóa bộ lọc</button>
+          </div>
         </div>
-      </div>
 
         <div class="task-grid">
           <div 
@@ -562,6 +582,70 @@ interface AIEvaluation {
       border: 1px solid #ddd;
       border-radius: 6px;
       min-width: 120px;
+    }
+
+    .search-group {
+      flex: 1;
+      min-width: 250px;
+      max-width: 400px;
+    }
+
+    .search-input-wrapper {
+      display: flex;
+      gap: 0.5rem;
+      width: 100%;
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    .btn-search {
+      padding: 0.5rem 1rem;
+      white-space: nowrap;
+      font-size: 0.9rem;
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-search:hover {
+      background: linear-gradient(135deg, #1e40af, #1e3a8a);
+    }
+
+    .btn-clear,
+    .btn-apply {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      white-space: nowrap;
+    }
+
+    .btn-apply {
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      margin-right: 0.5rem;
+    }
+
+    .btn-apply:hover {
+      background: linear-gradient(135deg, #1e40af, #1e3a8a);
+    }
+
+    .filter-group:has(.btn-apply) {
+      flex-direction: row;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .task-grid {
@@ -1899,7 +1983,27 @@ interface AIEvaluation {
 
       .task-filters {
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
+        gap: 1rem;
+      }
+      
+      .search-group {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .search-input-wrapper {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .btn-search,
+      .btn-apply {
+        width: 100%;
+      }
+
+      .filter-group:has(.btn-apply) {
+        flex-direction: column;
       }
 
       .header-top {
@@ -2060,6 +2164,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   itemsPerPage = 9;
   
   // Filter state
+  searchQuery = '';
   selectedType = '';
   selectedDifficulty = '';
   activeTab = signal<'uncompleted' | 'completed'>('uncompleted');
@@ -2075,6 +2180,35 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     let filteredTasks = tasks.filter(task => {
       if (this.selectedType && task.type !== this.selectedType) return false;
       if (this.selectedDifficulty && task.difficulty !== this.selectedDifficulty) return false;
+      
+      // Search filter - search in title, instruction, and task-specific content
+      if (this.searchQuery && this.searchQuery.trim()) {
+        const searchLower = this.searchQuery.toLowerCase().trim();
+        const matchesTitle = task.title.toLowerCase().includes(searchLower);
+        const matchesInstruction = task.instruction?.toLowerCase().includes(searchLower) || false;
+        const matchesType = task.type.toLowerCase().includes(searchLower);
+        const matchesDifficulty = this.getDifficultyLabel(task.difficulty).toLowerCase().includes(searchLower);
+        
+        // Task-specific search
+        let matchesTaskContent = false;
+        if (task.type === 'task1') {
+          const task1 = task as WritingTask1;
+          matchesTaskContent = 
+            task1.description?.toLowerCase().includes(searchLower) || 
+            task1.task1Type?.toLowerCase().includes(searchLower) || false;
+        } else if (task.type === 'task2') {
+          const task2 = task as WritingTask2;
+          matchesTaskContent = 
+            task2.question?.toLowerCase().includes(searchLower) || 
+            task2.task2Type?.toLowerCase().includes(searchLower) ||
+            (task2.additionalQuestions?.some(q => q.toLowerCase().includes(searchLower)) || false);
+        }
+        
+        if (!matchesTitle && !matchesInstruction && !matchesType && !matchesDifficulty && !matchesTaskContent) {
+          return false;
+        }
+      }
+      
       return task.isActive;
     });
 
@@ -2323,7 +2457,27 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isTimerRunning.set(false);
   }
 
+  clearFilters(): void {
+    this.searchQuery = '';
+    this.selectedType = '';
+    this.selectedDifficulty = '';
+    // Clear filters in service and reload tasks
+    this.writingService.clearFilter();
+    this.resetPagination();
+  }
+
   onFilterChange(): void {
+    this.resetPagination();
+  }
+
+  triggerSearch(): void {
+    // Apply filters and trigger API call through WritingTaskService
+    this.writingService.setFilter({
+      search: this.searchQuery?.trim() || undefined,
+      type: (this.selectedType ? (this.selectedType as 'task1' | 'task2') : undefined),
+      difficulty: (this.selectedDifficulty ? (this.selectedDifficulty as 'easy' | 'medium' | 'hard') : undefined),
+      isActive: true
+    });
     this.resetPagination();
   }
 

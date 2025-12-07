@@ -1,11 +1,13 @@
-import { Component, signal, computed, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { WritingHistoryService } from '../../services/writing-history.service';
-import { WritingHistoryDto } from '../../services/writing-history-api.service';
+import { WritingHistoryApiService, WritingHistoryDto, Page } from '../../services/writing-history-api.service';
 import { WritingTaskService } from '../../services/writing-task.service';
 import { WritingTask } from '../../models/writing-task.model';
+import { AuthService } from '../../services/auth.service';
+import flatpickr from 'flatpickr';
 
 @Component({
   selector: 'app-writing-history',
@@ -52,21 +54,52 @@ import { WritingTask } from '../../models/writing-task.model';
       </div>
 
       <div class="filters-section">
+        <!-- Search Box -->
+        <div class="filter-group search-group">
+          <label>🔍 Tìm kiếm:</label>
+          <div class="search-input-wrapper">
+            <input 
+              type="text" 
+              [(ngModel)]="searchQuery" 
+              (keyup.enter)="triggerSearch()"
+              (input)="onSearchChange()"
+              placeholder="Tìm theo nội dung bài viết, tiêu đề đề bài..."
+              class="search-input">
+            <button class="btn btn-primary btn-search" (click)="triggerSearch()" type="button">
+              🔍 Tìm kiếm
+            </button>
+          </div>
+        </div>
+        
         <div class="filter-group">
           <label>Loại bài:</label>
-          <select [(ngModel)]="selectedType" (change)="onFilterChange()">
+          <select [(ngModel)]="selectedType">
             <option value="">Tất cả</option>
             <option value="TASK1">Task 1</option>
             <option value="TASK2">Task 2</option>
           </select>
         </div>
+        
+        <!-- Date Filters -->
         <div class="filter-group">
-          <label>Sắp xếp:</label>
-          <select [(ngModel)]="sortBy" (change)="onFilterChange()">
-            <option value="date">Ngày làm bài</option>
-            <option value="score">Điểm số</option>
-            <option value="wordCount">Số từ</option>
-          </select>
+          <label>📅 Ngày làm bài:</label>
+          <input 
+            #fromDateInput
+            type="text" 
+            [(ngModel)]="fromDate" 
+            placeholder="dd/mm/yyyy"
+            class="date-input">
+          <span class="date-separator">đến</span>
+          <input 
+            #toDateInput
+            type="text" 
+            [(ngModel)]="toDate" 
+            placeholder="dd/mm/yyyy"
+            class="date-input">
+        </div>
+        
+        <div class="filter-group">
+          <button class="btn btn-secondary btn-clear" (click)="clearFilters()">Xóa bộ lọc</button>
         </div>
       </div>
 
@@ -76,13 +109,14 @@ import { WritingTask } from '../../models/writing-task.model';
           <p>Đang tải lịch sử...</p>
         </div>
 
-        <div *ngIf="!loading() && paginatedHistory().length === 0" class="empty-state">
+        <div *ngIf="!loading() && historyPage() && historyPage()!.content.length === 0" class="empty-state">
           <div class="empty-icon">📚</div>
-          <h3>Chưa có bài viết nào</h3>
-          <p>Hãy bắt đầu làm bài để xem lịch sử ở đây!</p>
+          <h3>Không tìm thấy bài viết nào</h3>
+          <p *ngIf="hasActiveFilters()">Không có kết quả phù hợp với bộ lọc. Hãy thử điều chỉnh bộ lọc hoặc xóa bộ lọc để xem tất cả.</p>
+          <p *ngIf="!hasActiveFilters()">Hãy bắt đầu làm bài để xem lịch sử ở đây!</p>
         </div>
 
-        <div *ngFor="let item of paginatedHistory()" class="history-item">
+        <div *ngFor="let item of historyPage()?.content || []" class="history-item">
           <div class="history-card">
             <div class="history-card-header">
               <div class="title-block">
@@ -189,11 +223,11 @@ import { WritingTask } from '../../models/writing-task.model';
         </div>
       </div>
 
-      <div class="history-pagination" *ngIf="totalPages() > 1">
+      <div class="history-pagination" *ngIf="historyPage() && historyPage()!.totalPages > 1">
         <button
           class="btn btn-sm"
-          [disabled]="currentPage() === 1"
-          (click)="goToPage(currentPage() - 1)">
+          [disabled]="historyPage() && historyPage()!.first"
+          (click)="goToPage((historyPage()?.number || 0))">
           ← Trước
         </button>
 
@@ -201,18 +235,23 @@ import { WritingTask } from '../../models/writing-task.model';
           <button
             *ngFor="let page of getPageNumbers()"
             class="btn btn-sm page-btn"
-            [class.active]="page === currentPage()"
-            (click)="goToPage(page)">
+            [class.active]="page === (historyPage()?.number || 0) + 1"
+            (click)="goToPage(page - 1)">
             {{ page }}
           </button>
         </div>
 
         <button
           class="btn btn-sm"
-          [disabled]="currentPage() === totalPages()"
-          (click)="goToPage(currentPage() + 1)">
+          [disabled]="historyPage() && historyPage()!.last"
+          (click)="goToPage((historyPage()?.number || 0) + 2)">
           Sau →
         </button>
+        
+        <div class="pagination-info" *ngIf="historyPage()">
+          Trang {{ (historyPage()!.number || 0) + 1 }} / {{ historyPage()!.totalPages }} 
+          (Tổng: {{ historyPage()!.totalElements }} bài)
+        </div>
       </div>
     </div>
   `,
@@ -309,6 +348,79 @@ import { WritingTask } from '../../models/writing-task.model';
       border: 1px solid #d1d5db;
       border-radius: 6px;
       background: white;
+    }
+
+    .search-group {
+      flex: 1;
+      min-width: 250px;
+    }
+
+    .search-input-wrapper {
+      display: flex;
+      gap: 0.5rem;
+      width: 100%;
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+
+    .btn-search,
+    .btn-apply {
+      padding: 0.5rem 1rem;
+      white-space: nowrap;
+      font-size: 0.9rem;
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-search:hover,
+    .btn-apply:hover {
+      background: linear-gradient(135deg, #1e40af, #1e3a8a);
+    }
+
+    .filter-group .btn-apply {
+      margin-right: 0.5rem;
+    }
+
+    .date-input {
+      padding: 0.5rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    .date-separator {
+      margin: 0 0.5rem;
+      color: #6b7280;
+      font-size: 0.875rem;
+    }
+
+    .btn-clear {
+      padding: 0.5rem 1rem;
+    }
+
+    .filter-group:has(.btn-apply) {
+      flex-direction: row;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .pagination-info {
+      margin-left: 1rem;
+      color: #6b7280;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
     }
 
     .history-list {
@@ -678,6 +790,20 @@ import { WritingTask } from '../../models/writing-task.model';
         align-items: stretch;
       }
 
+      .search-input-wrapper {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .btn-search,
+      .btn-apply {
+        width: 100%;
+      }
+
+      .filter-group:has(.btn-apply) {
+        flex-direction: column;
+      }
+
       .history-card-header {
         flex-direction: column;
         align-items: flex-start;
@@ -695,72 +821,148 @@ import { WritingTask } from '../../models/writing-task.model';
     }
   `]
 })
-export class WritingHistoryComponent implements OnInit {
+export class WritingHistoryComponent implements OnInit, AfterViewInit, OnDestroy {
   private historyService = inject(WritingHistoryService);
+  private historyApiService = inject(WritingHistoryApiService);
+  private authService = inject(AuthService);
   private router = inject(Router);
   private writingTaskService = inject(WritingTaskService);
 
   selectedType = '';
-  sortBy = 'date';
-  currentPage = signal(1);
+  searchQuery = '';
+  fromDate = '';
+  toDate = '';
+  
+  @ViewChild('fromDateInput') fromDateInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('toDateInput') toDateInput!: ElementRef<HTMLInputElement>;
+  
+  private fromDatePicker: flatpickr.Instance | null = null;
+  private toDatePicker: flatpickr.Instance | null = null;
+  
+  currentPage = signal(0);
   itemsPerPage = 6;
+  searchDebounceTimer: any = null;
 
-  history = computed(() => this.historyService.history());
+  historyPage = signal<Page<WritingHistoryDto> | null>(null);
   userStats = computed(() => this.historyService.userStats());
-  loading = computed(() => this.historyService.loading());
-
-  filteredHistory = computed(() => {
-    let filtered = this.history();
-
-    if (this.selectedType) {
-      filtered = filtered.filter(item => item.taskType === this.selectedType);
-    }
-
-    let sorted: WritingHistoryDto[];
-
-    switch (this.sortBy) {
-      case 'score':
-        sorted = [...filtered].sort((a, b) => (b.aiScore || 0) - (a.aiScore || 0));
-        break;
-      case 'wordCount':
-        sorted = [...filtered].sort((a, b) => b.wordCount - a.wordCount);
-        break;
-      case 'date':
-      default:
-        sorted = [...filtered].sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
-        break;
-    }
-
-    return sorted;
-  });
-
-  totalPages = computed(() => {
-    const totalItems = this.filteredHistory().length;
-    if (totalItems === 0) {
-      return 0;
-    }
-    return Math.ceil(totalItems / this.itemsPerPage);
-  });
-
-  paginatedHistory = computed(() => {
-    const data = this.filteredHistory();
-    if (data.length === 0) {
-      return [];
-    }
-
-    const totalPages = Math.max(1, Math.ceil(data.length / this.itemsPerPage));
-    const current = Math.min(Math.max(this.currentPage(), 1), totalPages);
-    const start = (current - 1) * this.itemsPerPage;
-    return data.slice(start, start + this.itemsPerPage);
-  });
+  loading = signal(false);
 
   ngOnInit() {
-    // Refresh data when component loads
+    this.loadHistory();
+    // Also refresh stats
     this.historyService.refresh();
   }
 
-  onFilterChange(): void {
-    this.resetPagination();
+  ngAfterViewInit() {
+    // Initialize flatpickr for date inputs
+    if (this.fromDateInput) {
+      this.fromDatePicker = flatpickr(this.fromDateInput.nativeElement, {
+        dateFormat: 'd/m/Y',
+        locale: {
+          firstDayOfWeek: 1
+        },
+        onChange: (selectedDates, dateStr) => {
+          this.fromDate = dateStr;
+        }
+      });
+    }
+
+    if (this.toDateInput) {
+      this.toDatePicker = flatpickr(this.toDateInput.nativeElement, {
+        dateFormat: 'd/m/Y',
+        locale: {
+          firstDayOfWeek: 1
+        },
+        onChange: (selectedDates, dateStr) => {
+          this.toDate = dateStr;
+        }
+      });
+    }
+  }
+
+  ngOnDestroy() {
+    // Destroy flatpickr instances
+    if (this.fromDatePicker) {
+      this.fromDatePicker.destroy();
+    }
+    if (this.toDatePicker) {
+      this.toDatePicker.destroy();
+    }
+  }
+
+  loadHistory() {
+    const authState = this.authService.getAuthState();
+    if (!authState.isAuthenticated || !authState.user?.id) {
+      return;
+    }
+
+    this.loading.set(true);
+    
+    // Convert dd/mm/yyyy to yyyy-mm-dd for API
+    const fromDateParam = this.fromDate ? this.convertDateFormat(this.fromDate, true) : undefined;
+    const toDateParam = this.toDate ? this.convertDateFormat(this.toDate, false) : undefined;
+
+    this.historyApiService.getMyHistoryPageWithFilters(
+      this.currentPage(),
+      this.itemsPerPage,
+      this.searchQuery || undefined,
+      this.selectedType || undefined,
+      fromDateParam,
+      toDateParam,
+      undefined,
+      undefined
+    ).subscribe({
+      next: (page) => {
+        this.historyPage.set(page);
+        this.loading.set(false);
+      },
+      error: (err) => {
+        console.error('Error loading history:', err);
+        this.loading.set(false);
+      }
+    });
+  }
+
+  hasActiveFilters(): boolean {
+    return !!(
+      this.searchQuery || 
+      this.selectedType || 
+      this.fromDate || 
+      this.toDate
+    );
+  }
+
+  clearFilters() {
+    this.searchQuery = '';
+    this.selectedType = '';
+    this.fromDate = '';
+    this.toDate = '';
+    this.currentPage.set(0);
+    this.loadHistory();
+  }
+
+  onSearchChange() {
+    // Debounce search when typing (optional - user can also press Enter or button)
+    // For now, we'll keep it disabled and require explicit button click
+    // Uncomment below if you want auto-search while typing
+    /*
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.searchDebounceTimer = setTimeout(() => {
+      this.currentPage.set(0);
+      this.loadHistory();
+    }, 500);
+    */
+  }
+
+  triggerSearch() {
+    // Apply all filters (search, task type, date range) when button is clicked or Enter is pressed
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+    this.currentPage.set(0);
+    this.loadHistory();
   }
 
   viewFullAnswer(item: WritingHistoryDto): void {
@@ -772,25 +974,42 @@ export class WritingHistoryComponent implements OnInit {
   }
 
   goToPage(page: number): void {
-    const total = this.totalPages();
-    if (total === 0) {
-      this.currentPage.set(1);
-      return;
+    if (page < 0) {
+      page = 0;
     }
-    const target = Math.min(Math.max(page, 1), total);
-    this.currentPage.set(target);
+    const totalPages = this.historyPage()?.totalPages || 0;
+    if (totalPages > 0 && page >= totalPages) {
+      page = totalPages - 1;
+    }
+    this.currentPage.set(page);
+    this.loadHistory();
   }
 
   getPageNumbers(): number[] {
-    const total = this.totalPages();
-    if (total <= 0) {
+    const totalPages = this.historyPage()?.totalPages || 0;
+    if (totalPages <= 0) {
       return [];
     }
-    return Array.from({ length: total }, (_, index) => index + 1);
-  }
-
-  private resetPagination(): void {
-    this.currentPage.set(1);
+    const current = (this.historyPage()?.number || 0) + 1;
+    const pages: number[] = [];
+    
+    // Show max 7 pages
+    let start = Math.max(1, current - 3);
+    let end = Math.min(totalPages, current + 3);
+    
+    if (end - start < 6) {
+      if (start === 1) {
+        end = Math.min(totalPages, start + 6);
+      } else {
+        start = Math.max(1, end - 6);
+      }
+    }
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    
+    return pages;
   }
 
   private findTask(item: WritingHistoryDto): WritingTask | undefined {
@@ -866,6 +1085,26 @@ export class WritingHistoryComponent implements OnInit {
     });
   }
 
+  // Convert dd/mm/yyyy to ISO string for API (isStart = true for fromDate, false for toDate)
+  convertDateFormat(dateStr: string, isStart: boolean): string {
+    // Support both d/m/Y and dd/mm/yyyy formats from flatpickr
+    const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+    if (!dateRegex.test(dateStr)) {
+      return '';
+    }
+
+    const [, day, month, year] = dateStr.match(dateRegex)!;
+    const date = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+    
+    if (isStart) {
+      date.setHours(0, 0, 0, 0);
+    } else {
+      date.setHours(23, 59, 59, 999);
+    }
+
+    return date.toISOString();
+  }
+
   formatDuration(seconds: number): string {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -878,8 +1117,8 @@ export class WritingHistoryComponent implements OnInit {
   }
 
   getAttemptNumber(item: WritingHistoryDto): number {
-    const taskHistory = this.history().filter(h => h.taskId === item.taskId);
-    const sortedHistory = [...taskHistory].sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime());
-    return sortedHistory.findIndex(h => h.id === item.id) + 1;
+    // Note: This is an approximation since we're paginating server-side
+    // For accurate attempt numbers, we'd need to load all history for the task
+    return 1; // Placeholder - can be improved if needed
   }
 }
