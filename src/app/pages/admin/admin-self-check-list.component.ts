@@ -92,25 +92,18 @@ interface Page<T> {
             <div class="history-card-header">
               <div class="title-block">
                 <h3 class="task-title">{{ getTaskTitle(item) }}</h3>
-                <div class="meta-chips">
-                  <span class="chip task-type-badge" [ngClass]="item.taskType.toLowerCase()">
-                    {{ item.taskType === 'TASK1' ? 'Task 1' : 'Task 2' }}
+                <div class="user-info">
+                  <span class="user-label">Người làm bài:</span>
+                  <span *ngIf="item.userName || item.userEmail" class="user-details">
+                    <span *ngIf="item.userName" class="user-name">{{ item.userName }}</span>
+                    <span *ngIf="item.userName && item.userEmail" class="user-separator"> · </span>
+                    <span *ngIf="item.userEmail" class="user-email">{{ item.userEmail }}</span>
                   </span>
-                  <span class="chip meta-chip">
-                    <span class="chip-icon">📝</span>{{ item.wordCount }} từ
-                  </span>
-                  <span class="chip user-chip" *ngIf="item.userName || item.userEmail">
-                    <span class="chip-icon">👤</span>
-                    <span *ngIf="item.userName">{{ item.userName }}</span>
-                    <span *ngIf="item.userName && item.userEmail"> · </span>
-                    <span *ngIf="item.userEmail">{{ item.userEmail }}</span>
-                    <span *ngIf="!item.userName && !item.userEmail">Anonymous</span>
+                  <span *ngIf="!item.userName && !item.userEmail" class="user-details">
+                    <span class="user-id">ID: {{ item.userId }}</span>
+                    <span class="anonymous-badge">(Anonymous)</span>
                   </span>
                 </div>
-              </div>
-              <div class="submitted-meta">
-                <span class="submitted-date">{{ formatDate(item.submittedAt) }}</span>
-                <span class="submitted-time">{{ formatTime(item.submittedAt) }}</span>
               </div>
             </div>
 
@@ -125,15 +118,28 @@ interface Page<T> {
                 <div class="answer-text" [innerHTML]="getAnswerPreview(item.userAnswer)"></div>
               </div>
 
-              <div class="result-chips">
+              <!-- All chips in one line -->
+              <div class="all-chips">
+                <span class="chip task-type-badge" [ngClass]="item.taskType.toLowerCase()">
+                  {{ item.taskType === 'TASK1' ? 'Task 1' : 'Task 2' }}
+                </span>
                 <span class="chip meta-chip">
                   <span class="chip-icon">📝</span>{{ item.wordCount }} từ thực tế
                 </span>
+                <span class="chip user-chip">
+                  <span class="chip-icon">👤</span>
+                  <span *ngIf="item.userName || item.userEmail">
+                    <span *ngIf="item.userName">{{ item.userName }}</span>
+                    <span *ngIf="item.userName && item.userEmail"> · </span>
+                    <span *ngIf="item.userEmail">{{ item.userEmail }}</span>
+                  </span>
+                  <span *ngIf="!item.userName && !item.userEmail">ID: {{ item.userId }}</span>
+                </span>
+                <span class="chip meta-chip">
+                  <span class="chip-icon">📅</span>{{ formatDate(item.submittedAt) }} {{ formatTime(item.submittedAt) }}
+                </span>
                 <span class="chip meta-chip score-chip" *ngIf="item.aiScore">
                   <span class="chip-icon">🎯</span>{{ item.aiScore.toFixed(1) }}/9
-                </span>
-                <span class="chip meta-chip" *ngIf="item.aiEvaluatedAt">
-                  <span class="chip-icon">🕒</span>{{ formatDate(item.aiEvaluatedAt) }} {{ formatTime(item.aiEvaluatedAt) }}
                 </span>
               </div>
 
@@ -141,11 +147,6 @@ interface Page<T> {
                 <div class="evaluation-header">
                   <h4>Điểm chi tiết</h4>
                   <span class="overall-score-chip">{{ item.aiScore.toFixed(1) }}/9</span>
-                </div>
-                <div class="provider-meta" *ngIf="item.aiEvaluatedAt">
-                  <span *ngIf="item.aiEvaluatedAt">
-                    🕒 {{ formatDate(item.aiEvaluatedAt) }} · {{ formatTime(item.aiEvaluatedAt) }}
-                  </span>
                 </div>
                 <div class="criteria-grid">
                   <div class="criteria-item" *ngIf="item.taskAchievement">
@@ -312,6 +313,61 @@ interface Page<T> {
       color: #0f172a;
     }
 
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .user-label {
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .user-details {
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .user-name {
+      font-weight: 500;
+      color: #2563eb;
+    }
+
+    .user-email {
+      color: #6b7280;
+    }
+
+    .user-separator {
+      color: #9ca3af;
+    }
+
+    .user-id {
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #6b7280;
+      background: #f1f5f9;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .anonymous-badge {
+      color: #9ca3af;
+      font-size: 0.8rem;
+      font-style: italic;
+    }
+
+    .all-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+    }
+
     .meta-chips,
     .result-chips {
       display: flex;
@@ -411,21 +467,6 @@ interface Page<T> {
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
-    }
-
-    .provider-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      font-size: 0.8rem;
-      color: #475569;
-      margin-bottom: 0.5rem;
-    }
-
-    .provider-meta span {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
     }
 
     .evaluation-header {

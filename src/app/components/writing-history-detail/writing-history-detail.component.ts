@@ -2,6 +2,7 @@ import { Component, OnInit, AfterViewInit, OnDestroy, inject, signal, computed, 
 import { Subject } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { WritingHistoryService } from '../../services/writing-history.service';
 import { WritingTaskService } from '../../services/writing-task.service';
 import { WritingTaskApiService } from '../../services/writing-task-api.service';
@@ -26,11 +27,19 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <div class="history-detail-container">
+    <div class="history-detail-container" [ngClass]="{ 'admin-view': isAdminRoute() }">
       <div class="detail-header">
-        <button class="btn-back" (click)="goBack()">← Quay lại lịch sử</button>
+        <button class="btn-back" *ngIf="!isAdminRoute()" (click)="goBack()">← Quay lại lịch sử</button>
         <div class="header-content">
           <h1>{{ getTaskTitle() }}</h1>
+          <div class="user-info" *ngIf="isAdminRoute() && (getUserName() || getUserEmail())">
+            <span class="user-label">Người làm bài:</span>
+            <span class="user-details">
+              <span *ngIf="getUserName()" class="user-name">{{ getUserName() }}</span>
+              <span *ngIf="getUserName() && getUserEmail()" class="user-separator"> · </span>
+              <span *ngIf="getUserEmail()" class="user-email">{{ getUserEmail() }}</span>
+            </span>
+          </div>
           <div class="header-badges">
             <span class="badge task-badge" [class.task1]="historyItem()?.taskType === 'TASK1'" [class.task2]="historyItem()?.taskType === 'TASK2'">
               {{ historyItem()?.taskType === 'TASK1' ? 'Task 1' : 'Task 2' }}
@@ -38,7 +47,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
             <span class="badge difficulty-badge" [class]="getTaskDifficulty()">
               {{ getDifficultyLabel(getTaskDifficulty()) }}
             </span>
-            <span class="badge attempt-badge">Lần {{ getAttemptNumber() }}</span>
+            <span class="badge attempt-badge" *ngIf="!isAdminRoute()">Lần {{ getAttemptNumber() }}</span>
             <span class="badge date-badge">{{ formatDate(historyItem()?.submittedAt || '') }}</span>
           </div>
         </div>
@@ -53,7 +62,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
         <div class="error-icon">❌</div>
         <h3>Không thể tải bài viết</h3>
         <p>{{ error() }}</p>
-        <button class="btn btn-primary" (click)="goBack()">Quay lại lịch sử</button>
+        <button class="btn btn-primary" *ngIf="!isAdminRoute()" (click)="goBack()">Quay lại lịch sử</button>
       </div>
 
       <ng-container *ngIf="!loading() && !error() && historyItem()">
@@ -421,7 +430,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
                 <div class="timer-section-compact">
                   <div class="timer-compact">⏱️ {{ formatDuration(historyItem()!.timeSpent) }}</div>
                 </div>
-                <div class="writing-actions">
+                <div class="writing-actions" *ngIf="!isAdminRoute()">
                   <button class="btn btn-secondary" (click)="goBack()">Quay lại</button>
                   <button class="btn btn-primary" (click)="retakeTask()">Làm lại bài</button>
                 </div>
@@ -490,6 +499,11 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       padding-top: calc(2rem + 40px); /* Add space for fixed header */
     }
 
+    .history-detail-container.admin-view {
+      padding-top: 0.5rem;
+      padding: 0.5rem 0;
+    }
+
     .detail-header {
       display: flex;
       align-items: center;
@@ -497,6 +511,12 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       margin-bottom: 2rem;
       padding: 0 2rem 1rem 2rem;
       border-bottom: 1px solid #e2e8f0;
+    }
+
+    .history-detail-container.admin-view .detail-header {
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+      padding: 0 1.5rem 0.5rem 1.5rem;
     }
 
     .btn-back {
@@ -523,6 +543,43 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       color: #0f172a;
       font-size: 1.85rem;
       font-weight: 700;
+    }
+
+    .user-info {
+      margin-bottom: 0.75rem;
+      padding: 0.5rem 0.75rem;
+      background: #f1f5f9;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .user-label {
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .user-details {
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .user-name {
+      font-weight: 500;
+      color: #1e293b;
+    }
+
+    .user-email {
+      color: #475569;
+    }
+
+    .user-separator {
+      color: #94a3b8;
     }
 
     .header-badges {
@@ -2085,9 +2142,12 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
   private writingService = inject(WritingTaskService);
   private taskApiService = inject(WritingTaskApiService);
   private apiService = inject(WritingHistoryApiService);
+  private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroy$ = new Subject<void>();
+  
+  isAdminRoute = computed(() => this.router.url.includes('/admin/'));
 
   @ViewChildren('highlightRef', { read: ElementRef }) highlightElements!: QueryList<ElementRef<HTMLElement>>;
   @ViewChild('essayContent', { read: ElementRef }) essayContentElement!: ElementRef<HTMLElement>;
@@ -2408,28 +2468,48 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
     this.loading.set(true);
     this.error.set(null);
 
-    // First, try to find in local state
-    const history = this.historyService.history();
-    const item = history.find(h => h.id === historyId);
-
-    if (item) {
-      this.historyItem.set(item);
-      this.loadOriginalTask(item.taskId);
-      this.loading.set(false);
-    } else {
-      // If not found in local state, fetch from API (for anonymous users or when viewing results directly)
-      this.apiService.getHistoryById(historyId).subscribe({
+    // Check if this is an admin route
+    const isAdmin = this.isAdminRoute();
+    
+    if (isAdmin) {
+      // For admin route, use admin endpoint
+      this.http.get<WritingHistoryDto>(`http://localhost:8081/api/admin/writing-history/history/${historyId}`).subscribe({
         next: (historyItem) => {
           this.historyItem.set(historyItem);
           this.loadOriginalTask(historyItem.taskId);
           this.loading.set(false);
         },
         error: (err) => {
-          console.error('Error loading history item:', err);
-          this.error.set('Không tìm thấy bài viết này');
+          console.error('Error loading history item from admin endpoint:', err);
+          this.error.set(err.error?.message || 'Không tìm thấy bài viết này');
           this.loading.set(false);
         }
       });
+    } else {
+      // For regular route, use existing logic
+      // First, try to find in local state
+      const history = this.historyService.history();
+      const item = history.find(h => h.id === historyId);
+
+      if (item) {
+        this.historyItem.set(item);
+        this.loadOriginalTask(item.taskId);
+        this.loading.set(false);
+      } else {
+        // If not found in local state, fetch from API (for anonymous users or when viewing results directly)
+        this.apiService.getHistoryById(historyId).subscribe({
+          next: (historyItem) => {
+            this.historyItem.set(historyItem);
+            this.loadOriginalTask(historyItem.taskId);
+            this.loading.set(false);
+          },
+          error: (err) => {
+            console.error('Error loading history item:', err);
+            this.error.set('Không tìm thấy bài viết này');
+            this.loading.set(false);
+          }
+        });
+      }
     }
   }
 
@@ -2485,6 +2565,18 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
     const target = this.getTaskWordCount() || 1;
     const current = this.historyItem()?.wordCount || 0;
     return Math.min((current / target) * 100, 100);
+  }
+
+  getUserName(): string | undefined {
+    const item = this.historyItem();
+    if (!item) return undefined;
+    return (item as any).userName;
+  }
+
+  getUserEmail(): string | undefined {
+    const item = this.historyItem();
+    if (!item) return undefined;
+    return (item as any).userEmail;
   }
 
   getTaskTitle(): string {
@@ -3390,6 +3482,11 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
   }
 
   goBack(): void {
-    this.router.navigate(['/writing/history']);
+    // Check if this is an admin route
+    if (this.isAdminRoute()) {
+      this.router.navigate(['/admin/writing-history']);
+    } else {
+      this.router.navigate(['/writing/history']);
+    }
   }
 }

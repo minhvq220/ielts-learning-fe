@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, RouterOutlet } from '@angular/router';
+import { RouterModule, RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-admin-layout',
@@ -29,6 +30,18 @@ import { RouterModule, RouterOutlet } from '@angular/router';
             </svg>
             <span>Writing Admin</span>
           </a>
+
+          <a 
+            routerLink="/admin/writing-history" 
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{exact: false}"
+            class="nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+            <span>Lịch sử làm bài Writing</span>
+          </a>
           
           <a 
             routerLink="/admin/writing-self-check" 
@@ -54,7 +67,7 @@ import { RouterModule, RouterOutlet } from '@angular/router';
       </aside>
 
       <!-- Main Content -->
-      <main class="admin-main">
+      <main class="admin-main" [class.detail-view]="isDetailRouteFn()">
         <router-outlet></router-outlet>
       </main>
     </div>
@@ -181,7 +194,38 @@ import { RouterModule, RouterOutlet } from '@angular/router';
         padding: 1rem;
       }
     }
+    .admin-main.detail-view {
+      padding-top: 1rem;
+      padding-left: 1rem;
+      padding-right: 1rem;
+      padding-bottom: 1rem;
+    }
   `]
 })
-export class AdminLayoutComponent {}
+export class AdminLayoutComponent implements OnInit {
+  private router = inject(Router);
+  isDetailRoute = signal(false);
+  
+  ngOnInit() {
+    // Check initial route
+    this.updateDetailRoute();
+    
+    // Listen to route changes
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.updateDetailRoute();
+    });
+  }
+  
+  private updateDetailRoute() {
+    const url = this.router.url;
+    const isDetail = url.includes('/writing-history/') && url !== '/admin/writing-history';
+    this.isDetailRoute.set(isDetail);
+  }
+  
+  isDetailRouteFn(): boolean {
+    return this.isDetailRoute();
+  }
+}
 

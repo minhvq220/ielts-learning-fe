@@ -121,66 +121,57 @@ import flatpickr from 'flatpickr';
             <div class="history-card-header">
               <div class="title-block">
                 <h3 class="task-title">{{ item.taskTitle || ('Bài Task ' + item.taskId) }}</h3>
-                <div class="meta-chips">
-                  <span class="chip attempt-chip">
-                    <span class="chip-icon">🔁</span>Lần {{ getAttemptNumber(item) }}
-                  </span>
-                  <span class="chip task-type-badge" [ngClass]="item.taskType.toLowerCase()">
-                    {{ item.taskType === 'TASK1' ? 'Task 1' : 'Task 2' }}
-                  </span>
-                  <span class="chip subtype-chip" *ngIf="getTaskSubtypeLabel(item)">
-                    {{ getTaskSubtypeLabel(item) }}
-                  </span>
-                  <span
-                    class="chip difficulty-badge"
-                    *ngIf="getTaskDifficulty(item) as difficulty"
-                    [ngClass]="difficulty">
-                    {{ getDifficultyLabel(difficulty) }}
-                  </span>
-                  <span class="chip meta-chip" *ngIf="getTaskTimeLimit(item) as timeLimit">
-                    <span class="chip-icon">⏱️</span>{{ timeLimit }} phút
-                  </span>
-                  <span class="chip meta-chip" *ngIf="getTaskWordTarget(item) as wordTarget">
-                    <span class="chip-icon">📝</span>{{ wordTarget }} từ
-                  </span>
-                </div>
-              </div>
-              <div class="submitted-meta">
-                <span class="submitted-date">{{ formatDate(item.submittedAt) }}</span>
-                <span class="submitted-time">{{ formatTime(item.submittedAt) }}</span>
               </div>
             </div>
 
             <div class="history-card-body">
+              <div class="task-instruction-preview" *ngIf="getTaskInstruction(item)">
+                <h4>Đề bài</h4>
+                <div class="instruction-text" [innerHTML]="getTaskInstruction(item)"></div>
+              </div>
+              
               <div class="answer-preview">
                 <h4>Bài viết</h4>
                 <div class="answer-text" [innerHTML]="getAnswerPreview(item.answer)"></div>
               </div>
 
-              <div class="result-chips">
+              <!-- All chips in one line -->
+              <div class="all-chips">
+                <span class="chip task-type-badge" [ngClass]="item.taskType.toLowerCase()">
+                  {{ item.taskType === 'TASK1' ? 'Task 1' : 'Task 2' }}
+                </span>
+                <span class="chip subtype-chip" *ngIf="getTaskSubtypeLabel(item)">
+                  {{ getTaskSubtypeLabel(item) }}
+                </span>
+                <span
+                  class="chip difficulty-badge"
+                  *ngIf="getTaskDifficulty(item) as difficulty"
+                  [ngClass]="difficulty">
+                  {{ getDifficultyLabel(difficulty) }}
+                </span>
+                <span class="chip meta-chip" *ngIf="getTaskTimeLimit(item) as timeLimit">
+                  <span class="chip-icon">⏱️</span>Giới hạn: {{ timeLimit }} phút
+                </span>
+                <span class="chip meta-chip" *ngIf="getTaskWordTarget(item) as wordTarget">
+                  <span class="chip-icon">📝</span>Mục tiêu: {{ wordTarget }} từ
+                </span>
                 <span class="chip meta-chip">
                   <span class="chip-icon">📝</span>{{ item.wordCount }} từ thực tế
                 </span>
                 <span class="chip meta-chip">
-                  <span class="chip-icon">⏱️</span>{{ formatDuration(item.timeSpent) }}
+                  <span class="chip-icon">⏱️</span>Đã làm: {{ formatDuration(item.timeSpent) }}
+                </span>
+                <span class="chip meta-chip">
+                  <span class="chip-icon">📅</span>{{ formatDate(item.submittedAt) }} {{ formatTime(item.submittedAt) }}
                 </span>
                 <span class="chip meta-chip score-chip" *ngIf="item.aiScore">
                   <span class="chip-icon">🎯</span>{{ item.aiScore.toFixed(1) }}/9
-                </span>
-                <span class="chip meta-chip" *ngIf="item.aiEvaluatedAt">
-                  <span class="chip-icon">🕒</span>{{ formatDate(item.aiEvaluatedAt) }} {{ formatTime(item.aiEvaluatedAt) }}
                 </span>
               </div>
 
               <div class="evaluation-results" *ngIf="item.aiScore">
                 <div class="evaluation-header">
                   <h4>Điểm chi tiết</h4>
-                  <span class="overall-score-chip">{{ item.aiScore.toFixed(1) }}/9</span>
-                </div>
-                <div class="provider-meta" *ngIf="item.aiEvaluatedAt">
-                  <span *ngIf="item.aiEvaluatedAt">
-                    🕒 {{ formatDate(item.aiEvaluatedAt) }} · {{ formatTime(item.aiEvaluatedAt) }}
-                  </span>
                 </div>
                 <div class="criteria-grid">
                   <div class="criteria-item" *ngIf="item.taskAchievement">
@@ -466,6 +457,13 @@ import flatpickr from 'flatpickr';
       color: #0f172a;
     }
 
+    .all-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.75rem;
+    }
+
     .meta-chips,
     .result-chips {
       display: flex;
@@ -537,15 +535,6 @@ import flatpickr from 'flatpickr';
       font-weight: 600;
     }
 
-    .submitted-meta {
-      text-align: right;
-      font-size: 0.8rem;
-      color: #64748b;
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      align-items: flex-end;
-    }
 
     .history-card-body {
       display: flex;
@@ -553,8 +542,14 @@ import flatpickr from 'flatpickr';
       gap: 1rem;
     }
 
+    .task-instruction-preview,
+    .answer-preview {
+      margin-bottom: 0.5rem;
+    }
+
+    .task-instruction-preview h4,
     .answer-preview h4 {
-      margin: 0;
+      margin: 0 0 0.5rem 0;
       font-size: 0.8rem;
       font-weight: 600;
       color: #6b7280;
@@ -562,6 +557,7 @@ import flatpickr from 'flatpickr';
       letter-spacing: 0.06em;
     }
 
+    .instruction-text,
     .answer-text {
       background: #f8fafc;
       padding: 0.85rem;
@@ -592,21 +588,6 @@ import flatpickr from 'flatpickr';
       gap: 0.75rem;
     }
 
-    .provider-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-      font-size: 0.8rem;
-      color: #475569;
-      margin-bottom: 0.5rem;
-    }
-
-    .provider-meta span {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-    }
-
     .evaluation-header {
       display: flex;
       justify-content: space-between;
@@ -619,15 +600,6 @@ import flatpickr from 'flatpickr';
       font-size: 0.85rem;
       font-weight: 600;
       color: #475569;
-    }
-
-    .overall-score-chip {
-      background: #312e81;
-      color: #f8fafc;
-      padding: 0.35rem 0.7rem;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      font-weight: 600;
     }
 
     .criteria-grid {
@@ -808,10 +780,6 @@ import flatpickr from 'flatpickr';
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
-      }
-
-      .submitted-meta {
-        text-align: left;
       }
 
       .history-actions {
@@ -1072,6 +1040,11 @@ export class WritingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   getTaskWordTarget(item: WritingHistoryDto): number | null {
     const task = this.findTask(item);
     return task ? task.wordCount : null;
+  }
+
+  getTaskInstruction(item: WritingHistoryDto): string | null {
+    const task = this.findTask(item);
+    return task?.instruction || null;
   }
 
   formatDate(dateString: string): string {

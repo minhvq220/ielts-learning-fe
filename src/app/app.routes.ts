@@ -19,6 +19,8 @@ export const routes: Routes = [
     children: [
       { path: '', redirectTo: 'writing', pathMatch: 'full' },
       { path: 'writing', loadComponent: () => import('./pages/admin/writing-admin.component').then(m => m.WritingAdminComponent) },
+      { path: 'writing-history', loadComponent: () => import('./pages/admin/admin-writing-history.component').then(m => m.AdminWritingHistoryComponent) },
+      { path: 'writing-history/:id', loadComponent: () => import('./components/writing-history-detail/writing-history-detail.component').then(m => m.WritingHistoryDetailComponent) },
       { path: 'writing-self-check', loadComponent: () => import('./pages/admin/admin-self-check-list.component').then(m => m.AdminSelfCheckListComponent) },
       { path: 'writing-self-check/history/:id', loadComponent: () => import('./pages/writing-self-check/writing-self-check-history-detail.component').then(m => m.WritingSelfCheckHistoryDetailComponent) },
     ]

@@ -1,112 +1,28 @@
 import { Component, signal, computed, inject, OnInit, AfterViewInit, ViewChild, ElementRef, OnDestroy } from '@angular/core';
-import flatpickr from 'flatpickr';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { WritingHistoryApiService, WritingHistoryDto, Page } from '../../services/writing-history-api.service';
+import { WritingTaskService } from '../../services/writing-task.service';
+import { WritingTask } from '../../models/writing-task.model';
 import { AuthService } from '../../services/auth.service';
-import { AiCorrection, WritingStatistics, DetailedIeltsScores } from '../../services/writing-history-api.service';
+import flatpickr from 'flatpickr';
 
-interface WritingSelfCheckHistoryDto {
-  id: number;
-  userId: string;
-  taskType: string;
-  taskQuestion: string;
-  userAnswer: string;
-  wordCount: number;
-  imageData?: string;
-  imageMimeType?: string;
-  aiScore?: number;
-  taskAchievement?: number;
-  coherenceCohesion?: number;
-  lexicalResource?: number;
-  grammaticalRange?: number;
-  aiFeedback?: string;
-  aiSuggestions?: string[];
-  aiCorrections?: AiCorrection[];
-  aiCorrectedAnswer?: string;
-  aiProvider?: string;
-  aiModel?: string;
-  aiEvaluatedAt?: string;
-  aiRequestId?: string;
-  aiStatistics?: WritingStatistics;
-  aiDetailedScores?: DetailedIeltsScores;
-  submittedAt: string;
-  createdAt: string;
-  updatedAt?: string;
-}
-
-interface Page<T> {
-  content: T[];
-  pageable: {
-    pageNumber: number;
-    pageSize: number;
-    sort: {
-      sorted: boolean;
-      unsorted: boolean;
-      empty: boolean;
-    };
-    offset: number;
-    paged: boolean;
-    unpaged: boolean;
-  };
-  totalElements: number;
-  totalPages: number;
-  last: boolean;
-  first: boolean;
-  numberOfElements: number;
-  size: number;
-  number: number;
-  sort: {
-    sorted: boolean;
-    unsorted: boolean;
-    empty: boolean;
-  };
-  empty: boolean;
+interface AdminWritingHistoryDto extends WritingHistoryDto {
+  userName?: string;
+  userEmail?: string;
 }
 
 @Component({
-  selector: 'app-writing-self-check-history',
+  selector: 'app-admin-writing-history',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
     <div class="history-container">
       <div class="history-header">
-        <h2>Lịch sử Tự kiểm tra Writing</h2>
-        <p>Xem lại các bài tự kiểm tra đã làm và điểm số</p>
-      </div>
-
-      <div class="stats-section" *ngIf="userStats()">
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">📝</div>
-            <div class="stat-content">
-              <div class="stat-number">{{ userStats()!.totalCompleted }}</div>
-              <div class="stat-label">Tổng bài đã làm</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">📊</div>
-            <div class="stat-content">
-              <div class="stat-number">{{ userStats()!.averageScore?.toFixed(1) || 'N/A' }}</div>
-              <div class="stat-label">Điểm trung bình</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">📈</div>
-            <div class="stat-content">
-              <div class="stat-number">{{ userStats()!.task1Completed }}</div>
-              <div class="stat-label">Task 1</div>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">📋</div>
-            <div class="stat-content">
-              <div class="stat-number">{{ userStats()!.task2Completed }}</div>
-              <div class="stat-label">Task 2</div>
-            </div>
-          </div>
-        </div>
+        <h2>Lịch sử làm bài Writing (Admin)</h2>
+        <p>Xem tất cả các bài viết của người dùng</p>
       </div>
 
       <div class="filters-section">
@@ -119,7 +35,7 @@ interface Page<T> {
               [(ngModel)]="searchQuery" 
               (keyup.enter)="triggerSearch()"
               (input)="onSearchChange()"
-              placeholder="Tìm theo đề bài, nội dung bài viết..."
+              placeholder="Tìm theo nội dung bài viết, tiêu đề đề bài, user..."
               class="search-input">
             <button class="btn btn-primary btn-search" (click)="triggerSearch()" type="button">
               🔍 Tìm kiếm
@@ -129,7 +45,7 @@ interface Page<T> {
         
         <div class="filter-group">
           <label>Loại bài:</label>
-          <select [(ngModel)]="selectedType">
+          <select [(ngModel)]="selectedType" (change)="onFilterChange()">
             <option value="">Tất cả</option>
             <option value="TASK1">Task 1</option>
             <option value="TASK2">Task 2</option>
@@ -167,51 +83,73 @@ interface Page<T> {
 
         <div *ngIf="!loading() && historyPage() && historyPage()!.content.length === 0" class="empty-state">
           <div class="empty-icon">📚</div>
-          <h3>Không tìm thấy bài tự kiểm tra nào</h3>
+          <h3>Không tìm thấy bài viết nào</h3>
           <p *ngIf="hasActiveFilters()">Không có kết quả phù hợp với bộ lọc. Hãy thử điều chỉnh bộ lọc hoặc xóa bộ lọc để xem tất cả.</p>
-          <p *ngIf="!hasActiveFilters()">Hãy bắt đầu tự kiểm tra để xem lịch sử ở đây!</p>
+          <p *ngIf="!hasActiveFilters()">Chưa có bài viết nào.</p>
         </div>
 
         <div *ngFor="let item of historyPage()?.content || []" class="history-item">
           <div class="history-card">
             <div class="history-card-header">
               <div class="title-block">
-                <h3 class="task-title">{{ getTaskTitle(item) }}</h3>
-                <div class="meta-chips">
-                  <span class="chip task-type-badge" [ngClass]="item.taskType.toLowerCase()">
-                    {{ item.taskType === 'TASK1' ? 'Task 1' : 'Task 2' }}
+                <h3 class="task-title">{{ item.taskTitle || ('Bài Task ' + item.taskId) }}</h3>
+                <div class="user-info">
+                  <span class="user-label">Người làm bài:</span>
+                  <span *ngIf="getUserName(item) || getUserEmail(item)" class="user-details">
+                    <span *ngIf="getUserName(item)" class="user-name">{{ getUserName(item) }}</span>
+                    <span *ngIf="getUserName(item) && getUserEmail(item)" class="user-separator"> · </span>
+                    <span *ngIf="getUserEmail(item)" class="user-email">{{ getUserEmail(item) }}</span>
                   </span>
-                  <span class="chip meta-chip">
-                    <span class="chip-icon">📝</span>{{ item.wordCount }} từ
+                  <span *ngIf="!getUserName(item) && !getUserEmail(item)" class="user-details">
+                    <span class="user-id">ID: {{ item.userId }}</span>
+                    <span class="anonymous-badge">(Anonymous)</span>
                   </span>
                 </div>
-              </div>
-              <div class="submitted-meta">
-                <span class="submitted-date">{{ formatDate(item.submittedAt) }}</span>
-                <span class="submitted-time">{{ formatTime(item.submittedAt) }}</span>
               </div>
             </div>
 
             <div class="history-card-body">
-              <div class="answer-preview">
+              <div class="task-instruction-preview" *ngIf="getTaskInstruction(item)">
                 <h4>Đề bài</h4>
-                <div class="answer-text" [innerHTML]="getQuestionPreview(item.taskQuestion)"></div>
+                <div class="instruction-text" [innerHTML]="getTaskInstruction(item)"></div>
               </div>
-
+              
               <div class="answer-preview">
                 <h4>Bài viết</h4>
-                <div class="answer-text" [innerHTML]="getAnswerPreview(item.userAnswer)"></div>
+                <div class="answer-text" [innerHTML]="getAnswerPreview(item.answer)"></div>
               </div>
 
-              <div class="result-chips">
+              <!-- All chips in one line -->
+              <div class="all-chips">
+                <span class="chip task-type-badge" [ngClass]="item.taskType.toLowerCase()">
+                  {{ item.taskType === 'TASK1' ? 'Task 1' : 'Task 2' }}
+                </span>
+                <span class="chip subtype-chip" *ngIf="getTaskSubtypeLabel(item)">
+                  {{ getTaskSubtypeLabel(item) }}
+                </span>
+                <span
+                  class="chip difficulty-badge"
+                  *ngIf="getTaskDifficulty(item) as difficulty"
+                  [ngClass]="difficulty">
+                  {{ getDifficultyLabel(difficulty) }}
+                </span>
+                <span class="chip meta-chip" *ngIf="getTaskTimeLimit(item) as timeLimit">
+                  <span class="chip-icon">⏱️</span>Giới hạn: {{ timeLimit }} phút
+                </span>
+                <span class="chip meta-chip" *ngIf="getTaskWordTarget(item) as wordTarget">
+                  <span class="chip-icon">📝</span>Mục tiêu: {{ wordTarget }} từ
+                </span>
                 <span class="chip meta-chip">
                   <span class="chip-icon">📝</span>{{ item.wordCount }} từ thực tế
                 </span>
-                <span class="chip meta-chip score-chip" *ngIf="item.aiScore">
-                  <span class="chip-icon">🎯</span>{{ item.aiScore.toFixed(1) }}/9
+                <span class="chip meta-chip">
+                  <span class="chip-icon">⏱️</span>Đã làm: {{ formatDuration(item.timeSpent) }}
                 </span>
                 <span class="chip meta-chip">
                   <span class="chip-icon">📅</span>{{ formatDate(item.submittedAt) }} {{ formatTime(item.submittedAt) }}
+                </span>
+                <span class="chip meta-chip score-chip" *ngIf="item.aiScore">
+                  <span class="chip-icon">🎯</span>{{ item.aiScore.toFixed(1) }}/9
                 </span>
               </div>
 
@@ -316,46 +254,6 @@ interface Page<T> {
       font-size: 1rem;
     }
 
-    .stats-section {
-      margin-bottom: 2rem;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-    }
-
-    .stat-card {
-      background: #ffffff;
-      padding: 1rem 1.1rem;
-      border-radius: 10px;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .stat-icon {
-      font-size: 2rem;
-    }
-
-    .stat-content {
-      flex: 1;
-    }
-
-    .stat-number {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #3b82f6;
-    }
-
-    .stat-label {
-      font-size: 0.875rem;
-      color: #6b7280;
-    }
-
     .filters-section {
       background: #ffffff;
       padding: 1rem 1.25rem;
@@ -425,10 +323,6 @@ interface Page<T> {
       background: linear-gradient(135deg, #1e40af, #1e3a8a);
     }
 
-    .filter-group .btn-apply {
-      margin-right: 0.5rem;
-    }
-
     .date-input {
       padding: 0.5rem;
       border: 1px solid #d1d5db;
@@ -444,12 +338,6 @@ interface Page<T> {
 
     .btn-clear {
       padding: 0.5rem 1rem;
-    }
-
-    .filter-group:has(.btn-apply) {
-      flex-direction: row;
-      align-items: center;
-      gap: 0.5rem;
     }
 
     .pagination-info {
@@ -503,11 +391,59 @@ interface Page<T> {
       color: #0f172a;
     }
 
-    .meta-chips,
-    .result-chips {
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+    }
+
+    .user-label {
+      font-weight: 600;
+      color: #475569;
+    }
+
+    .user-details {
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .user-name {
+      font-weight: 500;
+      color: #2563eb;
+    }
+
+    .user-email {
+      color: #6b7280;
+    }
+
+    .user-separator {
+      color: #9ca3af;
+    }
+
+    .user-id {
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #6b7280;
+      background: #f1f5f9;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .anonymous-badge {
+      color: #9ca3af;
+      font-size: 0.8rem;
+      font-style: italic;
+    }
+
+    .all-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 0.4rem;
+      margin-top: 0.75rem;
     }
 
     .chip {
@@ -538,6 +474,26 @@ interface Page<T> {
       color: #b91c1c;
     }
 
+    .subtype-chip {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .difficulty-badge.easy {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .difficulty-badge.medium {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    .difficulty-badge.hard {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+
     .meta-chip {
       background: #f8fafc;
       color: #334155;
@@ -549,24 +505,20 @@ interface Page<T> {
       font-weight: 600;
     }
 
-    .submitted-meta {
-      text-align: right;
-      font-size: 0.8rem;
-      color: #64748b;
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      align-items: flex-end;
-    }
-
     .history-card-body {
       display: flex;
       flex-direction: column;
       gap: 1rem;
     }
 
+    .task-instruction-preview,
+    .answer-preview {
+      margin-bottom: 0.5rem;
+    }
+
+    .task-instruction-preview h4,
     .answer-preview h4 {
-      margin: 0;
+      margin: 0 0 0.5rem 0;
       font-size: 0.8rem;
       font-weight: 600;
       color: #6b7280;
@@ -574,6 +526,7 @@ interface Page<T> {
       letter-spacing: 0.06em;
     }
 
+    .instruction-text,
     .answer-text {
       background: #f8fafc;
       padding: 0.85rem;
@@ -584,16 +537,6 @@ interface Page<T> {
       line-height: 1.5;
       max-height: 140px;
       overflow: hidden;
-    }
-
-    .result-chips .chip {
-      font-weight: 600;
-      color: #1e293b;
-    }
-
-    .result-chips .chip.meta-chip {
-      background: #eef2ff;
-      color: #1e293b;
     }
 
     .evaluation-results {
@@ -797,18 +740,10 @@ interface Page<T> {
         width: 100%;
       }
 
-      .filter-group:has(.btn-apply) {
-        flex-direction: column;
-      }
-
       .history-card-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
-      }
-
-      .submitted-meta {
-        text-align: left;
       }
 
       .history-actions {
@@ -818,10 +753,11 @@ interface Page<T> {
     }
   `]
 })
-export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, OnDestroy {
+export class AdminWritingHistoryComponent implements OnInit, AfterViewInit, OnDestroy {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
-  router = inject(Router);
+  private router = inject(Router);
+  private writingTaskService = inject(WritingTaskService);
 
   selectedType = '';
   searchQuery = '';
@@ -835,73 +771,17 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
   private toDatePicker: flatpickr.Instance | null = null;
   
   currentPage = signal(0);
-  itemsPerPage = 6;
+  itemsPerPage = 10;
   searchDebounceTimer: any = null;
 
-  historyPage = signal<Page<WritingSelfCheckHistoryDto> | null>(null);
-  allHistoryForStats = signal<WritingSelfCheckHistoryDto[]>([]);
-  loading = signal<boolean>(false);
-  error = signal<string | null>(null);
+  historyPage = signal<Page<AdminWritingHistoryDto> | null>(null);
+  loading = signal(false);
 
-  // Computed stats from all history
-  userStats = computed(() => {
-    const allHistory = this.allHistoryForStats();
-    if (allHistory.length === 0) {
-      // Fallback to page data if all history not loaded yet
-      const page = this.historyPage();
-      if (!page) return null;
-      
-      // Estimate based on current page
-      const totalCompleted = page.totalElements;
-      const task1Ratio = page.content.length > 0 
-        ? page.content.filter(item => item.taskType === 'TASK1').length / page.content.length 
-        : 0;
-      const task2Ratio = page.content.length > 0 
-        ? page.content.filter(item => item.taskType === 'TASK2').length / page.content.length 
-        : 0;
-      
-      const itemsWithScores = page.content.filter(item => item.aiScore != null && item.aiScore > 0);
-      const averageScore = itemsWithScores.length > 0
-        ? itemsWithScores.reduce((sum, item) => sum + (item.aiScore || 0), 0) / itemsWithScores.length
-        : undefined;
-
-      return {
-        totalCompleted,
-        task1Completed: Math.round(totalCompleted * task1Ratio),
-        task2Completed: Math.round(totalCompleted * task2Ratio),
-        averageScore
-      };
-    }
-
-    // Calculate from all history
-    const totalCompleted = allHistory.length;
-    const task1Completed = allHistory.filter(item => item.taskType === 'TASK1').length;
-    const task2Completed = allHistory.filter(item => item.taskType === 'TASK2').length;
-    
-    const itemsWithScores = allHistory.filter(item => item.aiScore != null && item.aiScore > 0);
-    const averageScore = itemsWithScores.length > 0
-      ? itemsWithScores.reduce((sum, item) => sum + (item.aiScore || 0), 0) / itemsWithScores.length
-      : undefined;
-
-    return {
-      totalCompleted,
-      task1Completed,
-      task2Completed,
-      averageScore
-    };
-  });
-
-  ngOnInit(): void {
-    if (!this.authService.isAuthenticated()) {
-      this.error.set('Vui lòng đăng nhập để xem lịch sử tự kiểm tra.');
-      return;
-    }
+  ngOnInit() {
     this.loadHistory();
-    this.loadAllHistoryForStats();
   }
 
   ngAfterViewInit() {
-    // Initialize flatpickr for date inputs
     if (this.fromDateInput) {
       this.fromDatePicker = flatpickr(this.fromDateInput.nativeElement, {
         dateFormat: 'd/m/Y',
@@ -928,7 +808,6 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
   }
 
   ngOnDestroy() {
-    // Destroy flatpickr instances
     if (this.fromDatePicker) {
       this.fromDatePicker.destroy();
     }
@@ -937,11 +816,9 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
     }
   }
 
-  loadHistory(): void {
+  loadHistory() {
     this.loading.set(true);
-    this.error.set(null);
-
-    // Convert dd/mm/yyyy to yyyy-mm-dd for API
+    
     const fromDateParam = this.fromDate ? this.convertDateFormat(this.fromDate, true) : undefined;
     const toDateParam = this.toDate ? this.convertDateFormat(this.toDate, false) : undefined;
 
@@ -962,32 +839,25 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
       params = params.set('toDate', toDateParam);
     }
 
-    this.http.get<Page<WritingSelfCheckHistoryDto>>('http://localhost:8081/api/writing-self-check/history', { params }).subscribe({
+    // Use admin endpoint
+    this.http.get<Page<AdminWritingHistoryDto>>('http://localhost:8081/api/admin/writing-history/history', { params }).subscribe({
       next: (page) => {
         this.historyPage.set(page);
         this.loading.set(false);
       },
       error: (err) => {
-        console.error('Error loading history:', err);
-        this.error.set(err.error?.message || 'Không thể tải lịch sử. Vui lòng thử lại.');
-        this.loading.set(false);
-      }
-    });
-  }
-
-  loadAllHistoryForStats(): void {
-    // Load all history without filters for accurate stats calculation
-    let params = new HttpParams()
-      .set('page', '0')
-      .set('size', '1000'); // Large size to get all history
-
-    this.http.get<Page<WritingSelfCheckHistoryDto>>('http://localhost:8081/api/writing-self-check/history', { params }).subscribe({
-      next: (page) => {
-        this.allHistoryForStats.set(page.content);
-      },
-      error: (err) => {
-        console.error('Error loading all history for stats:', err);
-        // Silently fail, stats will use fallback from current page
+        console.warn('Admin endpoint not available, trying alternative:', err);
+        // Alternative: try different endpoint pattern
+        this.http.get<Page<AdminWritingHistoryDto>>('http://localhost:8081/api/writing-history/all/page', { params }).subscribe({
+          next: (page) => {
+            this.historyPage.set(page);
+            this.loading.set(false);
+          },
+          error: (fallbackErr) => {
+            console.error('Error loading history. Please create admin endpoint:', fallbackErr);
+            this.loading.set(false);
+          }
+        });
       }
     });
   }
@@ -1010,23 +880,16 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
     this.loadHistory();
   }
 
+  onFilterChange() {
+    this.currentPage.set(0);
+    this.loadHistory();
+  }
+
   onSearchChange() {
-    // Debounce search when typing (optional - user can also press Enter or button)
-    // For now, we'll keep it disabled and require explicit button click
-    // Uncomment below if you want auto-search while typing
-    /*
-    if (this.searchDebounceTimer) {
-      clearTimeout(this.searchDebounceTimer);
-    }
-    this.searchDebounceTimer = setTimeout(() => {
-      this.currentPage.set(0);
-      this.loadHistory();
-    }, 500);
-    */
+    // Can add debounce here if needed
   }
 
   triggerSearch() {
-    // Apply all filters (search, task type, date range) when button is clicked or Enter is pressed
     if (this.searchDebounceTimer) {
       clearTimeout(this.searchDebounceTimer);
     }
@@ -1034,8 +897,8 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
     this.loadHistory();
   }
 
-  viewFullAnswer(item: WritingSelfCheckHistoryDto): void {
-    this.router.navigate(['/writing-self-check/history', item.id]);
+  viewFullAnswer(item: AdminWritingHistoryDto): void {
+    this.router.navigate(['/admin/writing-history', item.id]);
   }
 
   goToPage(page: number): void {
@@ -1058,7 +921,6 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
     const current = (this.historyPage()?.number || 0) + 1;
     const pages: number[] = [];
     
-    // Show max 7 pages
     let start = Math.max(1, current - 3);
     let end = Math.min(totalPages, current + 3);
     
@@ -1077,8 +939,71 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
     return pages;
   }
 
-  getTaskTitle(item: WritingSelfCheckHistoryDto): string {
-    return `Tự kiểm tra - ${item.taskType === 'TASK1' ? 'Task 1' : 'Task 2'}`;
+  private findTask(item: WritingHistoryDto): WritingTask | undefined {
+    return this.writingTaskService.sortedTasks().find((t: WritingTask) => t.id === item.taskId.toString());
+  }
+
+  getTaskSubtypeLabel(item: WritingHistoryDto): string | null {
+    const task = this.findTask(item);
+    if (!task) {
+      return null;
+    }
+
+    if (task.type === 'task1') {
+      const labels: Record<string, string> = {
+        'line-graph': 'Line Graph',
+        'bar-chart': 'Bar Chart',
+        'pie-chart': 'Pie Chart',
+        'table': 'Table',
+        'mixed-graph': 'Mixed Graph',
+        'map': 'Map',
+        'process': 'Process'
+      };
+      return labels[task.task1Type] || null;
+    }
+
+    if (task.type === 'task2') {
+      const labels: Record<string, string> = {
+        'agree-disagree': 'Agree/Disagree',
+        'discussion': 'Discussion',
+        'advantages-disadvantages': 'Advantages/Disadvantages',
+        'causes-problems-solutions': 'Causes/Problems/Solutions',
+        'two-part-question': 'Two-Part Question',
+        'positive-negative-development': 'Positive/Negative Development'
+      };
+      return labels[task.task2Type] || null;
+    }
+
+    return null;
+  }
+
+  getTaskDifficulty(item: WritingHistoryDto): 'easy' | 'medium' | 'hard' | null {
+    const task = this.findTask(item);
+    return task ? task.difficulty : null;
+  }
+
+  getDifficultyLabel(difficulty: 'easy' | 'medium' | 'hard'): string {
+    const labels: Record<'easy' | 'medium' | 'hard', string> = {
+      easy: 'Dễ',
+      medium: 'Trung bình',
+      hard: 'Khó'
+    };
+    return labels[difficulty];
+  }
+
+  getTaskTimeLimit(item: WritingHistoryDto): number | null {
+    const task = this.findTask(item);
+    return task ? task.timeLimit : null;
+  }
+
+  getTaskWordTarget(item: WritingHistoryDto): number | null {
+    const task = this.findTask(item);
+    return task ? task.wordCount : null;
+  }
+
+  getTaskInstruction(item: WritingHistoryDto): string | null {
+    const task = this.findTask(item);
+    return task?.instruction || null;
   }
 
   formatDate(dateString: string): string {
@@ -1092,9 +1017,7 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
     });
   }
 
-  // Convert d/m/Y or dd/mm/yyyy to ISO string for API (isStart = true for fromDate, false for toDate)
   convertDateFormat(dateStr: string, isStart: boolean): string {
-    // Support both d/m/Y and dd/mm/yyyy formats from flatpickr
     const dateRegex = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
     if (!dateRegex.test(dateStr)) {
       return '';
@@ -1112,13 +1035,22 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
     return date.toISOString();
   }
 
+  formatDuration(seconds: number): string {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
+
   getAnswerPreview(answer: string): string {
     if (!answer) return '';
     return answer.length > 200 ? answer.substring(0, 200) + '...' : answer;
   }
 
-  getQuestionPreview(question: string): string {
-    if (!question) return '';
-    return question.length > 200 ? question.substring(0, 200) + '...' : question;
+  getUserName(item: WritingHistoryDto): string | undefined {
+    return (item as AdminWritingHistoryDto).userName;
+  }
+
+  getUserEmail(item: WritingHistoryDto): string | undefined {
+    return (item as AdminWritingHistoryDto).userEmail;
   }
 }
