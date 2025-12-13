@@ -110,9 +110,44 @@ interface Page<T> {
       </div>
 
       <div class="filters-section">
+        <!-- Advanced Filters -->
+        <div class="advanced-filters" *ngIf="showAdvancedFilters()">
+          <div class="filter-group">
+            <label>Loại bài:</label>
+            <select [(ngModel)]="selectedType">
+              <option value="">Tất cả</option>
+              <option value="TASK1">Task 1</option>
+              <option value="TASK2">Task 2</option>
+            </select>
+          </div>
+          
+          <!-- Date Filters -->
+          <div class="filter-group date-filter-group">
+            <label>📅 Ngày làm bài:</label>
+            <div class="date-inputs-wrapper">
+              <input 
+                #fromDateInput
+                type="text" 
+                [(ngModel)]="fromDate" 
+                placeholder="dd/mm/yyyy"
+                class="date-input">
+              <span class="date-separator">đến</span>
+              <input 
+                #toDateInput
+                type="text" 
+                [(ngModel)]="toDate" 
+                placeholder="dd/mm/yyyy"
+                class="date-input">
+            </div>
+          </div>
+          
+          <div class="filter-group clear-filter-group">
+            <button class="btn btn-secondary btn-clear" (click)="clearFilters()" *ngIf="hasActiveFilters()">Xóa bộ lọc</button>
+          </div>
+        </div>
+        
         <!-- Search Box -->
         <div class="filter-group search-group">
-          <label>🔍 Tìm kiếm:</label>
           <div class="search-input-wrapper">
             <input 
               type="text" 
@@ -121,41 +156,15 @@ interface Page<T> {
               (input)="onSearchChange()"
               placeholder="Tìm theo đề bài, nội dung bài viết..."
               class="search-input">
-            <button class="btn btn-primary btn-search" (click)="triggerSearch()" type="button">
-              🔍 Tìm kiếm
+            <button class="btn btn-primary btn-search" (click)="triggerSearch()" type="button" title="Tìm kiếm">
+              <span class="search-icon">🔍</span>
+            </button>
+            <button class="btn btn-secondary btn-advanced" (click)="toggleAdvancedFilters()" type="button" [class.active]="showAdvancedFilters()" title="Tìm kiếm nâng cao">
+              <svg class="filter-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 6H20M7 12H17M10 18H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
             </button>
           </div>
-        </div>
-        
-        <div class="filter-group">
-          <label>Loại bài:</label>
-          <select [(ngModel)]="selectedType">
-            <option value="">Tất cả</option>
-            <option value="TASK1">Task 1</option>
-            <option value="TASK2">Task 2</option>
-          </select>
-        </div>
-        
-        <!-- Date Filters -->
-        <div class="filter-group">
-          <label>📅 Ngày làm bài:</label>
-          <input 
-            #fromDateInput
-            type="text" 
-            [(ngModel)]="fromDate" 
-            placeholder="dd/mm/yyyy"
-            class="date-input">
-          <span class="date-separator">đến</span>
-          <input 
-            #toDateInput
-            type="text" 
-            [(ngModel)]="toDate" 
-            placeholder="dd/mm/yyyy"
-            class="date-input">
-        </div>
-        
-        <div class="filter-group">
-          <button class="btn btn-secondary btn-clear" (click)="clearFilters()">Xóa bộ lọc</button>
         </div>
       </div>
 
@@ -364,9 +373,8 @@ interface Page<T> {
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
       margin-bottom: 1.5rem;
       display: flex;
-      gap: 1.25rem;
-      align-items: center;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 1rem;
     }
 
     .filter-group {
@@ -378,6 +386,7 @@ interface Page<T> {
     .filter-group label {
       font-weight: 500;
       color: #374151;
+      font-size: 0.875rem;
     }
 
     .filter-group select {
@@ -385,11 +394,12 @@ interface Page<T> {
       border: 1px solid #d1d5db;
       border-radius: 6px;
       background: white;
+      font-size: 0.875rem;
+      min-width: 150px;
     }
 
     .search-group {
-      flex: 1;
-      min-width: 250px;
+      width: 100%;
     }
 
     .search-input-wrapper {
@@ -407,11 +417,13 @@ interface Page<T> {
       font-size: 0.9rem;
     }
 
-    .btn-search,
-    .btn-apply {
-      padding: 0.5rem 1rem;
-      white-space: nowrap;
-      font-size: 0.9rem;
+    .btn-search {
+      padding: 0.5rem 0.75rem;
+      min-width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       background: linear-gradient(135deg, #2563eb, #1e40af);
       color: white;
       border: none;
@@ -420,13 +432,71 @@ interface Page<T> {
       font-weight: 500;
     }
 
-    .btn-search:hover,
-    .btn-apply:hover {
+    .btn-search:hover {
       background: linear-gradient(135deg, #1e40af, #1e3a8a);
     }
 
-    .filter-group .btn-apply {
-      margin-right: 0.5rem;
+    .btn-advanced {
+      padding: 0.5rem 0.75rem;
+      min-width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-advanced {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+    }
+    
+    .btn-advanced:hover {
+      background: #e5e7eb;
+    }
+    
+    .btn-advanced.active {
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: white;
+      border-color: #2563eb;
+    }
+
+    .search-icon {
+      display: inline-block;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .filter-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .advanced-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2.5rem;
+      align-items: flex-end;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 0;
+    }
+
+    .date-filter-group {
+      flex: 0 0 auto;
+    }
+
+    .date-inputs-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .date-input {
@@ -434,22 +504,23 @@ interface Page<T> {
       border: 1px solid #d1d5db;
       border-radius: 6px;
       font-size: 0.85rem;
+      min-width: 120px;
     }
 
     .date-separator {
-      margin: 0 0.5rem;
+      margin: 0;
       color: #6b7280;
       font-size: 0.875rem;
+      white-space: nowrap;
     }
 
-    .btn-clear {
+    .clear-filter-group {
+      flex: 0 0 auto;
+    }
+
+    .clear-filter-group .btn-clear {
       padding: 0.5rem 1rem;
-    }
-
-    .filter-group:has(.btn-apply) {
-      flex-direction: row;
-      align-items: center;
-      gap: 0.5rem;
+      white-space: nowrap;
     }
 
     .pagination-info {
@@ -827,6 +898,7 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
   searchQuery = '';
   fromDate = '';
   toDate = '';
+  showAdvancedFilters = signal(false); // Track advanced filters visibility
   
   @ViewChild('fromDateInput') fromDateInput!: ElementRef<HTMLInputElement>;
   @ViewChild('toDateInput') toDateInput!: ElementRef<HTMLInputElement>;
@@ -901,8 +973,23 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
   }
 
   ngAfterViewInit() {
-    // Initialize flatpickr for date inputs
-    if (this.fromDateInput) {
+    // Initialize flatpickr will be done when advanced filters are shown
+    this.initializeDatePickers();
+  }
+
+  initializeDatePickers() {
+    // Destroy existing pickers if they exist
+    if (this.fromDatePicker) {
+      this.fromDatePicker.destroy();
+      this.fromDatePicker = null;
+    }
+    if (this.toDatePicker) {
+      this.toDatePicker.destroy();
+      this.toDatePicker = null;
+    }
+
+    // Initialize flatpickr for date inputs if they exist
+    if (this.fromDateInput?.nativeElement) {
       this.fromDatePicker = flatpickr(this.fromDateInput.nativeElement, {
         dateFormat: 'd/m/Y',
         locale: {
@@ -914,7 +1001,7 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
       });
     }
 
-    if (this.toDateInput) {
+    if (this.toDateInput?.nativeElement) {
       this.toDatePicker = flatpickr(this.toDateInput.nativeElement, {
         dateFormat: 'd/m/Y',
         locale: {
@@ -924,6 +1011,17 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
           this.toDate = dateStr;
         }
       });
+    }
+  }
+
+  toggleAdvancedFilters(): void {
+    this.showAdvancedFilters.set(!this.showAdvancedFilters());
+    // Initialize date pickers after advanced filters are shown
+    if (this.showAdvancedFilters()) {
+      // Use setTimeout to wait for DOM to update
+      setTimeout(() => {
+        this.initializeDatePickers();
+      }, 0);
     }
   }
 
