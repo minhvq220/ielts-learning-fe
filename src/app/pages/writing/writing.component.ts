@@ -37,68 +37,77 @@ interface AIEvaluation {
             <div>
               <h2>Chọn bài tập Writing</h2>
               <p>Chọn một bài tập để bắt đầu luyện tập</p>
-        </div>
-            <a routerLink="/writing/history" class="history-btn">
-              <span class="history-icon">📚</span>
-              <span>Lịch sử làm bài</span>
-            </a>
-          </div>
-          
-          <!-- Introduction -->
-          <div class="writing-intro">
-            <h3 class="intro-title">Luyện IELTS Writing với AI</h3>
-            <p class="intro-line">
-              <strong>1.</strong> Luyện IELTS Writing với AI theo phương pháp <strong>Logical Framework</strong> của YouPass.
-            </p>
-            <p class="intro-line">
-              <strong>2.</strong> Phù hợp nhất với trình độ đầu vào Writing <strong>5.5 ~ 6.5</strong>, nếu bạn thấp hoặc cao hơn thì sẽ không hiệu quả tối đa.
-            </p>
-            <p class="intro-callout">Bạn hãy chọn bài mình thích và viết ngay nha!</p>
+            </div>
           </div>
 
           <!-- Stats Overview -->
           <div class="stats-overview" *ngIf="userStats()">
-            <div class="stat-summary">
-              <div class="summary-title">Tổng quan luyện tập</div>
-              <div class="summary-value">{{ userStats()!.totalCompleted }} bài</div>
-              <div class="summary-sub">
-                Điểm TB: <strong>{{ userStats()!.averageScore?.toFixed(1) || 'N/A' }}</strong> / 9
+            <div class="stats-content">
+              <div class="stat-summary">
+                <div class="summary-title">Tổng quan luyện tập</div>
+                <div class="summary-value">{{ userStats()!.totalCompleted }} bài</div>
+                <div class="summary-sub">
+                  Điểm TB: <strong>{{ userStats()!.averageScore?.toFixed(1) || 'N/A' }}</strong> / 9
+                </div>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat-groups">
+                <div class="stat-mini">
+                  <span class="mini-label">Task 1</span>
+                  <span class="mini-value">{{ userStats()!.task1Completed }}</span>
+                </div>
+                <div class="stat-mini">
+                  <span class="mini-label">Task 2</span>
+                  <span class="mini-value">{{ userStats()!.task2Completed }}</span>
+                </div>
               </div>
             </div>
-            <div class="stat-divider"></div>
-            <div class="stat-groups">
-              <div class="stat-mini">
-                <span class="mini-label">Task 1</span>
-                <span class="mini-value">{{ userStats()!.task1Completed }}</span>
-              </div>
-              <div class="stat-mini">
-                <span class="mini-label">Task 2</span>
-                <span class="mini-value">{{ userStats()!.task2Completed }}</span>
-              </div>
+            <div class="stats-header">
+              <a routerLink="/writing/history" class="history-btn">
+                <span class="history-icon">📚</span>
+                <span>Lịch sử làm bài</span>
+              </a>
             </div>
           </div>
         </div>
         
-        <!-- Tabs -->
-        <div class="task-tabs">
-          <button 
-            class="tab-btn" 
-            [class.active]="activeTab() === 'uncompleted'"
-            (click)="setActiveTab('uncompleted')">
-            Bài chưa làm ({{ uncompletedCount() }})
-            </button>
-          <button 
-            class="tab-btn" 
-            [class.active]="activeTab() === 'completed'"
-            (click)="setActiveTab('completed')">
-            Bài đã làm ({{ completedCount() }})
-            </button>
-          </div>
-        
         <div class="task-filters">
+          <!-- Advanced Filters -->
+          <div class="advanced-filters" *ngIf="showAdvancedFilters()">
+            <div class="filter-group">
+              <label>Loại bài:</label>
+              <select [(ngModel)]="selectedType">
+                <option value="">Tất cả</option>
+                <option value="task1">Task 1</option>
+                <option value="task2">Task 2</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Độ khó:</label>
+              <select [(ngModel)]="selectedDifficulty">
+                <option value="">Tất cả</option>
+                <option value="easy">Dễ</option>
+                <option value="medium">Trung bình</option>
+                <option value="hard">Khó</option>
+              </select>
+            </div>
+            
+            <div class="filter-group">
+              <label>Trạng thái:</label>
+              <select [(ngModel)]="selectedStatus" (change)="onFilterChange()">
+                <option value="">Tất cả</option>
+                <option value="completed">Đã làm</option>
+                <option value="uncompleted">Chưa làm</option>
+              </select>
+            </div>
+            
+            <div class="filter-group">
+              <button class="btn btn-secondary btn-clear" (click)="clearFilters()" *ngIf="searchQuery || selectedType || selectedDifficulty || selectedStatus">Xóa bộ lọc</button>
+            </div>
+          </div>
+          
           <!-- Search Box -->
           <div class="filter-group search-group">
-            <label>🔍 Tìm kiếm:</label>
             <div class="search-input-wrapper">
               <input 
                 type="text" 
@@ -106,32 +115,15 @@ interface AIEvaluation {
                 (keyup.enter)="triggerSearch()"
                 placeholder="Tìm theo tiêu đề, hướng dẫn, loại bài..."
                 class="search-input">
-              <button class="btn btn-primary btn-search" (click)="triggerSearch()" type="button">
-                🔍 Tìm kiếm
+              <button class="btn btn-primary btn-search" (click)="triggerSearch()" type="button" title="Tìm kiếm">
+                <span class="search-icon">🔍</span>
+              </button>
+              <button class="btn btn-secondary btn-advanced" (click)="toggleAdvancedFilters()" type="button" [class.active]="showAdvancedFilters()" title="Tìm kiếm nâng cao">
+                <svg class="filter-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M4 6H20M7 12H17M10 18H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
               </button>
             </div>
-          </div>
-          
-          <div class="filter-group">
-            <label>Loại bài:</label>
-            <select [(ngModel)]="selectedType">
-              <option value="">Tất cả</option>
-              <option value="task1">Task 1</option>
-              <option value="task2">Task 2</option>
-            </select>
-          </div>
-          <div class="filter-group">
-            <label>Độ khó:</label>
-            <select [(ngModel)]="selectedDifficulty">
-              <option value="">Tất cả</option>
-              <option value="easy">Dễ</option>
-              <option value="medium">Trung bình</option>
-              <option value="hard">Khó</option>
-            </select>
-          </div>
-          
-          <div class="filter-group">
-            <button class="btn btn-secondary btn-clear" (click)="clearFilters()" *ngIf="searchQuery || selectedType || selectedDifficulty">Xóa bộ lọc</button>
           </div>
         </div>
 
@@ -143,8 +135,8 @@ interface AIEvaluation {
             (click)="selectTask(task)">
             <div class="task-card-header">
               <h3 class="task-title">{{ task.title }}</h3>
-              <span *ngIf="isTaskCompleted(task)" class="completed-badge">
-                ✓ Đã làm
+              <span class="status-badge" [class.completed]="isTaskCompleted(task)" [class.uncompleted]="!isTaskCompleted(task)">
+                {{ isTaskCompleted(task) ? '✓ Đã làm' : '○ Chưa làm' }}
               </span>
             </div>
 
@@ -561,15 +553,20 @@ interface AIEvaluation {
 
     .task-filters {
       display: flex;
-      gap: 2rem;
+      flex-direction: column;
+      gap: 1rem;
       margin-bottom: 2rem;
-      justify-content: center;
     }
 
     .filter-group {
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      flex-shrink: 0;
+    }
+    
+    .filter-group:has(.btn-clear) {
+      margin-left: auto;
     }
 
     .filter-group label {
@@ -585,9 +582,7 @@ interface AIEvaluation {
     }
 
     .search-group {
-      flex: 1;
-      min-width: 250px;
-      max-width: 400px;
+      width: 100%;
     }
 
     .search-input-wrapper {
@@ -605,20 +600,68 @@ interface AIEvaluation {
       font-size: 0.9rem;
     }
 
-    .btn-search {
-      padding: 0.5rem 1rem;
-      white-space: nowrap;
-      font-size: 0.9rem;
-      background: linear-gradient(135deg, #2563eb, #1e40af);
-      color: white;
+    .btn-search,
+    .btn-advanced {
+      padding: 0.5rem 0.75rem;
+      min-width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       border: none;
       border-radius: 6px;
       cursor: pointer;
       font-weight: 500;
+      font-size: 1.1rem;
+    }
+    
+    .btn-search {
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: white;
     }
 
     .btn-search:hover {
       background: linear-gradient(135deg, #1e40af, #1e3a8a);
+    }
+    
+    .btn-advanced {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+    }
+    
+    .btn-advanced:hover {
+      background: #e5e7eb;
+    }
+    
+    .btn-advanced.active {
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: white;
+      border-color: #2563eb;
+    }
+    
+    .search-icon {
+      display: inline-block;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+    
+    .filter-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .advanced-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      align-items: flex-start;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 0;
     }
 
     .btn-clear,
@@ -722,12 +765,22 @@ interface AIEvaluation {
       flex: 1;
     }
 
-    .completed-badge {
-      background: #22c55e;
-      color: white;
-      padding: 0.2rem 0.5rem;
+    .status-badge {
+      padding: 0.25rem 0.6rem;
       border-radius: 999px;
       font-size: 0.75rem;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    
+    .status-badge.completed {
+      background: #22c55e;
+      color: white;
+    }
+    
+    .status-badge.uncompleted {
+      background: #e5e7eb;
+      color: #6b7280;
       font-weight: 600;
       white-space: nowrap;
     }
@@ -824,48 +877,6 @@ interface AIEvaluation {
       color: #64748b;
     }
 
-    .writing-intro {
-      background: #0f172a;
-      color: #f8fafc;
-      padding: 1.25rem 1.5rem;
-      border-radius: 14px;
-      margin-top: 1.5rem;
-      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.25);
-      border: 1px solid rgba(148, 163, 184, 0.2);
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    .intro-title {
-      margin: 0;
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #38bdf8;
-      letter-spacing: 0.02em;
-    }
-
-    .intro-line {
-      margin: 0;
-      font-size: 0.9rem;
-      color: #e2e8f0;
-      line-height: 1.5;
-    }
-
-    .intro-callout {
-      margin: 0;
-      margin-top: 0.5rem;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #f97316;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    .intro-callout::before {
-      content: "✍️";
-    }
 
     .stats-overview {
       display: flex;
@@ -877,6 +888,19 @@ interface AIEvaluation {
       background: #f8fafc;
       border-radius: 12px;
       border: 1px solid #e2e8f0;
+    }
+    
+    .stats-content {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      flex: 1;
+    }
+    
+    .stats-header {
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
     }
 
     .stat-summary {
@@ -1948,15 +1972,21 @@ interface AIEvaluation {
         grid-template-columns: 1fr;
       }
 
-      .writing-intro {
-        padding: 1.1rem 1.25rem;
-        gap: 0.6rem;
-      }
 
       .stats-overview {
         flex-direction: column;
         align-items: stretch;
         gap: 1rem;
+      }
+      
+      .stats-content {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+      }
+      
+      .stats-header {
+        align-self: flex-end;
       }
 
       .stat-divider {
@@ -1993,13 +2023,23 @@ interface AIEvaluation {
       }
 
       .search-input-wrapper {
-        flex-direction: column;
-        gap: 0.75rem;
+        gap: 0.5rem;
+      }
+      
+      .btn-search,
+      .btn-advanced {
+        min-width: 36px;
+        height: 36px;
+        padding: 0.4rem 0.6rem;
+        font-size: 1rem;
       }
 
-      .btn-search,
       .btn-apply {
         width: 100%;
+      }
+      
+      .advanced-filters {
+        gap: 1rem;
       }
 
       .filter-group:has(.btn-apply) {
@@ -2167,8 +2207,9 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   searchQuery = '';
   selectedType = '';
   selectedDifficulty = '';
-  activeTab = signal<'uncompleted' | 'completed'>('uncompleted');
+  selectedStatus = ''; // Filter by status: 'completed', 'uncompleted', or '' for all
   activeInfoTab = signal<'question' | 'guide'>('question'); // Tab for switching between question and guide
+  showAdvancedFilters = signal(false); // Track advanced filters visibility
   isQuestionPanelCollapsed = signal(false); // State for collapsing question panel
   highlightedWord = signal<string | null>(null); // Currently highlighted word for statistics
 
@@ -2212,12 +2253,13 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
       return task.isActive;
     });
 
-    // Filter based on active tab
-    if (this.activeTab() === 'completed') {
+    // Filter based on selected status
+    if (this.selectedStatus === 'completed') {
       filteredTasks = filteredTasks.filter(task => completedIds.includes(Number(task.id)));
-        } else {
+    } else if (this.selectedStatus === 'uncompleted') {
       filteredTasks = filteredTasks.filter(task => !completedIds.includes(Number(task.id)));
     }
+    // If selectedStatus is empty, show all tasks
 
     return filteredTasks;
   });
@@ -2289,13 +2331,6 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.destroy$.complete();
   }
 
-  setActiveTab(tab: 'uncompleted' | 'completed'): void {
-    if (this.activeTab() !== tab) {
-      this.activeTab.set(tab);
-      this.resetPagination();
-      this.ensurePaginationBounds();
-    }
-  }
 
   goToPage(page: number): void {
     const total = this.totalPages();
@@ -2457,10 +2492,15 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isTimerRunning.set(false);
   }
 
+  toggleAdvancedFilters(): void {
+    this.showAdvancedFilters.set(!this.showAdvancedFilters());
+  }
+
   clearFilters(): void {
     this.searchQuery = '';
     this.selectedType = '';
     this.selectedDifficulty = '';
+    this.selectedStatus = '';
     // Clear filters in service and reload tasks
     this.writingService.clearFilter();
     this.resetPagination();
