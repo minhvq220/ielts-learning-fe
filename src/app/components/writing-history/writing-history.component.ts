@@ -54,9 +54,44 @@ import flatpickr from 'flatpickr';
       </div>
 
       <div class="filters-section">
+        <!-- Advanced Filters -->
+        <div class="advanced-filters" *ngIf="showAdvancedFilters()">
+          <div class="filter-group">
+            <label>Loại bài:</label>
+            <select [(ngModel)]="selectedType">
+              <option value="">Tất cả</option>
+              <option value="TASK1">Task 1</option>
+              <option value="TASK2">Task 2</option>
+            </select>
+          </div>
+          
+          <!-- Date Filters -->
+          <div class="filter-group date-filter-group">
+            <label>📅 Ngày làm bài:</label>
+            <div class="date-inputs-wrapper">
+              <input 
+                #fromDateInput
+                type="text" 
+                [(ngModel)]="fromDate" 
+                placeholder="dd/mm/yyyy"
+                class="date-input">
+              <span class="date-separator">đến</span>
+              <input 
+                #toDateInput
+                type="text" 
+                [(ngModel)]="toDate" 
+                placeholder="dd/mm/yyyy"
+                class="date-input">
+            </div>
+          </div>
+          
+          <div class="filter-group clear-filter-group">
+            <button class="btn btn-secondary btn-clear" (click)="clearFilters()" *ngIf="hasActiveFilters()">Xóa bộ lọc</button>
+          </div>
+        </div>
+        
         <!-- Search Box -->
         <div class="filter-group search-group">
-          <label>🔍 Tìm kiếm:</label>
           <div class="search-input-wrapper">
             <input 
               type="text" 
@@ -65,41 +100,15 @@ import flatpickr from 'flatpickr';
               (input)="onSearchChange()"
               placeholder="Tìm theo nội dung bài viết, tiêu đề đề bài..."
               class="search-input">
-            <button class="btn btn-primary btn-search" (click)="triggerSearch()" type="button">
-              🔍 Tìm kiếm
+            <button class="btn btn-primary btn-search" (click)="triggerSearch()" type="button" title="Tìm kiếm">
+              <span class="search-icon">🔍</span>
+            </button>
+            <button class="btn btn-secondary btn-advanced" (click)="toggleAdvancedFilters()" type="button" [class.active]="showAdvancedFilters()" title="Tìm kiếm nâng cao">
+              <svg class="filter-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M4 6H20M7 12H17M10 18H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
             </button>
           </div>
-        </div>
-        
-        <div class="filter-group">
-          <label>Loại bài:</label>
-          <select [(ngModel)]="selectedType">
-            <option value="">Tất cả</option>
-            <option value="TASK1">Task 1</option>
-            <option value="TASK2">Task 2</option>
-          </select>
-        </div>
-        
-        <!-- Date Filters -->
-        <div class="filter-group">
-          <label>📅 Ngày làm bài:</label>
-          <input 
-            #fromDateInput
-            type="text" 
-            [(ngModel)]="fromDate" 
-            placeholder="dd/mm/yyyy"
-            class="date-input">
-          <span class="date-separator">đến</span>
-          <input 
-            #toDateInput
-            type="text" 
-            [(ngModel)]="toDate" 
-            placeholder="dd/mm/yyyy"
-            class="date-input">
-        </div>
-        
-        <div class="filter-group">
-          <button class="btn btn-secondary btn-clear" (click)="clearFilters()">Xóa bộ lọc</button>
         </div>
       </div>
 
@@ -318,9 +327,8 @@ import flatpickr from 'flatpickr';
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
       margin-bottom: 1.5rem;
       display: flex;
-      gap: 1.25rem;
-      align-items: center;
-      flex-wrap: wrap;
+      flex-direction: column;
+      gap: 1rem;
     }
 
     .filter-group {
@@ -332,6 +340,7 @@ import flatpickr from 'flatpickr';
     .filter-group label {
       font-weight: 500;
       color: #374151;
+      font-size: 0.875rem;
     }
 
     .filter-group select {
@@ -339,11 +348,12 @@ import flatpickr from 'flatpickr';
       border: 1px solid #d1d5db;
       border-radius: 6px;
       background: white;
+      font-size: 0.875rem;
+      min-width: 150px;
     }
 
     .search-group {
-      flex: 1;
-      min-width: 250px;
+      width: 100%;
     }
 
     .search-input-wrapper {
@@ -361,11 +371,13 @@ import flatpickr from 'flatpickr';
       font-size: 0.9rem;
     }
 
-    .btn-search,
-    .btn-apply {
-      padding: 0.5rem 1rem;
-      white-space: nowrap;
-      font-size: 0.9rem;
+    .btn-search {
+      padding: 0.5rem 0.75rem;
+      min-width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       background: linear-gradient(135deg, #2563eb, #1e40af);
       color: white;
       border: none;
@@ -374,13 +386,71 @@ import flatpickr from 'flatpickr';
       font-weight: 500;
     }
 
-    .btn-search:hover,
-    .btn-apply:hover {
+    .btn-search:hover {
       background: linear-gradient(135deg, #1e40af, #1e3a8a);
     }
 
-    .filter-group .btn-apply {
-      margin-right: 0.5rem;
+    .btn-advanced {
+      padding: 0.5rem 0.75rem;
+      min-width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-advanced {
+      background: #f3f4f6;
+      color: #374151;
+      border: 1px solid #d1d5db;
+    }
+    
+    .btn-advanced:hover {
+      background: #e5e7eb;
+    }
+    
+    .btn-advanced.active {
+      background: linear-gradient(135deg, #2563eb, #1e40af);
+      color: white;
+      border-color: #2563eb;
+    }
+
+    .search-icon {
+      display: inline-block;
+      font-size: 1.1rem;
+      line-height: 1;
+    }
+
+    .filter-icon {
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .advanced-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2.5rem;
+      align-items: flex-end;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 0;
+    }
+
+    .date-filter-group {
+      flex: 0 0 auto;
+    }
+
+    .date-inputs-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .date-input {
@@ -388,17 +458,25 @@ import flatpickr from 'flatpickr';
       border: 1px solid #d1d5db;
       border-radius: 6px;
       font-size: 0.85rem;
+      min-width: 120px;
     }
 
     .date-separator {
-      margin: 0 0.5rem;
+      margin: 0;
       color: #6b7280;
       font-size: 0.875rem;
+      white-space: nowrap;
     }
 
-    .btn-clear {
-      padding: 0.5rem 1rem;
+    .clear-filter-group {
+      flex: 0 0 auto;
     }
+
+    .clear-filter-group .btn-clear {
+      padding: 0.5rem 1rem;
+      white-space: nowrap;
+    }
+
 
     .filter-group:has(.btn-apply) {
       flex-direction: row;
@@ -760,20 +838,28 @@ import flatpickr from 'flatpickr';
       .filters-section {
         flex-direction: column;
         align-items: stretch;
+        gap: 1rem;
+      }
+      
+      .search-group {
+        width: 100%;
+        max-width: 100%;
       }
 
       .search-input-wrapper {
-        flex-direction: column;
-        gap: 0.75rem;
+        gap: 0.5rem;
       }
-
+      
       .btn-search,
-      .btn-apply {
-        width: 100%;
+      .btn-advanced {
+        min-width: 36px;
+        height: 36px;
+        padding: 0.4rem 0.6rem;
+        font-size: 1rem;
       }
-
-      .filter-group:has(.btn-apply) {
-        flex-direction: column;
+      
+      .advanced-filters {
+        gap: 1rem;
       }
 
       .history-card-header {
@@ -810,6 +896,7 @@ export class WritingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   currentPage = signal(0);
   itemsPerPage = 6;
   searchDebounceTimer: any = null;
+  showAdvancedFilters = signal(false); // Track advanced filters visibility
 
   historyPage = signal<Page<WritingHistoryDto> | null>(null);
   userStats = computed(() => this.historyService.userStats());
@@ -822,8 +909,23 @@ export class WritingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   ngAfterViewInit() {
-    // Initialize flatpickr for date inputs
-    if (this.fromDateInput) {
+    // Initialize flatpickr will be done when advanced filters are shown
+    this.initializeDatePickers();
+  }
+
+  initializeDatePickers() {
+    // Destroy existing pickers if they exist
+    if (this.fromDatePicker) {
+      this.fromDatePicker.destroy();
+      this.fromDatePicker = null;
+    }
+    if (this.toDatePicker) {
+      this.toDatePicker.destroy();
+      this.toDatePicker = null;
+    }
+
+    // Initialize flatpickr for date inputs if they exist
+    if (this.fromDateInput?.nativeElement) {
       this.fromDatePicker = flatpickr(this.fromDateInput.nativeElement, {
         dateFormat: 'd/m/Y',
         locale: {
@@ -835,7 +937,7 @@ export class WritingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
       });
     }
 
-    if (this.toDateInput) {
+    if (this.toDateInput?.nativeElement) {
       this.toDatePicker = flatpickr(this.toDateInput.nativeElement, {
         dateFormat: 'd/m/Y',
         locale: {
@@ -1093,5 +1195,16 @@ export class WritingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
     // Note: This is an approximation since we're paginating server-side
     // For accurate attempt numbers, we'd need to load all history for the task
     return 1; // Placeholder - can be improved if needed
+  }
+
+  toggleAdvancedFilters(): void {
+    this.showAdvancedFilters.set(!this.showAdvancedFilters());
+    // Initialize date pickers after advanced filters are shown
+    if (this.showAdvancedFilters()) {
+      // Use setTimeout to wait for DOM to update
+      setTimeout(() => {
+        this.initializeDatePickers();
+      }, 0);
+    }
   }
 }
