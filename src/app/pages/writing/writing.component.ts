@@ -6,6 +6,7 @@ import { WritingTaskService } from '../../services/writing-task.service';
 import { WritingHistoryService } from '../../services/writing-history.service';
 import { WritingHistoryDto, WritingStatistics, DetailedIeltsScores, LinkingWord, WordRepetition } from '../../services/writing-history-api.service';
 import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-task.model';
+import { AuthService } from '../../services/auth.service';
 import { Subject, takeUntil, switchMap, finalize, of, from } from 'rxjs';
 
 interface AIEvaluation {
@@ -62,7 +63,7 @@ interface AIEvaluation {
                 </div>
               </div>
             </div>
-            <div class="stats-header">
+            <div class="stats-header" *ngIf="authService.isAuthenticated()">
               <a routerLink="/writing/history" class="history-btn">
                 <span class="history-icon">📚</span>
                 <span>Lịch sử làm bài</span>
@@ -2191,6 +2192,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   private historyService = inject(WritingHistoryService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  authService = inject(AuthService);
   private destroy$ = new Subject<void>();
 
   // Signals

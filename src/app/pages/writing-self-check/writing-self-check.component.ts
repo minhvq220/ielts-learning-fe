@@ -5,6 +5,7 @@ import { Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { WritingHistoryService } from '../../services/writing-history.service';
 import { WritingHistoryDto } from '../../services/writing-history-api.service';
+import { AuthService } from '../../services/auth.service';
 
 // DTO for self-check history (similar to WritingHistoryDto but with taskQuestion)
 interface WritingSelfCheckHistoryDto {
@@ -53,7 +54,7 @@ interface FileValidationConfig {
           <h2>Tự kiểm tra Writing</h2>
           <p>Nhập đề bài và bài viết của bạn để được AI chấm điểm</p>
         </div>
-        <a routerLink="/writing-self-check/history" class="history-btn">
+        <a routerLink="/writing-self-check/history" class="history-btn" *ngIf="authService.isAuthenticated()">
           <span class="history-icon">📚</span>
           <span>Lịch sử tự kiểm tra</span>
         </a>
@@ -367,6 +368,7 @@ export class WritingSelfCheckComponent {
   private http = inject(HttpClient);
   private historyService = inject(WritingHistoryService);
   router = inject(Router);
+  authService = inject(AuthService);
 
   // Form fields
   taskType = signal<'TASK1' | 'TASK2'>('TASK2');
