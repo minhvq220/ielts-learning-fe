@@ -12,7 +12,7 @@ import { AuthService } from '../../services/auth.service';
       <div class="header-content">
         <div class="logo">
           <a routerLink="/writing" class="logo-link">
-            <h1>YouPassCopy</h1>
+            <h1>EssayRater</h1>
           </a>
         </div>
         <nav class="nav">
