@@ -185,8 +185,9 @@ export class AuthService {
 
   /**
    * Logout
+   * @param redirectUrl Optional URL to redirect after logout. Defaults to '/writing'
    */
-  async logout(): Promise<void> {
+  async logout(redirectUrl?: string): Promise<void> {
     try {
       // Sign out from Firebase
       if (this.firebaseService.isReady()) {
@@ -202,8 +203,9 @@ export class AuthService {
 
       this.clearAuthStateFromStorage();
 
-      // Redirect to writing
-      this.router.navigate(['/writing']);
+      // Redirect to specified URL or default to writing
+      const targetUrl = redirectUrl || '/writing';
+      this.router.navigate([targetUrl]);
     } catch (error) {
       console.error('Logout error:', error);
       throw error;
@@ -240,6 +242,17 @@ export class AuthService {
       const userStr = localStorage.getItem('auth_user');
 
       if (token && userStr) {
+        // Check if token is expired before loading
+        if (this.isTokenExpired(token)) {
+          console.warn('⚠️ Token expired. Clearing auth state...');
+          this.clearAuthStateFromStorage();
+          // Show notification to user
+          alert('Phiên đăng nhập đã hết. Vui lòng thực hiện đăng nhập lại.');
+          // Redirect to login
+          this.router.navigate(['/login']);
+          return;
+        }
+
         const user = JSON.parse(userStr);
         this.updateAuthState({
           isAuthenticated: true,
@@ -250,6 +263,46 @@ export class AuthService {
     } catch (error) {
       console.error('Error loading auth state:', error);
       this.clearAuthStateFromStorage();
+    }
+  }
+
+  /**
+   * Check if JWT token is expired
+   * Decodes the token and checks the expiration claim
+   */
+  private isTokenExpired(token: string): boolean {
+    try {
+      if (!token) {
+        return true;
+      }
+
+      // JWT token has 3 parts separated by dots: header.payload.signature
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        return true; // Invalid token format
+      }
+
+      // Decode the payload (second part)
+      const payload = parts[1];
+      // Add padding if needed for base64 decoding
+      const paddedPayload = payload + '='.repeat((4 - payload.length % 4) % 4);
+      const decodedPayload = JSON.parse(atob(paddedPayload));
+
+      // Check expiration (exp is in seconds, Date.now() is in milliseconds)
+      if (decodedPayload.exp) {
+        const expirationTime = decodedPayload.exp * 1000; // Convert to milliseconds
+        const currentTime = Date.now();
+        
+        // Add 5 second buffer to account for clock skew
+        return currentTime >= (expirationTime - 5000);
+      }
+
+      // If no exp claim, consider it expired for security
+      return true;
+    } catch (error) {
+      console.error('Error checking token expiration:', error);
+      // If we can't decode, consider it expired for security
+      return true;
     }
   }
 
