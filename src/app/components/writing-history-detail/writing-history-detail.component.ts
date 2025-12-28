@@ -1,6 +1,6 @@
 import { Component, OnInit, AfterViewInit, OnDestroy, inject, signal, computed, ViewChildren, QueryList, ElementRef, ViewChild } from '@angular/core';
 import { Subject } from 'rxjs';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { WritingHistoryService } from '../../services/writing-history.service';
@@ -2145,7 +2145,9 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
   private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private location = inject(Location);
   private destroy$ = new Subject<void>();
+  private previousUrl: string | null = null;
   
   isAdminRoute = computed(() => this.router.url.includes('/admin/'));
 
@@ -2182,6 +2184,33 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
   });
 
   ngOnInit(): void {
+    // Get navigation state from Angular Router to determine where user came from
+    const navigation = this.router.getCurrentNavigation();
+    if (navigation && navigation.extras && navigation.extras.state) {
+      this.previousUrl = navigation.extras.state['previousUrl'] || null;
+    }
+    
+    // Fallback: try to get from sessionStorage (saved when navigating to detail)
+    if (!this.previousUrl) {
+      const savedPreviousUrl = sessionStorage.getItem('writing_history_previous_url');
+      if (savedPreviousUrl) {
+        this.previousUrl = savedPreviousUrl;
+        // Clear it after use
+        sessionStorage.removeItem('writing_history_previous_url');
+      }
+    }
+    
+    // Last fallback: try to get from browser history state or document.referrer
+    if (!this.previousUrl) {
+      const state = this.location.getState() as any;
+      if (state && state.previousUrl) {
+        this.previousUrl = state.previousUrl;
+      } else {
+        // Use document.referrer as last resort
+        this.previousUrl = document.referrer || null;
+      }
+    }
+    
     this.route.params.subscribe(params => {
       const historyId = Number(params['id']);
       if (historyId) {
@@ -3482,11 +3511,39 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
   }
 
   goBack(): void {
-    // Check if this is an admin route
-    if (this.isAdminRoute()) {
-      this.router.navigate(['/admin/writing-history']);
+    // Check if we have a saved previous URL that's not the history list page
+    // This ensures we go back to /writing if user came from there, not /writing/history
+    if (this.previousUrl) {
+      const url = new URL(this.previousUrl);
+      const path = url.pathname;
+      
+      // If previous URL is /writing (not /writing/history), navigate there
+      if (path === '/writing' || path.startsWith('/writing?') || path.startsWith('/writing#')) {
+        this.router.navigate(['/writing']);
+        return;
+      }
+      
+      // If previous URL is /writing/history, navigate there
+      if (path === '/writing/history' || path.startsWith('/writing/history?')) {
+        this.router.navigate(['/writing/history']);
+        return;
+      }
+    }
+    
+    // Use browser history to go back to previous page
+    // This will work correctly whether user came from /writing or /writing/history
+    const historyLength = window.history.length;
+    
+    // If there's browser history, use it
+    if (historyLength > 1) {
+      this.location.back();
     } else {
-      this.router.navigate(['/writing/history']);
+      // Fallback: navigate to appropriate default page
+      if (this.isAdminRoute()) {
+        this.router.navigate(['/admin/writing-history']);
+      } else {
+        this.router.navigate(['/writing/history']);
+      }
     }
   }
 }

@@ -11,14 +11,14 @@ import { AuthService } from '../../services/auth.service';
     <header class="header" [class.hidden]="!isHeaderVisible()">
       <div class="header-content">
         <div class="logo">
-          <a routerLink="/writing" class="logo-link">
+          <a (click)="reloadWritingPage($event)" class="logo-link">
             <h1>EssayRater</h1>
           </a>
         </div>
         <nav class="nav">
           <!-- <a routerLink="/reading" routerLinkActive="active" class="nav-link">Reading</a> -->
           <!-- <a routerLink="/listening" routerLinkActive="active" class="nav-link">Listening</a> -->
-          <a routerLink="/writing" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">Đề Writing</a>
+          <a (click)="reloadWritingPage($event)" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="nav-link">Đề Writing</a>
           <a routerLink="/writing/self-check" routerLinkActive="active" class="nav-link">Tự kiểm tra Writing</a>
           <!-- <a routerLink="/speaking" routerLinkActive="active" class="nav-link">Speaking</a> -->
         </nav>
@@ -227,6 +227,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
       await this.authService.logout();
     } catch (error) {
       console.error('Logout error:', error);
+    }
+  }
+
+  reloadWritingPage(event: Event): void {
+    event.preventDefault();
+    // Reload the page when clicking "Đề Writing" to reset component state
+    if (this.router.url === '/writing') {
+      window.location.reload();
+    } else {
+      window.location.href = '/writing';
     }
   }
 }

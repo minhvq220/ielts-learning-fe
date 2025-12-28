@@ -1,12 +1,15 @@
 import { Component, signal, computed, inject, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule, ActivatedRoute, Router } from '@angular/router';
+import { RouterModule, ActivatedRoute, Router, NavigationEnd } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { filter } from 'rxjs/operators';
 import { WritingTaskService } from '../../services/writing-task.service';
 import { WritingHistoryService } from '../../services/writing-history.service';
 import { WritingHistoryDto, WritingStatistics, DetailedIeltsScores, LinkingWord, WordRepetition } from '../../services/writing-history-api.service';
 import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-task.model';
 import { AuthService } from '../../services/auth.service';
+import { AppConfig } from '../../config/app.config';
 import { Subject, takeUntil, switchMap, finalize, of, from } from 'rxjs';
 
 interface AIEvaluation {
@@ -358,12 +361,9 @@ interface AIEvaluation {
               </button>
             </div>
             <div class="writing-actions">
-              <button class="btn btn-secondary" (click)="saveDraft()">Lưu nháp</button>
+              <button class="btn btn-secondary" *ngIf="authService.isAuthenticated()" (click)="saveDraft()">Lưu nháp</button>
               <button class="btn btn-primary" (click)="evaluateWriting()" [disabled]="!currentAnswer() || isEvaluating()">
                 {{ isEvaluating() ? 'Đang chấm...' : 'AI Chấm bài' }}
-              </button>
-              <button class="btn btn-success" (click)="submitAnswer()" [disabled]="!currentAnswer()">
-                Nộp bài
               </button>
             </div>
           </div>
@@ -1468,9 +1468,10 @@ interface AIEvaluation {
 
       .writing-actions-bar {
         left: 0;
+        right: 80px; /* Leave space for reCAPTCHA badge */
         flex-direction: column;
-        gap: 1rem;
-        padding: 0.75rem;
+        gap: 0.75rem; /* Reduced gap */
+        padding: 0.5rem 0.75rem; /* Reduced padding */
         z-index: 998;
       }
 
@@ -1600,15 +1601,16 @@ interface AIEvaluation {
       position: fixed;
       bottom: 0;
       left: 480px; /* Width of left-column */
-      right: 0; /* Default: full width, will be adjusted when statistics panel is visible */
-      background: white;
-      padding: 1rem 1.5rem;
-      border-top: 1px solid #e5e7eb;
-      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+      right: 80px; /* Leave space for reCAPTCHA badge on the right */
+      background: transparent; /* Make bar invisible */
+      padding: 0.5rem 1.5rem; /* Reduced vertical padding to make it thinner */
+      padding-right: 1.5rem; /* Keep padding consistent */
+      border: none; /* Remove border */
+      box-shadow: none; /* Remove shadow */
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 1.5rem;
+      gap: 1rem; /* Reduced gap */
       z-index: 998; /* Below header and left-column but above other content */
       transition: left 0.3s ease, right 0.3s ease;
     }
@@ -1619,7 +1621,7 @@ interface AIEvaluation {
     
     /* Adjust actions bar when statistics panel is visible */
     .writing-interface:has(.statistics-panel) .writing-actions-bar {
-      right: 320px;
+      right: 400px; /* 320px (panel) + 80px (reCAPTCHA space) */
     }
 
     .tools-left {
@@ -1631,7 +1633,7 @@ interface AIEvaluation {
     .tools-right {
       display: flex;
       align-items: center;
-      gap: 1.5rem;
+      gap: 1rem; /* Reduced gap */
     }
 
     .word-counter {
@@ -1644,19 +1646,19 @@ interface AIEvaluation {
     .current-words {
       font-weight: bold;
       color: #007bff;
-      font-size: 1rem;
+      font-size: 0.875rem; /* Reduced font size */
     }
 
     .word-target {
       color: #6b7280;
-      font-size: 0.875rem;
+      font-size: 0.75rem; /* Reduced font size */
     }
 
     .progress-bar {
-      width: 120px;
-      height: 8px;
+      width: 100px; /* Reduced width */
+      height: 6px; /* Reduced height */
       background: #e9ecef;
-      border-radius: 4px;
+      border-radius: 3px; /* Smaller border radius */
       overflow: hidden;
       margin-left: 0.5rem;
     }
@@ -1670,15 +1672,15 @@ interface AIEvaluation {
     .timer-section-compact {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
-      padding: 0.5rem 1rem;
+      gap: 0.5rem; /* Reduced gap */
+      padding: 0.375rem 0.75rem; /* Reduced padding */
       background: #f8fafc;
-      border-radius: 6px;
+      border-radius: 4px; /* Smaller border radius */
       border: 1px solid #e5e7eb;
     }
 
     .timer-compact {
-      font-size: 1rem;
+      font-size: 0.875rem; /* Reduced font size */
       font-weight: 600;
       color: #374151;
       white-space: nowrap;
@@ -1923,9 +1925,9 @@ interface AIEvaluation {
     }
 
     .btn {
-      padding: 0.75rem 1.5rem;
+      padding: 0.5rem 1.25rem; /* Reduced padding to make buttons smaller */
       border: none;
-      border-radius: 8px;
+      border-radius: 6px; /* Smaller border radius */
       cursor: pointer;
       font-weight: 500;
       transition: all 0.3s;
@@ -2192,8 +2194,11 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   private historyService = inject(WritingHistoryService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private http = inject(HttpClient);
   authService = inject(AuthService);
+  private readonly apiUrl = `${AppConfig.api.baseUrl}/api/writing-history`;
   private destroy$ = new Subject<void>();
+  private isNavigating = false; // Flag to prevent navigation loops
 
   // Signals
   timeLeft = signal(3600); // 60 minutes total
@@ -2305,15 +2310,64 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
         this.ensurePaginationBounds();
         
         // Check if there's a taskId in URL parameters
-        this.route.queryParams.subscribe(params => {
-          if (params['taskId']) {
-            const taskId = params['taskId'];
-            const task = tasks.find(t => t.id === taskId);
-            if (task) {
-              this.selectTask(task);
+        this.route.queryParams
+          .pipe(takeUntil(this.destroy$))
+          .subscribe(params => {
+            if (params['taskId']) {
+              const taskId = params['taskId'];
+              const task = tasks.find(t => t.id === taskId);
+              if (task && this.selectedTask()?.id !== task.id) {
+                // Only select task if it's different from current one
+                this.selectedTask.set(task);
+                this.evaluation.set(null);
+                this.timeLeft.set(task.timeLimit * 60);
+                this.isTimerRunning.set(false);
+                // Load draft if authenticated
+                if (this.authService.isAuthenticated()) {
+                  this.http.get<WritingHistoryDto>(`${this.apiUrl}/draft/task/${task.id}`).subscribe({
+                    next: (draft) => {
+                      if (draft && draft.answer && draft.isDraft === true) {
+                        this.currentAnswer.set(draft.answer);
+                        console.log(`📝 Đã tải nháp từ database (lưu lúc: ${draft.updatedAt || draft.submittedAt})`);
+                      } else {
+                        this.currentAnswer.set('');
+                      }
+                    },
+                    error: (err) => {
+                      this.currentAnswer.set('');
+                    }
+                  });
+                } else {
+                  this.currentAnswer.set('');
+                }
+              }
+            } else {
+              // No taskId in queryParams, reset to selection screen (only state, not navigation)
+              if (!this.isNavigating) {
+                this.selectedTask.set(null);
+                this.currentAnswer.set('');
+                this.evaluation.set(null);
+                this.isTimerRunning.set(false);
+              }
             }
-          }
-        });
+          });
+      });
+
+    // Subscribe to route changes to reset selectedTask when navigating to /writing without queryParams
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe((event: NavigationEnd) => {
+        // If navigating to /writing without taskId query param, reset to selection screen
+        if (!this.isNavigating && (event.url === '/writing' || (event.url.startsWith('/writing?') && !event.url.includes('taskId')))) {
+          // Only reset state, don't call backToSelection() to avoid navigation loop
+          this.selectedTask.set(null);
+          this.currentAnswer.set('');
+          this.evaluation.set(null);
+          this.isTimerRunning.set(false);
+        }
       });
   }
 
@@ -2481,10 +2535,51 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
 
   selectTask(task: WritingTask): void {
     this.selectedTask.set(task);
-    this.currentAnswer.set('');
     this.evaluation.set(null);
     this.timeLeft.set(task.timeLimit * 60); // Convert minutes to seconds
     this.isTimerRunning.set(false);
+    
+    // Update URL with taskId query param to maintain browser history
+    this.isNavigating = true;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { taskId: task.id },
+      replaceUrl: false // Allow browser back button to work correctly
+    }).then(() => {
+      this.isNavigating = false;
+    }).catch(() => {
+      this.isNavigating = false;
+    });
+    
+    // Load draft from database via API only (no localStorage)
+    // Only load if user is authenticated and it's actually a draft (isDraft = true)
+    if (this.authService.isAuthenticated()) {
+      this.http.get<WritingHistoryDto>(`${this.apiUrl}/draft/task/${task.id}`).subscribe({
+        next: (draft) => {
+          // Only load if it's a draft (isDraft = true)
+          // If isDraft = false or undefined, it means it's a submitted answer, don't load it
+          if (draft && draft.answer && draft.isDraft === true) {
+            this.currentAnswer.set(draft.answer);
+            console.log(`📝 Đã tải nháp từ database (lưu lúc: ${draft.updatedAt || draft.submittedAt})`);
+          } else {
+            // Not a draft or no draft found, start fresh
+            this.currentAnswer.set('');
+          }
+        },
+        error: (err) => {
+          // API failed (404 = no draft found, or other errors) - start fresh
+          if (err.status === 404) {
+            console.log('No draft in database, starting fresh.');
+          } else {
+            console.log('Error loading draft from database, starting fresh.');
+          }
+          this.currentAnswer.set('');
+        }
+      });
+    } else {
+      // Not authenticated, start fresh (no localStorage)
+      this.currentAnswer.set('');
+    }
   }
 
   backToSelection(): void {
@@ -2492,6 +2587,20 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.currentAnswer.set('');
     this.evaluation.set(null);
     this.isTimerRunning.set(false);
+    
+    // Only update URL if not already navigating to avoid loops
+    if (!this.isNavigating) {
+      this.isNavigating = true;
+      this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: {},
+        replaceUrl: false
+      }).then(() => {
+        this.isNavigating = false;
+      }).catch(() => {
+        this.isNavigating = false;
+      });
+    }
   }
 
   toggleAdvancedFilters(): void {
@@ -2627,13 +2736,92 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   saveDraft(): void {
-    const taskId = this.selectedTask()?.id;
-    const answer = this.currentAnswer();
+    const task = this.selectedTask();
+    const taskId = task?.id;
+    const answer = this.currentAnswer() || '';
     
-    if (taskId && answer) {
-      localStorage.setItem(`writing_draft_${taskId}`, answer);
-    alert('Đã lưu nháp thành công!');
+    // Check if task is selected
+    if (!task || !taskId) {
+      alert('Vui lòng chọn một bài viết trước khi lưu nháp.');
+      return;
     }
+    
+    // Check if user is authenticated
+    if (!this.authService.isAuthenticated()) {
+      // Fallback to localStorage for anonymous users
+      try {
+        const draftData = {
+          content: answer,
+          savedAt: new Date().toISOString(),
+          taskId: taskId,
+          taskTitle: task.title
+        };
+        localStorage.setItem(`writing_draft_${taskId}`, JSON.stringify(draftData));
+        const wordCount = answer.trim().split(/\s+/).filter(word => word.length > 0).length;
+        alert(`✅ Đã lưu nháp thành công (localStorage)!\n\nBài viết: ${task.title}\nSố từ: ${wordCount}\nThời gian: ${new Date().toLocaleString('vi-VN')}`);
+      } catch (error) {
+        console.error('Error saving draft to localStorage:', error);
+        alert('❌ Không thể lưu nháp. Vui lòng thử lại sau.');
+      }
+      return;
+    }
+    
+    // Save draft to database via API
+    const timeSpent = this.getTimeSpent();
+    const request = {
+      taskId: taskId,
+      answer: answer,
+      timeSpent: timeSpent
+    };
+    
+    this.http.post<WritingHistoryDto>(`${this.apiUrl}/draft`, request).subscribe({
+      next: (draft) => {
+        // Also save to localStorage as backup
+        try {
+          const draftData = {
+            content: answer,
+            savedAt: new Date().toISOString(),
+            taskId: taskId,
+            taskTitle: task.title
+          };
+          localStorage.setItem(`writing_draft_${taskId}`, JSON.stringify(draftData));
+        } catch (e) {
+          // Ignore localStorage errors
+        }
+        
+        // Show success message
+        const wordCount = answer.trim().split(/\s+/).filter(word => word.length > 0).length;
+        if (answer.trim()) {
+          alert(`✅ Đã lưu nháp thành công!\n\nBài viết: ${task.title}\nSố từ: ${wordCount}\nThời gian: ${new Date().toLocaleString('vi-VN')}`);
+        } else {
+          alert(`✅ Đã lưu nháp thành công!\n\nBài viết: ${task.title}\n(Lưu ý: Nội dung đang trống)\nThời gian: ${new Date().toLocaleString('vi-VN')}`);
+        }
+      },
+      error: (err) => {
+        console.error('Error saving draft to API:', err);
+        // Fallback to localStorage
+        try {
+          const draftData = {
+            content: answer,
+            savedAt: new Date().toISOString(),
+            taskId: taskId,
+            taskTitle: task.title
+          };
+          localStorage.setItem(`writing_draft_${taskId}`, JSON.stringify(draftData));
+          alert('⚠️ Đã lưu nháp vào bộ nhớ tạm (localStorage). Vui lòng đăng nhập để lưu vào database.');
+        } catch (error) {
+          alert('❌ Không thể lưu nháp. Vui lòng thử lại sau.');
+        }
+      }
+    });
+  }
+  
+  private getTimeSpent(): number {
+    const task = this.selectedTask();
+    if (!task) return 0;
+    const totalTime = task.timeLimit * 60; // Convert to seconds
+    const remaining = this.timeLeft();
+    return Math.max(0, totalTime - remaining);
   }
 
   evaluateWriting(): void {
@@ -2671,6 +2859,10 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     submission$
       .pipe(
         switchMap(history => {
+          // Delete draft from localStorage after successful submission
+          const draftKey = `writing_draft_${taskId}`;
+          localStorage.removeItem(draftKey);
+
           // Prepare image data for Task 1
           const task1ImageUrl = this.getTask1ImageUrl();
           let imageDataPromise: Promise<{ data?: string; mimeType?: string }> = Promise.resolve({});
@@ -2714,7 +2906,17 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
       )
       .subscribe({
         next: result => {
+          // Delete draft from database after successful submission (backend should already delete it, but ensure it's deleted)
+          if (this.authService.isAuthenticated()) {
+            this.http.delete(`${this.apiUrl}/draft/task/${taskId}`).subscribe({
+              next: () => console.log('✅ Draft đã được xóa sau khi submit'),
+              error: (err) => console.warn('⚠️ Không thể xóa draft (có thể đã được xóa):', err)
+            });
+          }
+
           this.updateEvaluationFromHistory(result, task.sampleAnswer);
+          // Save current URL as previous URL for detail page to know where to go back
+          sessionStorage.setItem('writing_history_previous_url', this.router.url);
           this.router.navigate(['/writing/history', result.id]);
         },
         error: error => {
@@ -2797,6 +2999,10 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
       next: (result) => {
         console.log('Answer submitted successfully:', result);
         alert(`Bạn đã nộp bài thành công với ${wordCount} từ!`);
+
+        // Delete draft from localStorage after successful submission
+        const draftKey = `writing_draft_${taskId}`;
+        localStorage.removeItem(draftKey);
 
         this.currentAnswer.set('');
         this.evaluation.set(null);

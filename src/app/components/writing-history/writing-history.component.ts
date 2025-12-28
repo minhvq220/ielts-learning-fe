@@ -1036,6 +1036,8 @@ export class WritingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   }
 
   viewFullAnswer(item: WritingHistoryDto): void {
+    // Save current URL as previous URL for detail page to know where to go back
+    sessionStorage.setItem('writing_history_previous_url', this.router.url);
     this.router.navigate(['/writing/history', item.id]);
   }
 

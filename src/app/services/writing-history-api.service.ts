@@ -97,6 +97,7 @@ export interface WritingHistoryDto {
   submittedAt: string;
   createdAt: string;
   updatedAt?: string;
+  isDraft?: boolean;
 }
 
 export interface UserWritingStatsDto {
