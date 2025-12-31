@@ -1,24 +1,42 @@
 /**
  * Application Configuration
- * Placeholder values - replace with actual keys from environment or config
+ * 
+ * ⚠️  NOTE: For production deployment, update these values before building:
+ *   1. Change the default values below to your production values, OR
+ *   2. Use Angular's file replacement in angular.json to replace this file
+ * 
+ * Configuration values:
+ * - Default values below are for development (localhost)
+ * - For production, update the values in this file or use file replacement
+ * 
+ * Example file replacement in angular.json:
+ *   "fileReplacements": [
+ *     {
+ *       "replace": "src/app/config/app.config.ts",
+ *       "with": "src/app/config/app.config.prod.ts"
+ *     }
+ *   ]
  */
 export const AppConfig = {
   firebase: {
-    apiKey: 'AIzaSyCgB0iZjQ8HFcKHXYmUjgnnHgnAqyPDoeo', // TODO: Set FIREBASE_API_KEY
-    authDomain: 'ielts-learning-d80dc.firebaseapp.com', // TODO: Set FIREBASE_AUTH_DOMAIN
-    projectId: 'ielts-learning-d80dc', // TODO: Set FIREBASE_PROJECT_ID
-    storageBucket: 'ielts-learning-d80dc.firebasestorage.app', // TODO: Set FIREBASE_STORAGE_BUCKET
-    messagingSenderId: '10789317916', // TODO: Set FIREBASE_MESSAGING_SENDER_ID
-    appId: '1:10789317916:web:416febc7cf9f1b0ee69ed9', // TODO: Set FIREBASE_APP_ID
+    apiKey: 'AIzaSyCgB0iZjQ8HFcKHXYmUjgnnHgnAqyPDoeo',
+    authDomain: 'ielts-learning-d80dc.firebaseapp.com',
+    projectId: 'ielts-learning-d80dc',
+    storageBucket: 'ielts-learning-d80dc.firebasestorage.app',
+    messagingSenderId: '10789317916',
+    appId: '1:10789317916:web:416febc7cf9f1b0ee69ed9',
   },
   google: {
-    clientId: '248911999918-09lg2liv7f0t4o1av081ubtr39bqsq5q.apps.googleusercontent.com', // TODO: Set GOOGLE_CLIENT_ID
+    clientId: '248911999918-09lg2liv7f0t4o1av081ubtr39bqsq5q.apps.googleusercontent.com',
   },
   recaptcha: {
-    siteKey: '6LffgQ8sAAAAANIzqmkPZ1p7oK_91cCL9bw4o0c-', // TODO: Set RECAPTCHA_SITE_KEY
+    siteKey: '6LffgQ8sAAAAANIzqmkPZ1p7oK_91cCL9bw4o0c-',
   },
   api: {
-    baseUrl: 'http://localhost:8081', // Backend API base URL
+    // Backend API base URL
+    // Development: http://localhost:8081
+    // Production: Update this to your production API URL (e.g., https://api.yourdomain.com)
+    baseUrl: 'http://localhost:8081',
   },
 };
 

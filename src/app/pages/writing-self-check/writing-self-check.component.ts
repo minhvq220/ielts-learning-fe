@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { WritingHistoryService } from '../../services/writing-history.service';
 import { WritingHistoryDto } from '../../services/writing-history-api.service';
 import { AuthService } from '../../services/auth.service';
+import { AppConfig } from '../../config/app.config';
 
 // DTO for self-check history (similar to WritingHistoryDto but with taskQuestion)
 interface WritingSelfCheckHistoryDto {
@@ -395,7 +396,7 @@ export class WritingSelfCheckComponent {
 
   loadFileValidationConfig(): void {
     // Load file validation config from backend
-    this.http.get<FileValidationConfig>('http://localhost:8081/api/writing-self-check/file-validation-config').subscribe({
+    this.http.get<FileValidationConfig>(`${AppConfig.api.baseUrl}/api/writing-self-check/file-validation-config`).subscribe({
       next: (config) => {
         this.allowedImageTypes = config.allowedTypes.join(',');
         this.maxFileSizeBytes = config.maxSizeBytes;
@@ -519,7 +520,7 @@ export class WritingSelfCheckComponent {
       imageMimeType: request.imageMimeType
     });
 
-    this.http.post<WritingSelfCheckHistoryDto>('http://localhost:8081/api/writing-self-check/score', request).subscribe({
+    this.http.post<WritingSelfCheckHistoryDto>(`${AppConfig.api.baseUrl}/api/writing-self-check/score`, request).subscribe({
       next: (result) => {
         console.log('Self-check scoring successful:', result);
         console.log('Result ID:', result?.id);

@@ -2,6 +2,7 @@ import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { AppConfig } from '../../config/app.config';
 
 interface UserDto {
   id: number;
@@ -498,7 +499,7 @@ interface UpdateUserRequest {
 })
 export class AdminUsersComponent implements OnInit {
   private http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:8081/api/admin/users';
+  private readonly apiUrl = `${AppConfig.api.baseUrl}/api/admin/users`;
 
   loading = signal(false);
   usersPage = signal<Page<UserDto> | null>(null);

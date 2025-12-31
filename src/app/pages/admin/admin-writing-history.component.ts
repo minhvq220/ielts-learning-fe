@@ -3,10 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { WritingHistoryApiService, WritingHistoryDto, Page } from '../../services/writing-history-api.service';
 import { WritingTaskService } from '../../services/writing-task.service';
 import { WritingTask } from '../../models/writing-task.model';
 import { AuthService } from '../../services/auth.service';
+import { AppConfig } from '../../config/app.config';
 import flatpickr from 'flatpickr';
 
 interface AdminWritingHistoryDto extends WritingHistoryDto {
@@ -111,12 +113,12 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
             <div class="history-card-body">
               <div class="task-instruction-preview" *ngIf="getTaskInstruction(item)">
                 <h4>Đề bài</h4>
-                <div class="instruction-text" [innerHTML]="getTaskInstruction(item)"></div>
+                <div class="instruction-text" [innerHTML]="sanitizeHtml(getTaskInstruction(item))"></div>
               </div>
               
               <div class="answer-preview">
                 <h4>Bài viết</h4>
-                <div class="answer-text" [innerHTML]="getAnswerPreview(item.answer)"></div>
+                <div class="answer-text" [innerHTML]="sanitizeHtml(getAnswerPreview(item.answer))"></div>
               </div>
 
               <!-- All chips in one line -->
@@ -758,6 +760,7 @@ export class AdminWritingHistoryComponent implements OnInit, AfterViewInit, OnDe
   private authService = inject(AuthService);
   private router = inject(Router);
   private writingTaskService = inject(WritingTaskService);
+  private sanitizer = inject(DomSanitizer);
 
   selectedType = '';
   searchQuery = '';
@@ -840,7 +843,7 @@ export class AdminWritingHistoryComponent implements OnInit, AfterViewInit, OnDe
     }
 
     // Use admin endpoint
-    this.http.get<Page<AdminWritingHistoryDto>>('http://localhost:8081/api/admin/writing-history/history', { params }).subscribe({
+    this.http.get<Page<AdminWritingHistoryDto>>(`${AppConfig.api.baseUrl}/api/admin/writing-history/history`, { params }).subscribe({
       next: (page) => {
         this.historyPage.set(page);
         this.loading.set(false);
@@ -848,7 +851,7 @@ export class AdminWritingHistoryComponent implements OnInit, AfterViewInit, OnDe
       error: (err) => {
         console.warn('Admin endpoint not available, trying alternative:', err);
         // Alternative: try different endpoint pattern
-        this.http.get<Page<AdminWritingHistoryDto>>('http://localhost:8081/api/writing-history/all/page', { params }).subscribe({
+        this.http.get<Page<AdminWritingHistoryDto>>(`${AppConfig.api.baseUrl}/api/writing-history/all/page`, { params }).subscribe({
           next: (page) => {
             this.historyPage.set(page);
             this.loading.set(false);
@@ -1052,5 +1055,15 @@ export class AdminWritingHistoryComponent implements OnInit, AfterViewInit, OnDe
 
   getUserEmail(item: WritingHistoryDto): string | undefined {
     return (item as AdminWritingHistoryDto).userEmail;
+  }
+
+  /**
+   * Sanitize HTML content to prevent XSS attacks
+   */
+  sanitizeHtml(html: string | null | undefined): SafeHtml {
+    if (!html) {
+      return this.sanitizer.sanitize(1, '') as SafeHtml; // SecurityContext.HTML = 1
+    }
+    return this.sanitizer.sanitize(1, html) as SafeHtml;
   }
 }

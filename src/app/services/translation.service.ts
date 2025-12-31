@@ -3,6 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
+import { AppConfig } from '../config/app.config';
 
 export interface TranslationResult {
   originalText: string;
@@ -18,7 +19,7 @@ export interface TranslationResult {
 })
 export class TranslationService {
   // Sử dụng backend proxy endpoint để tránh CORS issues
-  private readonly translateApiUrl = 'http://localhost:8081/api/translation/translate';
+  private readonly translateApiUrl = `${AppConfig.api.baseUrl}/api/translation/translate`;
   
   constructor(private http: HttpClient) {}
 

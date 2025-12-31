@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { AppConfig } from '../config/app.config';
 
 export interface AiCorrection {
   id?: string;
@@ -154,8 +155,8 @@ export interface AiScoringRequest {
   providedIn: 'root'
 })
 export class WritingHistoryApiService {
-  private readonly apiUrl = 'http://localhost:8081/api/writing-history';
-  private readonly aiScoringUrl = 'http://localhost:8081/api/ai-scoring';
+  private readonly apiUrl = `${AppConfig.api.baseUrl}/api/writing-history`;
+  private readonly aiScoringUrl = `${AppConfig.api.baseUrl}/api/ai-scoring`;
 
   constructor(private http: HttpClient) {}
 

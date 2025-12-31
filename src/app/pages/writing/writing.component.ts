@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { filter } from 'rxjs/operators';
 import { WritingTaskService } from '../../services/writing-task.service';
 import { WritingHistoryService } from '../../services/writing-history.service';
@@ -282,7 +283,7 @@ interface AIEvaluation {
             <!-- Writing Guide Panel -->
             <div class="info-panel" *ngIf="activeInfoTab() === 'guide' && selectedTask()?.writingGuide && !isQuestionPanelCollapsed()">
               <div class="writing-guide-panel-expanded">
-                <div class="writing-guide-content" [innerHTML]="selectedTask()!.writingGuide"></div>
+                <div class="writing-guide-content" [innerHTML]="sanitizeHtml(selectedTask()!.writingGuide)"></div>
               </div>
             </div>
           </div>
@@ -509,7 +510,7 @@ interface AIEvaluation {
           <!-- Sample Answer - Always visible at bottom -->
           <div class="sample-answer-section" *ngIf="selectedTask()!.sampleAnswer">
             <h4>Câu trả lời mẫu:</h4>
-            <div class="sample-answer" [innerHTML]="selectedTask()!.sampleAnswer"></div>
+            <div class="sample-answer" [innerHTML]="sanitizeHtml(selectedTask()!.sampleAnswer)"></div>
           </div>
         </div>
       </div>
@@ -2195,6 +2196,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private http = inject(HttpClient);
+  private sanitizer = inject(DomSanitizer);
   authService = inject(AuthService);
   private readonly apiUrl = `${AppConfig.api.baseUrl}/api/writing-history`;
   private destroy$ = new Subject<void>();
@@ -3031,6 +3033,16 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     if (!this.isQuestionPanelCollapsed()) {
       this.activeInfoTab.set(tab);
     }
+  }
+
+  /**
+   * Sanitize HTML content to prevent XSS attacks
+   */
+  sanitizeHtml(html: string | null | undefined): SafeHtml {
+    if (!html) {
+      return this.sanitizer.sanitize(1, '') as SafeHtml; // SecurityContext.HTML = 1
+    }
+    return this.sanitizer.sanitize(1, html) as SafeHtml;
   }
 
   toggleQuestionTab(): void {

@@ -2,6 +2,7 @@ import { Component, signal, computed, inject, OnInit, AfterViewInit, ViewChild, 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { WritingHistoryService } from '../../services/writing-history.service';
 import { WritingHistoryApiService, WritingHistoryDto, Page } from '../../services/writing-history-api.service';
 import { WritingTaskService } from '../../services/writing-task.service';
@@ -136,12 +137,12 @@ import flatpickr from 'flatpickr';
             <div class="history-card-body">
               <div class="task-instruction-preview" *ngIf="getTaskInstruction(item)">
                 <h4>Đề bài</h4>
-                <div class="instruction-text" [innerHTML]="getTaskInstruction(item)"></div>
+                <div class="instruction-text" [innerHTML]="sanitizeHtml(getTaskInstruction(item))"></div>
               </div>
               
               <div class="answer-preview">
                 <h4>Bài viết</h4>
-                <div class="answer-text" [innerHTML]="getAnswerPreview(item.answer)"></div>
+                <div class="answer-text" [innerHTML]="sanitizeHtml(getAnswerPreview(item.answer))"></div>
               </div>
 
               <!-- All chips in one line -->
@@ -881,6 +882,7 @@ export class WritingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
   private authService = inject(AuthService);
   private router = inject(Router);
   private writingTaskService = inject(WritingTaskService);
+  private sanitizer = inject(DomSanitizer);
 
   selectedType = '';
   searchQuery = '';
@@ -1208,5 +1210,15 @@ export class WritingHistoryComponent implements OnInit, AfterViewInit, OnDestroy
         this.initializeDatePickers();
       }, 0);
     }
+  }
+
+  /**
+   * Sanitize HTML content to prevent XSS attacks
+   */
+  sanitizeHtml(html: string | null | undefined): SafeHtml {
+    if (!html) {
+      return this.sanitizer.sanitize(1, '') as SafeHtml; // SecurityContext.HTML = 1
+    }
+    return this.sanitizer.sanitize(1, html) as SafeHtml;
   }
 }

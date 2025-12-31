@@ -55,11 +55,13 @@ export interface WritingTaskStatsDto {
   recentTasks: WritingTaskDto[];
 }
 
+import { AppConfig } from '../config/app.config';
+
 @Injectable({
   providedIn: 'root'
 })
 export class WritingTaskApiService {
-  private readonly apiUrl = 'http://localhost:8081/api/writing-tasks';
+  private readonly apiUrl = `${AppConfig.api.baseUrl}/api/writing-tasks`;
 
   constructor(private http: HttpClient) {}
 

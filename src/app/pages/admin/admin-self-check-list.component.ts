@@ -3,8 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { AuthService } from '../../services/auth.service';
 import { AiCorrection, WritingStatistics, DetailedIeltsScores } from '../../services/writing-history-api.service';
+import { AppConfig } from '../../config/app.config';
 
 interface WritingSelfCheckHistoryDto {
   id: number;
@@ -110,12 +112,12 @@ interface Page<T> {
             <div class="history-card-body">
               <div class="answer-preview">
                 <h4>Đề bài</h4>
-                <div class="answer-text" [innerHTML]="getQuestionPreview(item.taskQuestion)"></div>
+                <div class="answer-text" [innerHTML]="sanitizeHtml(getQuestionPreview(item.taskQuestion))"></div>
               </div>
 
               <div class="answer-preview">
                 <h4>Bài viết</h4>
-                <div class="answer-text" [innerHTML]="getAnswerPreview(item.userAnswer)"></div>
+                <div class="answer-text" [innerHTML]="sanitizeHtml(getAnswerPreview(item.userAnswer))"></div>
               </div>
 
               <!-- All chips in one line -->
@@ -673,6 +675,7 @@ export class AdminSelfCheckListComponent implements OnInit {
   private http = inject(HttpClient);
   private authService = inject(AuthService);
   router = inject(Router);
+  private sanitizer = inject(DomSanitizer);
 
   selectedType = '';
   sortBy = 'date';
@@ -749,7 +752,7 @@ export class AdminSelfCheckListComponent implements OnInit {
       .set('page', '0')
       .set('size', '1000'); // Load a large number to get all items
 
-    this.http.get<Page<WritingSelfCheckHistoryDto>>('http://localhost:8081/api/admin/writing-self-check/history', { params }).subscribe({
+    this.http.get<Page<WritingSelfCheckHistoryDto>>(`${AppConfig.api.baseUrl}/api/admin/writing-self-check/history`, { params }).subscribe({
       next: (page) => {
         this.historyList.set(page.content || []);
         this.loading.set(false);
@@ -815,5 +818,15 @@ export class AdminSelfCheckListComponent implements OnInit {
   getQuestionPreview(question: string): string {
     if (!question) return '';
     return question.length > 200 ? question.substring(0, 200) + '...' : question;
+  }
+
+  /**
+   * Sanitize HTML content to prevent XSS attacks
+   */
+  sanitizeHtml(html: string | null | undefined): SafeHtml {
+    if (!html) {
+      return this.sanitizer.sanitize(1, '') as SafeHtml; // SecurityContext.HTML = 1
+    }
+    return this.sanitizer.sanitize(1, html) as SafeHtml;
   }
 }

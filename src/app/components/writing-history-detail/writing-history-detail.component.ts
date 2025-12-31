@@ -3,10 +3,12 @@ import { Subject } from 'rxjs';
 import { CommonModule, Location } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { WritingHistoryService } from '../../services/writing-history.service';
 import { WritingTaskService } from '../../services/writing-task.service';
 import { WritingTaskApiService } from '../../services/writing-task-api.service';
 import { WritingHistoryApiService, AiCorrection, WritingHistoryDto, WritingStatistics, DetailedIeltsScores, LinkingWord, WordRepetition } from '../../services/writing-history-api.service';
+import { AppConfig } from '../../config/app.config';
 
 type NormalizedCorrection = AiCorrection & { id: string };
 
@@ -243,7 +245,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
             <div class="info-panel" *ngIf="activeInfoTab() === 'question' && !isQuestionPanelCollapsed()">
               <div class="task-instruction-panel-compact">
                 <div class="task-title-compact">{{ getTaskTitle() }}</div>
-                <div class="instruction-content-compact" [innerHTML]="getTaskInstruction()"></div>
+                <div class="instruction-content-compact" [innerHTML]="sanitizeHtml(getTaskInstruction())"></div>
 
                 <div class="task1-content-compact" *ngIf="historyItem()?.taskType === 'TASK1'">
                   <div class="task1-image-compact" *ngIf="getTask1ImageUrl()">
@@ -290,7 +292,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
             <div class="info-panel" *ngIf="activeInfoTab() === 'guide' && getWritingGuide() && !isQuestionPanelCollapsed()">
               <div class="writing-guide-panel-expanded">
-                <div class="writing-guide-content" [innerHTML]="getWritingGuide()"></div>
+                <div class="writing-guide-content" [innerHTML]="sanitizeHtml(getWritingGuide())"></div>
               </div>
             </div>
           </div>
@@ -2146,6 +2148,7 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private location = inject(Location);
+  private sanitizer = inject(DomSanitizer);
   private destroy$ = new Subject<void>();
   private previousUrl: string | null = null;
   
@@ -2502,7 +2505,7 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
     
     if (isAdmin) {
       // For admin route, use admin endpoint
-      this.http.get<WritingHistoryDto>(`http://localhost:8081/api/admin/writing-history/history/${historyId}`).subscribe({
+      this.http.get<WritingHistoryDto>(`${AppConfig.api.baseUrl}/api/admin/writing-history/history/${historyId}`).subscribe({
         next: (historyItem) => {
           this.historyItem.set(historyItem);
           this.loadOriginalTask(historyItem.taskId);
@@ -2656,6 +2659,16 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
 
   getWritingGuide(): string {
     return this.originalTask()?.writingGuide || '';
+  }
+
+  /**
+   * Sanitize HTML content to prevent XSS attacks
+   */
+  sanitizeHtml(html: string | null | undefined): SafeHtml {
+    if (!html) {
+      return this.sanitizer.sanitize(1, '') as SafeHtml; // SecurityContext.HTML = 1
+    }
+    return this.sanitizer.sanitize(1, html) as SafeHtml;
   }
 
   getTaskTimeLimit(): number {

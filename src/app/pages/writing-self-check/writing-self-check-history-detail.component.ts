@@ -4,6 +4,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AiCorrection, WritingStatistics, DetailedIeltsScores, LinkingWord, WordRepetition } from '../../services/writing-history-api.service';
+import { AppConfig } from '../../config/app.config';
 
 type NormalizedCorrection = AiCorrection & { id: string };
 
@@ -2316,8 +2317,8 @@ export class WritingSelfCheckHistoryDetailComponent implements OnInit, AfterView
     // Check if this is an admin route
     const isAdminRoute = this.router.url.includes('/admin/');
     const apiUrl = isAdminRoute 
-      ? `http://localhost:8081/api/admin/writing-self-check/history/${historyId}`
-      : `http://localhost:8081/api/writing-self-check/history/${historyId}`;
+      ? `${AppConfig.api.baseUrl}/api/admin/writing-self-check/history/${historyId}`
+      : `${AppConfig.api.baseUrl}/api/writing-self-check/history/${historyId}`;
 
     this.http.get<WritingSelfCheckHistoryDto>(apiUrl).subscribe({
       next: (historyItem) => {
