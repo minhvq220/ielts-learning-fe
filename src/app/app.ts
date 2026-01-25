@@ -14,7 +14,7 @@ import { validateConfig } from './config/app.config';
   styleUrl: './app.css'
 })
 export class App implements OnInit {
-  protected readonly title = signal('YouPassCopy');
+  protected readonly title = signal('EssayRater');
 
   constructor(public loadingService: LoadingService) {}
 
