@@ -113,6 +113,20 @@ interface UpdateUserRequest {
                     ✏️ Sửa
                   </button>
                   <button 
+                    *ngIf="user.role !== 'ADMIN'"
+                    class="btn btn-sm btn-admin" 
+                    (click)="grantAdminRole(user.id, user.email)"
+                    title="Gán quyền Admin">
+                    👑 Gán Admin
+                  </button>
+                  <button 
+                    *ngIf="user.role === 'ADMIN'"
+                    class="btn btn-sm btn-remove-admin" 
+                    (click)="revokeAdminRole(user.id, user.email)"
+                    title="Bỏ quyền Admin">
+                    🚫 Bỏ Admin
+                  </button>
+                  <button 
                     *ngIf="user.enabled"
                     class="btn btn-sm btn-lock" 
                     (click)="lockUser(user.id)"
@@ -298,6 +312,27 @@ interface UpdateUserRequest {
     .btn-unlock {
       background: #28a745;
       color: white;
+    }
+
+    .btn-admin {
+      background: #ffc107;
+      color: #333;
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+
+    .btn-admin:hover:not(:disabled) {
+      background: #e0a800;
+    }
+
+    .btn-remove-admin {
+      background: #fd7e14;
+      color: white;
+      margin-right: 0.5rem;
+    }
+
+    .btn-remove-admin:hover:not(:disabled) {
+      background: #e86800;
     }
 
     .btn:disabled {
@@ -613,6 +648,50 @@ export class AdminUsersComponent implements OnInit {
       error: (err) => {
         console.error('Error unlocking user:', err);
         const errorMsg = err.error?.message || 'Không thể mở khóa tài khoản. Vui lòng thử lại sau.';
+        alert(errorMsg);
+      }
+    });
+  }
+
+  grantAdminRole(userId: number, userEmail: string) {
+    if (!confirm(`Bạn có chắc chắn muốn gán quyền Admin cho tài khoản ${userEmail}?\n\nNgười dùng này sẽ có quyền truy cập vào tất cả các chức năng quản trị.`)) {
+      return;
+    }
+
+    const updateRequest: UpdateUserRequest = {
+      role: 'ADMIN'
+    };
+
+    this.http.put<UserDto>(`${this.apiUrl}/${userId}`, updateRequest).subscribe({
+      next: () => {
+        alert(`Đã gán quyền Admin cho ${userEmail} thành công!`);
+        this.loadUsers();
+      },
+      error: (err) => {
+        console.error('Error granting admin role:', err);
+        const errorMsg = err.error?.message || 'Không thể gán quyền Admin. Vui lòng thử lại sau.';
+        alert(errorMsg);
+      }
+    });
+  }
+
+  revokeAdminRole(userId: number, userEmail: string) {
+    if (!confirm(`Bạn có chắc chắn muốn bỏ quyền Admin của tài khoản ${userEmail}?\n\nNgười dùng này sẽ mất quyền truy cập vào các chức năng quản trị.`)) {
+      return;
+    }
+
+    const updateRequest: UpdateUserRequest = {
+      role: 'USER'
+    };
+
+    this.http.put<UserDto>(`${this.apiUrl}/${userId}`, updateRequest).subscribe({
+      next: () => {
+        alert(`Đã bỏ quyền Admin của ${userEmail} thành công!`);
+        this.loadUsers();
+      },
+      error: (err) => {
+        console.error('Error revoking admin role:', err);
+        const errorMsg = err.error?.message || 'Không thể bỏ quyền Admin. Vui lòng thử lại sau.';
         alert(errorMsg);
       }
     });
