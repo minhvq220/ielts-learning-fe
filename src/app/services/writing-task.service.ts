@@ -1,5 +1,5 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
-import { BehaviorSubject, Observable, of, catchError, tap, map } from 'rxjs';
+import { BehaviorSubject, Observable, of, catchError, tap, map, switchMap } from 'rxjs';
 import { 
   WritingTask, 
   WritingTask1, 
@@ -26,6 +26,10 @@ export class WritingTaskService {
   private _sort = signal<WritingTaskSort>({ field: 'createdAt', direction: 'desc' });
   private _loading = signal(false);
   private _error = signal<string | null>(null);
+  // Pagination info from API
+  private _totalElements = signal<number>(0);
+  private _totalPages = signal<number>(0);
+  private _currentPageNumber = signal<number>(0);
 
   // Computed values
   public filteredTasks = computed(() => {
@@ -130,13 +134,16 @@ export class WritingTaskService {
 
   public loading = computed(() => this._loading());
   public error = computed(() => this._error());
+  public totalElements = computed(() => this._totalElements());
+  public totalPages = computed(() => this._totalPages());
+  public currentPageNumber = computed(() => this._currentPageNumber());
 
   constructor() {
     this.loadTasks();
   }
 
   // CRUD Operations
-  loadTasks(): void {
+  loadTasks(page: number = 0, size: number = 10): void {
     this._loading.set(true);
     this._error.set(null);
     
@@ -150,13 +157,17 @@ export class WritingTaskService {
       search: filter.search,
       sortField: this._sort().field,
       sortDirection: this._sort().direction,
-      page: 0,
-      size: 1000 // Load all tasks for now
+      page: page,
+      size: size
     }).pipe(
-      tap(tasks => {
-        const convertedTasks = tasks.content.map(dto => this.convertDtoToModel(dto));
+      tap(pageResponse => {
+        const convertedTasks = pageResponse.content.map(dto => this.convertDtoToModel(dto));
         this._tasks.set(convertedTasks);
         this.tasksSubject.next(convertedTasks);
+        // Save pagination info from API
+        this._totalElements.set(pageResponse.totalElements);
+        this._totalPages.set(pageResponse.totalPages);
+        this._currentPageNumber.set(pageResponse.number);
         this._loading.set(false);
       }),
       catchError(error => {
@@ -176,6 +187,34 @@ export class WritingTaskService {
 
   getTaskById(id: string): WritingTask | undefined {
     return this._tasks().find(task => task.id === id);
+  }
+
+  // Load task details by ID from API (includes imageUrl)
+  loadTaskById(id: string): Observable<WritingTask> {
+    this._loading.set(true);
+    this._error.set(null);
+    
+    return this.apiService.getTaskById(Number(id)).pipe(
+      map(dto => {
+        const task = this.convertDtoToModel(dto);
+        // Update cached task if exists
+        const tasks = this._tasks();
+        const index = tasks.findIndex(t => t.id === id);
+        if (index >= 0) {
+          tasks[index] = task;
+          this._tasks.set([...tasks]);
+          this.tasksSubject.next([...tasks]);
+        }
+        this._loading.set(false);
+        return task;
+      }),
+      catchError(error => {
+        console.error('Error loading task details:', error);
+        this._error.set('Không thể tải chi tiết bài viết');
+        this._loading.set(false);
+        throw error;
+      })
+    );
   }
 
   createTask(task: Omit<WritingTask, 'id' | 'createdAt' | 'updatedAt'>): Observable<WritingTask> {
@@ -299,17 +338,17 @@ export class WritingTaskService {
   // Filter and Sort Operations
   setFilter(filter: WritingTaskFilter): void {
     this._filter.set(filter);
-    this.loadTasks(); // Reload data when filter changes
+    // Don't auto-reload here - let component call loadTasks with proper pagination
   }
 
   setSort(sort: WritingTaskSort): void {
     this._sort.set(sort);
-    this.loadTasks(); // Reload data when sort changes
+    // Don't auto-reload here - let component call loadTasks with proper pagination
   }
 
   clearFilter(): void {
     this._filter.set({});
-    this.loadTasks();
+    // Don't auto-reload here - let component call loadTasks with proper pagination
   }
 
   // Utility Methods

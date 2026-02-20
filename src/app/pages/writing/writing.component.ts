@@ -81,7 +81,7 @@ interface AIEvaluation {
           <div class="advanced-filters" *ngIf="showAdvancedFilters()">
             <div class="filter-group">
               <label>Loại bài:</label>
-              <select [(ngModel)]="selectedType">
+              <select [(ngModel)]="selectedType" (change)="onTypeOrDifficultyChange()">
                 <option value="">Tất cả</option>
                 <option value="task1">Task 1</option>
                 <option value="task2">Task 2</option>
@@ -89,7 +89,7 @@ interface AIEvaluation {
             </div>
             <div class="filter-group">
               <label>Độ khó:</label>
-              <select [(ngModel)]="selectedDifficulty">
+              <select [(ngModel)]="selectedDifficulty" (change)="onTypeOrDifficultyChange()">
                 <option value="">Tất cả</option>
                 <option value="easy">Dễ</option>
                 <option value="medium">Trung bình</option>
@@ -2223,70 +2223,36 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   highlightedWord = signal<string | null>(null); // Currently highlighted word for statistics
 
   // Computed values
+  // Note: Type, difficulty, and search filters are handled by backend API
+  // Only status filter (completed/uncompleted) is done on frontend
   filteredTasks = computed(() => {
-    const tasks = this.writingService.sortedTasks();
+    const tasks = this.writingService.sortedTasks(); // Tasks from API (already filtered by backend)
     const completedIds = this.historyService.completedTaskIds();
     
-    let filteredTasks = tasks.filter(task => {
-      if (this.selectedType && task.type !== this.selectedType) return false;
-      if (this.selectedDifficulty && task.difficulty !== this.selectedDifficulty) return false;
-      
-      // Search filter - search in title, instruction, and task-specific content
-      if (this.searchQuery && this.searchQuery.trim()) {
-        const searchLower = this.searchQuery.toLowerCase().trim();
-        const matchesTitle = task.title.toLowerCase().includes(searchLower);
-        const matchesInstruction = task.instruction?.toLowerCase().includes(searchLower) || false;
-        const matchesType = task.type.toLowerCase().includes(searchLower);
-        const matchesDifficulty = this.getDifficultyLabel(task.difficulty).toLowerCase().includes(searchLower);
-        
-        // Task-specific search
-        let matchesTaskContent = false;
-        if (task.type === 'task1') {
-          const task1 = task as WritingTask1;
-          matchesTaskContent = 
-            task1.description?.toLowerCase().includes(searchLower) || 
-            task1.task1Type?.toLowerCase().includes(searchLower) || false;
-        } else if (task.type === 'task2') {
-          const task2 = task as WritingTask2;
-          matchesTaskContent = 
-            task2.question?.toLowerCase().includes(searchLower) || 
-            task2.task2Type?.toLowerCase().includes(searchLower) ||
-            (task2.additionalQuestions?.some(q => q.toLowerCase().includes(searchLower)) || false);
-        }
-        
-        if (!matchesTitle && !matchesInstruction && !matchesType && !matchesDifficulty && !matchesTaskContent) {
-          return false;
-        }
-      }
-      
-      return task.isActive;
-    });
-
-    // Filter based on selected status
+    // Only filter by status (completed/uncompleted) on frontend
+    // Other filters (type, difficulty, search) are already applied by backend
     if (this.selectedStatus === 'completed') {
-      filteredTasks = filteredTasks.filter(task => completedIds.includes(Number(task.id)));
+      return tasks.filter(task => completedIds.includes(Number(task.id)));
     } else if (this.selectedStatus === 'uncompleted') {
-      filteredTasks = filteredTasks.filter(task => !completedIds.includes(Number(task.id)));
+      return tasks.filter(task => !completedIds.includes(Number(task.id)));
     }
-    // If selectedStatus is empty, show all tasks
-
-    return filteredTasks;
+    // If selectedStatus is empty, show all tasks from current page
+    return tasks;
   });
 
+  // Use totalElements from API instead of filteredTasks().length
+  // Note: When filtering by status (completed/uncompleted), the count is approximate
+  // because status filter depends on user's completed tasks and is applied on frontend
   totalPages = computed(() => {
-    const count = this.filteredTasks().length;
-    return count === 0 ? 0 : Math.ceil(count / this.itemsPerPage);
+    // Always use totalPages from API (based on backend filters: type, difficulty, search)
+    // Status filter is applied on frontend, so pagination is approximate when status filter is active
+    return this.writingService.totalPages();
   });
 
+  // Use tasks directly from API (already paginated by backend)
+  // Only apply status filter if needed
   paginatedTasks = computed(() => {
-    const tasks = this.filteredTasks();
-    if (tasks.length === 0) {
-      return [];
-    }
-    const totalPages = Math.max(1, Math.ceil(tasks.length / this.itemsPerPage));
-    const current = Math.min(Math.max(this.currentPage(), 1), totalPages);
-    const start = (current - 1) * this.itemsPerPage;
-    return tasks.slice(start, start + this.itemsPerPage);
+    return this.filteredTasks();
   });
 
   // Computed values for stats
@@ -2303,6 +2269,9 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   });
 
   ngOnInit() {
+    // Load initial tasks with pagination
+    this.loadTasksWithPagination(0, this.itemsPerPage);
+    
     // Subscribe to tasks changes
     this.writingService.tasks$
       .pipe(takeUntil(this.destroy$))
@@ -2398,6 +2367,33 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     const target = Math.min(Math.max(page, 1), total);
     this.currentPage.set(target);
+    
+    // Update URL with page parameter
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { 
+        page: target,
+        size: this.itemsPerPage,
+        ...(this.route.snapshot.queryParams['type'] ? { type: this.route.snapshot.queryParams['type'] } : {})
+      },
+      queryParamsHandling: 'merge'
+    });
+    
+    // Reload tasks for new page
+    this.loadTasksWithPagination(target - 1, this.itemsPerPage);
+  }
+
+  loadTasksWithPagination(page: number, size: number): void {
+    // Update filter based on current selections
+    this.writingService.setFilter({
+      type: (this.selectedType ? (this.selectedType as 'task1' | 'task2') : undefined),
+      difficulty: (this.selectedDifficulty ? (this.selectedDifficulty as 'easy' | 'medium' | 'hard') : undefined),
+      isActive: true,
+      search: this.searchQuery || undefined
+    });
+    
+    // Load tasks with pagination
+    this.writingService.loadTasks(page, size);
   }
 
   getPageNumbers(): number[] {
@@ -2536,6 +2532,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   selectTask(task: WritingTask): void {
+    // First set the task from cache (may not have imageUrl)
     this.selectedTask.set(task);
     this.evaluation.set(null);
     this.timeLeft.set(task.timeLimit * 60); // Convert minutes to seconds
@@ -2551,6 +2548,20 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
       this.isNavigating = false;
     }).catch(() => {
       this.isNavigating = false;
+    });
+    
+    // Load full task details from API (includes imageUrl)
+    // This ensures we have complete information even if list API didn't include imageUrl
+    this.writingService.loadTaskById(task.id).subscribe({
+      next: (fullTask) => {
+        // Update selected task with full details
+        this.selectedTask.set(fullTask);
+        console.log('✅ Loaded full task details including imageUrl');
+      },
+      error: (err) => {
+        console.warn('⚠️ Could not load full task details, using cached version:', err);
+        // Continue with cached task if API call fails
+      }
     });
     
     // Load draft from database via API only (no localStorage)
@@ -2617,10 +2628,19 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     // Clear filters in service and reload tasks
     this.writingService.clearFilter();
     this.resetPagination();
+    // Reload tasks with cleared filters
+    this.loadTasksWithPagination(0, this.itemsPerPage);
   }
 
   onFilterChange(): void {
+    // Status filter is applied on frontend only, no need to reload from API
     this.resetPagination();
+  }
+
+  onTypeOrDifficultyChange(): void {
+    // When type or difficulty changes, reload from API with new filters
+    this.resetPagination();
+    this.triggerSearch();
   }
 
   triggerSearch(): void {
@@ -2632,6 +2652,8 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
       isActive: true
     });
     this.resetPagination();
+    // Reload tasks with current page
+    this.loadTasksWithPagination(this.currentPage() - 1, this.itemsPerPage);
   }
 
   getTaskPreview(task: WritingTask): string {
