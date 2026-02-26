@@ -11,7 +11,7 @@ import { WritingHistoryDto, WritingStatistics, DetailedIeltsScores, LinkingWord,
 import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-task.model';
 import { AuthService } from '../../services/auth.service';
 import { AppConfig } from '../../config/app.config';
-import { Subject, takeUntil, switchMap, finalize, of, from } from 'rxjs';
+import { Subject, takeUntil, switchMap, finalize, of, from, catchError } from 'rxjs';
 
 interface AIEvaluation {
   overallScore: number;
@@ -239,7 +239,16 @@ interface AIEvaluation {
                   <!-- Task 1 Image -->
                   <div *ngIf="getTask1ImageUrl()" class="task1-image-compact">
                     <div class="section-label">Hình minh họa:</div>
-                    <img [src]="getTask1ImageUrl()" alt="Task 1 Chart/Graph" class="task-image">
+                    <img 
+                      [src]="getTask1ImageUrl()" 
+                      alt="Task 1 Chart/Graph" 
+                      class="task-image"
+                      (error)="onImageError($event)"
+                      (load)="onImageLoad($event)">
+                  </div>
+                  <!-- Debug info for missing image -->
+                  <div *ngIf="selectedTask()?.type === 'task1' && !getTask1ImageUrl()" class="image-debug" style="padding: 0.5rem; background: #fff3cd; border-radius: 4px; margin: 0.5rem 0; font-size: 0.875rem;">
+                    <small>⚠️ Không có ảnh cho bài tập này. imageUrl: {{ getTask1ImageUrlRaw() || 'null' }}</small>
                   </div>
                   <div *ngIf="getTask1Description()" class="task-description-compact">
                     <div class="section-label">Mô tả:</div>
@@ -2295,7 +2304,18 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.isTimerRunning.set(false);
                 // Load draft if authenticated
                 if (this.authService.isAuthenticated()) {
-                  this.http.get<WritingHistoryDto>(`${this.apiUrl}/draft/task/${task.id}`).subscribe({
+                  this.http.get<WritingHistoryDto>(`${this.apiUrl}/draft/task/${task.id}`).pipe(
+                    catchError((err) => {
+                      // 404 is expected when no draft exists - handle gracefully
+                      if (err.status === 404) {
+                        // No draft found, return empty observable
+                        return of(null);
+                      }
+                      // Other errors - log but don't throw
+                      console.warn('Error loading draft:', err);
+                      return of(null);
+                    })
+                  ).subscribe({
                     next: (draft) => {
                       if (draft && draft.answer && draft.isDraft === true) {
                         this.currentAnswer.set(draft.answer);
@@ -2303,9 +2323,6 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
                       } else {
                         this.currentAnswer.set('');
                       }
-                    },
-                    error: (err) => {
-                      this.currentAnswer.set('');
                     }
                   });
                 } else {
@@ -2338,6 +2355,27 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
           this.currentAnswer.set('');
           this.evaluation.set(null);
           this.isTimerRunning.set(false);
+          
+          // Check for type query param and apply filter
+          const urlTree = this.router.parseUrl(event.url);
+          const typeParam = urlTree.queryParams['type'];
+          if (typeParam === 'task1' || typeParam === 'task2') {
+            this.selectedType = typeParam;
+            this.showAdvancedFilters.set(true);
+            this.triggerSearch();
+          }
+        }
+      });
+    
+    // Check initial route params on component load
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(params => {
+        const typeParam = params['type'];
+        if (typeParam === 'task1' || typeParam === 'task2') {
+          this.selectedType = typeParam;
+          this.showAdvancedFilters.set(true);
+          this.triggerSearch();
         }
       });
   }
@@ -2567,7 +2605,18 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     // Load draft from database via API only (no localStorage)
     // Only load if user is authenticated and it's actually a draft (isDraft = true)
     if (this.authService.isAuthenticated()) {
-      this.http.get<WritingHistoryDto>(`${this.apiUrl}/draft/task/${task.id}`).subscribe({
+      this.http.get<WritingHistoryDto>(`${this.apiUrl}/draft/task/${task.id}`).pipe(
+        catchError((err) => {
+          // 404 is expected when no draft exists - handle gracefully without showing error
+          if (err.status === 404) {
+            // No draft found, return empty observable (this is normal, not an error)
+            return of(null);
+          }
+          // Other errors - log but don't throw
+          console.warn('Error loading draft from database:', err);
+          return of(null);
+        })
+      ).subscribe({
         next: (draft) => {
           // Only load if it's a draft (isDraft = true)
           // If isDraft = false or undefined, it means it's a submitted answer, don't load it
@@ -2578,15 +2627,6 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
             // Not a draft or no draft found, start fresh
             this.currentAnswer.set('');
           }
-        },
-        error: (err) => {
-          // API failed (404 = no draft found, or other errors) - start fresh
-          if (err.status === 404) {
-            console.log('No draft in database, starting fresh.');
-          } else {
-            console.log('Error loading draft from database, starting fresh.');
-          }
-          this.currentAnswer.set('');
         }
       });
     } else {
@@ -2681,9 +2721,52 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   getTask1ImageUrl(): string | null {
     const task = this.selectedTask();
     if (task?.type === 'task1') {
+      const imageUrl = (task as WritingTask1).imageUrl;
+      if (!imageUrl) {
+        console.log('⚠️ Task 1 has no imageUrl:', task);
+        return null;
+      }
+      
+      // If imageUrl is already a full URL (http/https) or base64 data URI, return as is
+      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:')) {
+        console.log('✅ Using imageUrl as-is:', imageUrl.substring(0, 50) + '...');
+        return imageUrl;
+      }
+      
+      // If imageUrl is a relative path, construct full URL using API base URL
+      // Remove leading slash if present to avoid double slashes
+      const cleanPath = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+      const fullUrl = `${this.apiUrl}/${cleanPath}`;
+      console.log('🔗 Constructed image URL from relative path:', fullUrl);
+      return fullUrl;
+    }
+    return null;
+  }
+
+  getTask1ImageUrlRaw(): string | null {
+    const task = this.selectedTask();
+    if (task?.type === 'task1') {
       return (task as WritingTask1).imageUrl || null;
     }
     return null;
+  }
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    console.error('❌ Failed to load image:', img.src);
+    // Optionally show a placeholder or error message
+    img.style.display = 'none';
+    // Show error message to user
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'image-error';
+    errorDiv.style.cssText = 'padding: 0.5rem; background: #f8d7da; color: #721c24; border-radius: 4px; margin: 0.5rem 0; font-size: 0.875rem;';
+    errorDiv.textContent = `⚠️ Không thể tải ảnh: ${img.src.substring(0, 50)}...`;
+    img.parentElement?.appendChild(errorDiv);
+  }
+
+  onImageLoad(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    console.log('✅ Image loaded successfully:', img.src.substring(0, 50) + '...');
   }
 
   /**

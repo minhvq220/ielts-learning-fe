@@ -43,6 +43,7 @@
   display: flex;
   flex: 1;
   overflow: hidden;
+  margin-top: 70px; /* Space for fixed header (height: 70px) */
 }
 
 .content-area {
@@ -56,6 +57,7 @@
 @media (max-width: 768px) {
   .main-content {
     flex-direction: column;
+    margin-top: 60px; /* Smaller header on mobile (height: 60px) */
   }
   
   .content-area {
