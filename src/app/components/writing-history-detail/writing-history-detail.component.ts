@@ -3526,8 +3526,13 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
   goBack(): void {
     // Check if coming from mock test pages
     const savedPreviousUrl = sessionStorage.getItem('writing_history_previous_url');
-    if (savedPreviousUrl === '/writing/mock-test' || savedPreviousUrl === '/writing/mock-test/history') {
-      this.router.navigate([savedPreviousUrl]);
+    if (savedPreviousUrl === '/writing/mock-test' || savedPreviousUrl === '/writing/mock-test/start' || savedPreviousUrl === '/writing/mock-test/history') {
+      // Always go back to landing page for mock test
+      if (savedPreviousUrl === '/writing/mock-test/history') {
+        this.router.navigate(['/writing/mock-test/history']);
+      } else {
+        this.router.navigate(['/writing/mock-test']);
+      }
       return;
     }
     

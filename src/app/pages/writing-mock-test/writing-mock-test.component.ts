@@ -1340,7 +1340,7 @@ export class WritingMockTestComponent implements OnInit, OnDestroy {
 
   viewTaskDetail(historyId: number) {
     // Save current URL to sessionStorage so detail page knows where to go back
-    sessionStorage.setItem('writing_history_previous_url', '/writing/mock-test');
+    sessionStorage.setItem('writing_history_previous_url', '/writing/mock-test/start');
     // Set flag to indicate we're going to detail page, so we can restore state when coming back
     sessionStorage.setItem('coming_back_from_mock_test_detail', 'true');
     this.router.navigate(['/writing/history', historyId]);
@@ -1349,18 +1349,9 @@ export class WritingMockTestComponent implements OnInit, OnDestroy {
   startNewMockTest() {
     // Clear saved state
     sessionStorage.removeItem('mock_test_result_state');
-    // Reset all signals
-    this.testCompleted.set(false);
-    this.mockTestResult.set(null);
-    this.task1Answer = '';
-    this.task2Answer = '';
-    this.waitingForAiScoring.set(false);
-    // Navigate with new parameter to force fresh load
-    this.router.navigate(['/writing/mock-test'], { queryParams: { new: 'true' } });
-    // Reload to start fresh
-    setTimeout(() => {
-      window.location.reload();
-    }, 100);
+    sessionStorage.removeItem('coming_back_from_mock_test_detail');
+    // Navigate back to landing page
+    this.router.navigate(['/writing/mock-test']);
   }
   
   goToMockTestHistory() {
