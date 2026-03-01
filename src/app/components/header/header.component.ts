@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ContactInfoService, ContactInfo } from '../../services/contact-info.service';
 
 @Component({
   selector: 'app-header',
@@ -59,27 +60,6 @@ import { AuthService } from '../../services/auth.service';
             <span>Mock test (Thi thử)</span>
           </a>
 
-          <!-- Luyện tập Writing (with submenu) -->
-          <div class="menu-item menu-item-with-submenu" (click)="toggleSubmenu('practice')">
-            <span class="menu-icon">🎯</span>
-            <span>Luyện tập Writing</span>
-            <span class="submenu-arrow" [class.open]="isSubmenuOpen('practice')">▼</span>
-          </div>
-          <div class="submenu" [class.open]="isSubmenuOpen('practice')">
-            <div class="submenu-section">
-              <div class="submenu-title">Tập viết Task 1</div>
-              <a class="submenu-item" (click)="closeMenu()">Paraphrase</a>
-              <a class="submenu-item" (click)="closeMenu()">Overview Writing</a>
-            </div>
-            <div class="submenu-section">
-              <div class="submenu-title">Tập viết Task 2</div>
-              <a class="submenu-item" (click)="closeMenu()">Outline Writing</a>
-              <a class="submenu-item" (click)="closeMenu()">Paraphrase</a>
-              <a class="submenu-item" (click)="closeMenu()">Idea Development</a>
-              <a class="submenu-item" (click)="closeMenu()">Translation practice</a>
-            </div>
-          </div>
-
           <!-- Hỗ trợ (with submenu) -->
           <div class="menu-item menu-item-with-submenu" (click)="toggleSubmenu('support')">
             <span class="menu-icon">💬</span>
@@ -90,7 +70,44 @@ import { AuthService } from '../../services/auth.service';
             <a class="submenu-item" (click)="closeMenu()">Nâng cấp tài khoản</a>
             <a class="submenu-item" (click)="closeMenu()">Câu hỏi thường gặp</a>
             <a class="submenu-item" (click)="closeMenu()">Hướng dẫn sử dụng</a>
-            <a class="submenu-item" (click)="closeMenu()">Liên hệ hỗ trợ</a>
+            <div class="submenu-section">
+              <div class="submenu-title">Liên hệ hỗ trợ</div>
+              <a *ngIf="contactInfo()?.email" 
+                 class="submenu-item contact-item" 
+                 [href]="'mailto:' + contactInfo()!.email" 
+                 target="_blank"
+                 (click)="closeMenu()">
+                <span class="contact-icon">📧</span>
+                <span>{{ contactInfo()!.email }}</span>
+              </a>
+              <a *ngIf="contactInfo()?.facebookUrl" 
+                 class="submenu-item contact-item" 
+                 [href]="contactInfo()!.facebookUrl" 
+                 target="_blank"
+                 (click)="closeMenu()">
+                <span class="contact-icon">📘</span>
+                <span>Facebook</span>
+              </a>
+              <a *ngIf="contactInfo()?.instagramUrl" 
+                 class="submenu-item contact-item" 
+                 [href]="contactInfo()!.instagramUrl" 
+                 target="_blank"
+                 (click)="closeMenu()">
+                <span class="contact-icon">📷</span>
+                <span>Instagram</span>
+              </a>
+              <a *ngIf="contactInfo()?.telegramUrl" 
+                 class="submenu-item contact-item" 
+                 [href]="contactInfo()!.telegramUrl" 
+                 target="_blank"
+                 (click)="closeMenu()">
+                <span class="contact-icon">✈️</span>
+                <span>Telegram</span>
+              </a>
+              <div *ngIf="!hasContactInfo()" class="submenu-item no-contact">
+                Chưa có thông tin liên hệ
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -361,6 +378,30 @@ import { AuthService } from '../../services/auth.service';
       color: #667eea;
     }
 
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .contact-icon {
+      font-size: 1rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    .no-contact {
+      color: #94a3b8;
+      font-style: italic;
+      cursor: default;
+    }
+
+    .no-contact:hover {
+      background: transparent;
+      padding-left: 3.5rem;
+      color: #94a3b8;
+    }
+
     /* Menu Overlay */
     .menu-overlay {
       position: fixed;
@@ -412,17 +453,22 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isHeaderVisible = signal(true);
   isMenuOpen = signal(false);
   openSubmenus = signal<Set<string>>(new Set());
+  contactInfo = signal<ContactInfo | null>(null);
   private lastScrollTop = 0;
   private scrollHandler: (() => void) | null = null;
 
   constructor(
     public authService: AuthService,
-    private router: Router
+    private router: Router,
+    private contactInfoService: ContactInfoService
   ) {}
 
   ngOnInit(): void {
     // Initialize header visibility
     this.handleHeaderVisibility();
+    
+    // Load contact info
+    this.loadContactInfo();
     
     // Setup scroll listener
     let scrollUpdateFrame: number | null = null;
@@ -537,5 +583,22 @@ export class HeaderComponent implements OnInit, OnDestroy {
       queryParams: { type: taskType },
       queryParamsHandling: 'merge'
     });
+  }
+
+  loadContactInfo(): void {
+    this.contactInfoService.getContactInfo().subscribe({
+      next: (info) => {
+        this.contactInfo.set(info);
+      },
+      error: (error) => {
+        console.error('Error loading contact info:', error);
+        // Don't show error to user, just log it
+      }
+    });
+  }
+
+  hasContactInfo(): boolean {
+    const info = this.contactInfo();
+    return !!(info?.email || info?.facebookUrl || info?.instagramUrl || info?.telegramUrl);
   }
 }

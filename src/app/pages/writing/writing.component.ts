@@ -67,8 +67,12 @@ interface AIEvaluation {
                 </div>
               </div>
             </div>
-            <div class="stats-header" *ngIf="authService.isAuthenticated()">
-              <a routerLink="/writing/history" class="history-btn">
+            <div class="stats-header">
+              <a routerLink="/writing/mock-test" class="mock-test-btn">
+                <span class="mock-test-icon">📝</span>
+                <span>Mock test (thi thử)</span>
+              </a>
+              <a routerLink="/writing/history" class="history-btn" *ngIf="authService.isAuthenticated()">
                 <span class="history-icon">📚</span>
                 <span>Lịch sử làm bài</span>
               </a>
@@ -2065,6 +2069,35 @@ interface AIEvaluation {
         align-items: center;
       }
     }
+    .mock-test-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      color: #f8fafc;
+      padding: 0.7rem 1.4rem;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 12px 24px rgba(245, 158, 11, 0.28);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      letter-spacing: 0.02em;
+      border: none;
+      margin-right: 0.75rem;
+    }
+
+    .mock-test-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 30px rgba(245, 158, 11, 0.32);
+      color: #fff;
+    }
+
+    .mock-test-icon {
+      font-size: 1.15rem;
+      line-height: 1;
+    }
+
     .history-btn {
       display: inline-flex;
       align-items: center;
@@ -2094,9 +2127,25 @@ interface AIEvaluation {
     }
 
     @media (max-width: 768px) {
+      .stats-header {
+        flex-direction: column;
+        gap: 0.75rem;
+        width: 100%;
+      }
+
+      .mock-test-btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.85rem;
+        margin-right: 0;
+        width: 100%;
+        justify-content: center;
+      }
+
       .history-btn {
         padding: 0.6rem 1.2rem;
         font-size: 0.85rem;
+        width: 100%;
+        justify-content: center;
       }
     }
     
