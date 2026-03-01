@@ -67,9 +67,8 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
             <span class="submenu-arrow" [class.open]="isSubmenuOpen('support')">▼</span>
           </div>
           <div class="submenu" [class.open]="isSubmenuOpen('support')">
-            <a class="submenu-item" (click)="closeMenu()">Nâng cấp tài khoản</a>
-            <a class="submenu-item" (click)="closeMenu()">Câu hỏi thường gặp</a>
-            <a class="submenu-item" (click)="closeMenu()">Hướng dẫn sử dụng</a>
+            <a class="submenu-item" routerLink="/faq" (click)="closeMenu()">Câu hỏi thường gặp</a>
+            <a class="submenu-item" routerLink="/guide" (click)="closeMenu()">Hướng dẫn sử dụng</a>
             <div class="submenu-section">
               <div class="submenu-title">Liên hệ hỗ trợ</div>
               <a *ngIf="contactInfo()?.email" 

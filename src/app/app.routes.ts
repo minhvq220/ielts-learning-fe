@@ -15,6 +15,8 @@ export const routes: Routes = [
   { path: 'writing/history/:id', loadComponent: () => import('./components/writing-history-detail/writing-history-detail.component').then(m => m.WritingHistoryDetailComponent) },
   // { path: 'speaking', loadComponent: () => import('./pages/speaking/speaking.component').then(m => m.SpeakingComponent) },
   { path: 'login', loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent) },
+  { path: 'guide', loadComponent: () => import('./pages/guide/user-guide.component').then(m => m.UserGuideComponent) },
+  { path: 'faq', loadComponent: () => import('./pages/faq/faq.component').then(m => m.FaqComponent) },
   {
     path: 'admin',
     loadComponent: () => import('./layouts/admin-layout.component').then(m => m.AdminLayoutComponent),
