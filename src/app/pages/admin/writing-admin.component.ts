@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject } from '@angular/core';
+import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { WritingTaskService } from '../../services/writing-task.service';
@@ -40,33 +40,33 @@ import {
         </div>
       </div>
 
-      <!-- Statistics Dashboard -->
+      <!-- Statistics Dashboard (from API) -->
       <div class="stats-dashboard">
         <div class="stat-card">
           <div class="stat-icon">📝</div>
           <div class="stat-content">
-            <h3>{{ stats().totalTasks }}</h3>
+            <h3>{{ adminStats()?.totalTasks ?? 0 }}</h3>
             <p>Tổng số bài</p>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">📊</div>
           <div class="stat-content">
-            <h3>{{ stats().task1Count }}</h3>
+            <h3>{{ adminStats()?.task1Count ?? 0 }}</h3>
             <p>Task 1</p>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">✍️</div>
           <div class="stat-content">
-            <h3>{{ stats().task2Count }}</h3>
+            <h3>{{ adminStats()?.task2Count ?? 0 }}</h3>
             <p>Task 2</p>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">⭐</div>
           <div class="stat-content">
-            <h3>{{ stats().byDifficulty.hard }}</h3>
+            <h3>{{ adminStats()?.byDifficulty?.hard ?? 0 }}</h3>
             <p>Bài khó</p>
           </div>
         </div>
@@ -118,6 +118,17 @@ import {
             <option value="hard">Khó</option>
           </select>
 
+          <select [(ngModel)]="selectedSource" (change)="onFilterChange()">
+            <option value="">Tất cả nguồn đề</option>
+            <option value="CAMBRIDGE">Cambridge</option>
+            <option value="VOL">VOL</option>
+            <option value="ACTUAL_TESTS">Actual Tests</option>
+            <option value="FORECAST">Forecast</option>
+            <option value="OTHERS">Khác</option>
+          </select>
+
+          <input type="text" [(ngModel)]="selectedTag" (blur)="onFilterChange()" (keyup.enter)="onFilterChange()" placeholder="Lọc theo chủ đề..." class="filter-tag-input">
+
           <select [(ngModel)]="selectedStatus" (change)="onFilterChange()">
             <option value="">Tất cả trạng thái</option>
             <option value="true">Đang hoạt động</option>
@@ -133,7 +144,7 @@ import {
       <!-- Tasks Table -->
       <div class="tasks-table-container">
         <div class="table-header">
-          <h3>Danh sách bài viết ({{ sortedTasks().length }} bài)</h3>
+          <h3>Danh sách bài viết ({{ totalElements() }} bài)</h3>
           <div class="sort-controls">
             <select [(ngModel)]="sortField" (change)="onSortChange()">
               <option value="createdAt">Ngày tạo</option>
@@ -148,12 +159,14 @@ import {
         </div>
 
         <div class="table-wrapper">
-          <table class="tasks-table">
+          <div *ngIf="loading()" class="table-loading">Đang tải...</div>
+          <table class="tasks-table" *ngIf="!loading()">
             <thead>
               <tr>
                 <th>Tiêu đề</th>
                 <th>Loại</th>
                 <th>Dạng đề</th>
+                <th>Nguồn đề</th>
                 <th>Độ khó</th>
                 <th>Thời gian</th>
                 <th>Trạng thái</th>
@@ -162,7 +175,7 @@ import {
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let task of paginatedTasks()" class="task-row">
+              <tr *ngFor="let task of currentPageTasks()" class="task-row">
                 <td class="task-title">
                   <div class="title-content">
                     <h4>{{ task.title }}</h4>
@@ -180,6 +193,10 @@ import {
                   <span class="task-subtype">
                     {{ getTaskSubtypeLabel(task) }}
                   </span>
+                </td>
+                <td>
+                  <span class="source-badge" *ngIf="task.source">{{ getSourceLabel(task.source) }}</span>
+                  <span class="source-empty" *ngIf="!task.source">—</span>
                 </td>
                 <td>
                   <span class="difficulty-badge" [class]="task.difficulty">
@@ -402,11 +419,18 @@ import {
       flex-wrap: wrap;
     }
 
-    .filter-controls select {
-      padding: 0.5rem;
+    .filter-controls select,
+    .filter-controls .filter-tag-input {
+      padding: 0.5rem 0.6rem;
       border: 1px solid #ddd;
       border-radius: 6px;
       min-width: 150px;
+      height: 2.25rem;
+      box-sizing: border-box;
+      line-height: 1.25;
+    }
+    .filter-controls .filter-tag-input {
+      min-width: 120px;
     }
 
     .tasks-table-container {
@@ -437,6 +461,12 @@ import {
 
     .table-wrapper {
       overflow-x: auto;
+    }
+
+    .table-loading {
+      padding: 2rem;
+      text-align: center;
+      color: #64748b;
     }
 
     .tasks-table {
@@ -513,6 +543,19 @@ import {
     .task-subtype {
       font-size: 0.9rem;
       color: #666;
+    }
+
+    .source-badge {
+      font-size: 0.85rem;
+      padding: 0.2rem 0.5rem;
+      background: #e8eaf6;
+      color: #3949ab;
+      border-radius: 4px;
+    }
+
+    .source-empty {
+      color: #999;
+      font-size: 0.9rem;
     }
 
     .difficulty-badge.easy {
@@ -614,56 +657,50 @@ import {
     }
   `]
 })
-export class WritingAdminComponent {
+export class WritingAdminComponent implements OnInit {
   private writingService = inject(WritingTaskService);
 
-  // Signals
-  public stats = this.writingService.stats;
-  public sortedTasks = this.writingService.sortedTasks;
+  readonly pageSize = 10;
+
+  // Server-side: current page content and pagination info from API
+  public loading = this.writingService.loading;
+  public currentPageTasks = this.writingService.currentPageTasks;
+  public totalElements = this.writingService.totalElements;
+  public totalPages = this.writingService.totalPages;
+  public currentPageNumber = this.writingService.currentPageNumber;
+  public adminStats = this.writingService.adminStats;
   
-  // Filter and search state
+  // Filter and search state (synced to service when applying)
   searchTerm = '';
   selectedType = '';
   selectedTask1Type = '';
   selectedTask2Type = '';
   selectedDifficulty = '';
+  selectedSource = '';
+  selectedTag = '';
   selectedStatus = '';
   sortField = 'createdAt';
   sortDirection: 'asc' | 'desc' = 'desc';
-  
-  // Pagination
-  currentPage = signal(1);
-  itemsPerPage = 10;
 
   // Modal state
   showModal = signal(false);
   selectedTask = signal<WritingTask | null>(null);
 
-  totalPages = computed(() => {
-    const totalItems = this.sortedTasks().length;
-    if (totalItems === 0) {
-      return 0;
-    }
-    return Math.ceil(totalItems / this.itemsPerPage);
-  });
+  /** 1-based current page for UI */
+  currentPage = computed(() => this.currentPageNumber() + 1);
 
-  paginatedTasks = computed(() => {
-    const totalPages = this.totalPages();
-    if (totalPages === 0) {
-      return [];
-    }
-    const current = Math.min(Math.max(this.currentPage(), 1), totalPages);
-    const start = (current - 1) * this.itemsPerPage;
-    const end = start + this.itemsPerPage;
-    return this.sortedTasks().slice(start, end);
-  });
+  ngOnInit(): void {
+    this.applyFilterAndSort();
+    this.writingService.loadTasks(0, this.pageSize);
+    this.writingService.loadStatistics();
+  }
 
   onSearchChange(): void {
-    this.updateFilter();
+    this.applyFilterAndSort();
   }
 
   onFilterChange(): void {
-    this.updateFilter();
+    this.applyFilterAndSort();
   }
 
   onSortChange(): void {
@@ -671,6 +708,7 @@ export class WritingAdminComponent {
       field: this.sortField as any,
       direction: this.sortDirection
     });
+    this.writingService.loadTasks(0, this.pageSize);
   }
 
   toggleSortDirection(): void {
@@ -678,18 +716,19 @@ export class WritingAdminComponent {
     this.onSortChange();
   }
 
-  private updateFilter(): void {
+  private applyFilterAndSort(): void {
     const filter: WritingTaskFilter = {};
-    
     if (this.searchTerm) filter.search = this.searchTerm;
     if (this.selectedType) filter.type = this.selectedType as any;
     if (this.selectedTask1Type) filter.task1Type = this.selectedTask1Type as any;
     if (this.selectedTask2Type) filter.task2Type = this.selectedTask2Type as any;
     if (this.selectedDifficulty) filter.difficulty = this.selectedDifficulty as any;
+    if (this.selectedSource) filter.source = this.selectedSource as any;
+    if (this.selectedTag?.trim()) filter.tag = this.selectedTag.trim();
     if (this.selectedStatus !== '') filter.isActive = this.selectedStatus === 'true';
-
     this.writingService.setFilter(filter);
-    this.currentPage.set(1);
+    this.writingService.setSort({ field: this.sortField as any, direction: this.sortDirection });
+    this.writingService.loadTasks(0, this.pageSize);
   }
 
   clearFilters(): void {
@@ -698,19 +737,18 @@ export class WritingAdminComponent {
     this.selectedTask1Type = '';
     this.selectedTask2Type = '';
     this.selectedDifficulty = '';
+    this.selectedSource = '';
+    this.selectedTag = '';
     this.selectedStatus = '';
     this.writingService.clearFilter();
-    this.currentPage.set(1);
+    this.writingService.loadTasks(0, this.pageSize);
   }
 
   goToPage(page: number): void {
     const total = this.totalPages();
-    if (total === 0) {
-      this.currentPage.set(1);
-      return;
-    }
+    if (total === 0) return;
     const target = Math.min(Math.max(page, 1), total);
-    this.currentPage.set(target);
+    this.writingService.loadTasks(target - 1, this.pageSize);
   }
 
   getPageNumbers(): number[] {
@@ -755,6 +793,18 @@ export class WritingAdminComponent {
     return labels[difficulty] || difficulty;
   }
 
+  getSourceLabel(source: string | undefined): string {
+    if (!source) return '';
+    const labels: Record<string, string> = {
+      'CAMBRIDGE': 'Cambridge',
+      'VOL': 'VOL',
+      'ACTUAL_TESTS': 'Actual Tests',
+      'FORECAST': 'Forecast',
+      'OTHERS': 'Others'
+    };
+    return labels[source] || source;
+  }
+
   formatDate(date: Date): string {
     return new Date(date).toLocaleDateString('vi-VN');
   }
@@ -777,11 +827,13 @@ export class WritingAdminComponent {
   onSaveTask(task: WritingTask): void {
     if (this.selectedTask()) {
       // Update existing task
+      const currentPage = this.writingService.currentPageNumber();
       this.writingService.updateTask(task.id, task).subscribe({
         next: () => {
-          console.log('Task updated successfully');
           this.showModal.set(false);
           this.selectedTask.set(null);
+          this.writingService.loadTasks(currentPage, this.pageSize);
+          this.writingService.loadStatistics();
         },
         error: (error) => {
           console.error('Error updating task:', error);
@@ -792,9 +844,10 @@ export class WritingAdminComponent {
       // Create new task
       this.writingService.createTask(task).subscribe({
         next: () => {
-          console.log('Task created successfully');
           this.showModal.set(false);
           this.selectedTask.set(null);
+          this.writingService.loadTasks(0, this.pageSize);
+          this.writingService.loadStatistics();
         },
         error: (error) => {
           console.error('Error creating task:', error);
@@ -811,9 +864,11 @@ export class WritingAdminComponent {
 
   deleteTask(task: WritingTask): void {
     if (confirm(`Bạn có chắc muốn xóa bài "${task.title}"?`)) {
+      const currentPage = this.writingService.currentPageNumber();
       this.writingService.deleteTask(task.id).subscribe({
         next: () => {
-          console.log('Task deleted successfully');
+          this.writingService.loadTasks(currentPage, this.pageSize);
+          this.writingService.loadStatistics();
         },
         error: (error) => {
           console.error('Error deleting task:', error);

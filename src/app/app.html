@@ -2,12 +2,13 @@
   <div class="simple-loading" *ngIf="loadingService.isLoading()">
     <div class="loading-spinner"></div>
     <p>Đang tải ứng dụng...</p>
-    </div>
+  </div>
   <app-header></app-header>
   <div class="main-content">
     <app-sidebar style="display: none;"></app-sidebar>
     <main class="content-area">
       <router-outlet></router-outlet>
     </main>
-    </div>
+    <app-footer></app-footer>
   </div>
+</div>

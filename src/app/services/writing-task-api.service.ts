@@ -8,6 +8,8 @@ export interface WritingTaskFilter {
   task1Type?: string;
   task2Type?: string;
   difficulty?: string;
+  source?: string;
+  tag?: string;
   isActive?: boolean;
   search?: string;
   sortField?: string;
@@ -16,6 +18,8 @@ export interface WritingTaskFilter {
   size?: number;
 }
 
+export type WritingTaskSourceDto = 'CAMBRIDGE' | 'VOL' | 'ACTUAL_TESTS' | 'FORECAST' | 'OTHERS';
+
 export interface WritingTaskDto {
   id?: number;
   title: string;
@@ -23,6 +27,7 @@ export interface WritingTaskDto {
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   timeLimit: number;
   wordCount: number;
+  source?: WritingTaskSourceDto; // Nguồn đề
   sampleAnswer?: string;
   writingGuide?: string; // Rich text HTML guide
   isActive: boolean;

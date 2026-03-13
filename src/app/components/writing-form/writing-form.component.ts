@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, signal, computed, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { 
@@ -197,6 +197,21 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                   min="50"
                   max="500"
                   class="form-control">
+              </div>
+
+              <div class="form-group">
+                <label>Nguồn đề</label>
+                <select 
+                  [(ngModel)]="taskData.source" 
+                  name="source" 
+                  class="form-control">
+                  <option [ngValue]="undefined">— Chọn nguồn —</option>
+                  <option value="CAMBRIDGE">Cambridge</option>
+                  <option value="VOL">VOL</option>
+                  <option value="ACTUAL_TESTS">Actual Tests</option>
+                  <option value="FORECAST">Forecast</option>
+                  <option value="OTHERS">Others</option>
+                </select>
               </div>
             </div>
 
@@ -565,7 +580,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
     }
   `]
 })
-export class WritingFormComponent implements OnInit {
+export class WritingFormComponent implements OnInit, OnChanges {
   @Input() task: WritingTask | null = null;
   @Input() isVisible = false;
   @Output() save = new EventEmitter<WritingTask>();
@@ -579,6 +594,7 @@ export class WritingFormComponent implements OnInit {
     difficulty: 'medium',
     timeLimit: 20,
     wordCount: 150,
+    source: undefined as string | undefined,
     isActive: true,
     tags: [],
     tips: [],
@@ -596,17 +612,28 @@ export class WritingFormComponent implements OnInit {
   isEditMode = computed(() => !!this.task);
 
   ngOnInit() {
+    this.syncTaskToForm();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['task'] || changes['isVisible']) {
+      this.syncTaskToForm();
+    }
+  }
+
+  private syncTaskToForm(): void {
     if (this.task) {
-      // Edit mode - copy all task data
+      // Edit mode - copy all task data including source
       this.taskData = { 
         ...this.task,
+        source: this.task.source ?? undefined,
         tags: this.task.tags ? [...this.task.tags] : [],
         tips: this.task.tips ? [...this.task.tips] : [],
         additionalQuestions: this.task.type === 'task2' && this.task.additionalQuestions 
           ? [...this.task.additionalQuestions] 
           : []
       };
-    } else {
+    } else if (this.isVisible) {
       // Add mode - initialize with defaults
       this.resetFormData();
     }
@@ -620,6 +647,7 @@ export class WritingFormComponent implements OnInit {
       difficulty: 'medium',
       timeLimit: 20,
       wordCount: 150,
+      source: undefined as string | undefined,
       isActive: true,
       tags: [],
       tips: [],
@@ -758,10 +786,12 @@ export class WritingFormComponent implements OnInit {
 
   onSubmit() {
     if (this.isFormValid()) {
-      const task = this.taskData as WritingTask;
+      const task = { ...this.taskData } as WritingTask;
+      task.source = this.taskData.source ?? undefined;
       if (this.isEditMode()) {
         task.id = this.task!.id;
         task.createdAt = this.task!.createdAt;
+        task.updatedAt = this.task!.updatedAt;
       }
       this.save.emit(task);
     }

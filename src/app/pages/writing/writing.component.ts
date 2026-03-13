@@ -34,7 +34,7 @@ interface AIEvaluation {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
-    <div class="writing-container">
+    <div class="writing-container" [class.writing-container--detail]="!!selectedTask()">
       <!-- Task Selection Panel -->
       <div class="task-selection-panel" *ngIf="!selectedTask()">
         <div class="panel-header">
@@ -82,7 +82,7 @@ interface AIEvaluation {
         
         <div class="task-filters">
           <!-- Advanced Filters -->
-          <div class="advanced-filters" *ngIf="showAdvancedFilters()">
+          <div class="advanced-filters">
             <div class="filter-group">
               <label>Loại bài:</label>
               <select [(ngModel)]="selectedType" (change)="onTypeOrDifficultyChange()">
@@ -102,6 +102,21 @@ interface AIEvaluation {
             </div>
             
             <div class="filter-group">
+              <label>Nguồn đề:</label>
+              <select [(ngModel)]="selectedSource" (change)="onTypeOrDifficultyChange()">
+                <option value="">Tất cả</option>
+                <option value="CAMBRIDGE">Cambridge</option>
+                <option value="VOL">VOL</option>
+                <option value="ACTUAL_TESTS">Actual Tests</option>
+                <option value="FORECAST">Forecast</option>
+                <option value="OTHERS">Khác</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label>Chủ đề:</label>
+              <input type="text" [(ngModel)]="selectedTag" (keyup.enter)="onTypeOrDifficultyChange()" placeholder="Nhập chủ đề...">
+            </div>
+            <div class="filter-group">
               <label>Trạng thái:</label>
               <select [(ngModel)]="selectedStatus" (change)="onFilterChange()">
                 <option value="">Tất cả</option>
@@ -111,7 +126,7 @@ interface AIEvaluation {
             </div>
             
             <div class="filter-group">
-              <button class="btn btn-secondary btn-clear" (click)="clearFilters()" *ngIf="searchQuery || selectedType || selectedDifficulty || selectedStatus">Xóa bộ lọc</button>
+              <button class="btn btn-secondary btn-clear" (click)="clearFilters()" *ngIf="searchQuery || selectedType || selectedDifficulty || selectedStatus || selectedSource || selectedTag">Xóa bộ lọc</button>
             </div>
           </div>
           
@@ -127,11 +142,13 @@ interface AIEvaluation {
               <button class="btn btn-primary btn-search" (click)="triggerSearch()" type="button" title="Tìm kiếm">
                 <span class="search-icon">🔍</span>
               </button>
+              <!-- Tạm ẩn nút bật/tắt bộ lọc nâng cao - bộ lọc luôn hiển thị
               <button class="btn btn-secondary btn-advanced" (click)="toggleAdvancedFilters()" type="button" [class.active]="showAdvancedFilters()" title="Tìm kiếm nâng cao">
                 <svg class="filter-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M4 6H20M7 12H17M10 18H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                 </svg>
               </button>
+              -->
             </div>
           </div>
         </div>
@@ -155,6 +172,9 @@ interface AIEvaluation {
               </span>
               <span class="chip difficulty-badge" [class]="task.difficulty">
                 {{ getDifficultyLabel(task.difficulty) }}
+              </span>
+              <span class="chip meta-chip source-chip" *ngIf="task.source">
+                <span class="chip-icon">📚</span>{{ getSourceLabel(task.source) }}
               </span>
               <span class="chip meta-chip">
                 <span class="chip-icon">⏱️</span>{{ task.timeLimit }} phút
@@ -274,6 +294,10 @@ interface AIEvaluation {
                 </div>
 
                 <div class="task-requirements-compact">
+                  <div class="requirement-item-compact" *ngIf="selectedTask()?.source">
+                    <span class="label-compact">📚</span>
+                    <span class="value-compact">Nguồn: {{ getSourceLabel(selectedTask()!.source) }}</span>
+                  </div>
                   <div class="requirement-item-compact">
                     <span class="label-compact">⏱️</span>
                     <span class="value-compact">{{ selectedTask()!.timeLimit }} phút</span>
@@ -536,6 +560,11 @@ interface AIEvaluation {
       position: relative;
       z-index: 1;
     }
+    /* Màn chi tiết: kéo dài div để che footer, tránh ló 1 phần footer */
+    .writing-container.writing-container--detail {
+      min-height: calc(100vh - 70px + 400px);
+      background: #f8f9fa;
+    }
 
     .task-selection-panel {
       padding: 2rem;
@@ -589,11 +618,18 @@ interface AIEvaluation {
       color: #2c3e50;
     }
 
-    .filter-group select {
-      padding: 0.5rem;
+    .filter-group select,
+    .filter-group input[type="text"] {
+      padding: 0.5rem 0.6rem;
       border: 1px solid #ddd;
       border-radius: 6px;
       min-width: 120px;
+      height: 2.25rem;
+      box-sizing: border-box;
+      line-height: 1.25;
+    }
+    .filter-group input[type="text"] {
+      min-width: 140px;
     }
 
     .search-group {
@@ -1035,6 +1071,10 @@ interface AIEvaluation {
       overflow: visible;
       position: relative;
       background: transparent;
+    }
+    .writing-container--detail .writing-interface {
+      min-height: calc(100vh - 70px + 400px);
+      background: #f8f9fa;
     }
 
     /* Content Container: Đề bài + Bài viết */
@@ -2265,6 +2305,15 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   isTimerRunning = signal(false);
   selectedTask = signal<WritingTask | null>(null);
   evaluation = signal<AIEvaluation | null>(null);
+
+  /** Cập nhật class body để ẩn/hiện footer ngay lập tức (gọi đồng bộ khi set/clear selectedTask) */
+  private setFooterVisibilityForDetailView(inDetailView: boolean): void {
+    if (inDetailView) {
+      document.body.classList.add('writing-detail-view');
+    } else {
+      document.body.classList.remove('writing-detail-view');
+    }
+  }
   isEvaluating = signal(false);
   currentAnswer = signal('');
   currentPage = signal(1);
@@ -2274,6 +2323,8 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   searchQuery = '';
   selectedType = '';
   selectedDifficulty = '';
+  selectedSource = ''; // Nguồn đề: CAMBRIDGE, VOL, ACTUAL_TESTS, FORECAST, OTHERS
+  selectedTag = '';    // Lọc theo tag (bài có chứa tag này)
   selectedStatus = ''; // Filter by status: 'completed', 'uncompleted', or '' for all
   activeInfoTab = signal<'question' | 'guide'>('question'); // Tab for switching between question and guide
   showAdvancedFilters = signal(false); // Track advanced filters visibility
@@ -2348,6 +2399,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
               if (task && this.selectedTask()?.id !== task.id) {
                 // Only select task if it's different from current one
                 this.selectedTask.set(task);
+                this.setFooterVisibilityForDetailView(true);
                 this.evaluation.set(null);
                 this.timeLeft.set(task.timeLimit * 60);
                 this.isTimerRunning.set(false);
@@ -2382,6 +2434,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
               // No taskId in queryParams, reset to selection screen (only state, not navigation)
               if (!this.isNavigating) {
                 this.selectedTask.set(null);
+                this.setFooterVisibilityForDetailView(false);
                 this.currentAnswer.set('');
                 this.evaluation.set(null);
                 this.isTimerRunning.set(false);
@@ -2401,6 +2454,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
         if (!this.isNavigating && (event.url === '/writing' || (event.url.startsWith('/writing?') && !event.url.includes('taskId')))) {
           // Only reset state, don't call backToSelection() to avoid navigation loop
           this.selectedTask.set(null);
+          this.setFooterVisibilityForDetailView(false);
           this.currentAnswer.set('');
           this.evaluation.set(null);
           this.isTimerRunning.set(false);
@@ -2441,6 +2495,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnDestroy() {
+    document.body.classList.remove('writing-detail-view');
     this.destroy$.next();
     this.destroy$.complete();
   }
@@ -2475,6 +2530,8 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.writingService.setFilter({
       type: (this.selectedType ? (this.selectedType as 'task1' | 'task2') : undefined),
       difficulty: (this.selectedDifficulty ? (this.selectedDifficulty as 'easy' | 'medium' | 'hard') : undefined),
+      source: (this.selectedSource ? this.selectedSource as any : undefined),
+      tag: this.selectedTag?.trim() || undefined,
       isActive: true,
       search: this.searchQuery || undefined
     });
@@ -2621,6 +2678,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   selectTask(task: WritingTask): void {
     // First set the task from cache (may not have imageUrl)
     this.selectedTask.set(task);
+    this.setFooterVisibilityForDetailView(true);
     this.evaluation.set(null);
     this.timeLeft.set(task.timeLimit * 60); // Convert minutes to seconds
     this.isTimerRunning.set(false);
@@ -2643,6 +2701,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
       next: (fullTask) => {
         // Update selected task with full details
         this.selectedTask.set(fullTask);
+        this.setFooterVisibilityForDetailView(true);
         console.log('✅ Loaded full task details including imageUrl');
       },
       error: (err) => {
@@ -2686,6 +2745,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
 
   backToSelection(): void {
     this.selectedTask.set(null);
+    this.setFooterVisibilityForDetailView(false);
     this.currentAnswer.set('');
     this.evaluation.set(null);
     this.isTimerRunning.set(false);
@@ -2713,6 +2773,8 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     this.searchQuery = '';
     this.selectedType = '';
     this.selectedDifficulty = '';
+    this.selectedSource = '';
+    this.selectedTag = '';
     this.selectedStatus = '';
     // Clear filters in service and reload tasks
     this.writingService.clearFilter();
@@ -2738,6 +2800,8 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
       search: this.searchQuery?.trim() || undefined,
       type: (this.selectedType ? (this.selectedType as 'task1' | 'task2') : undefined),
       difficulty: (this.selectedDifficulty ? (this.selectedDifficulty as 'easy' | 'medium' | 'hard') : undefined),
+      source: (this.selectedSource ? this.selectedSource as any : undefined),
+      tag: this.selectedTag?.trim() || undefined,
       isActive: true
     });
     this.resetPagination();
@@ -2757,6 +2821,18 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
       'hard': 'Khó'
     };
     return labels[difficulty] || difficulty;
+  }
+
+  getSourceLabel(source: string | undefined): string {
+    if (!source) return '';
+    const labels: Record<string, string> = {
+      'CAMBRIDGE': 'Cambridge',
+      'VOL': 'VOL',
+      'ACTUAL_TESTS': 'Actual Tests',
+      'FORECAST': 'Forecast',
+      'OTHERS': 'Others'
+    };
+    return labels[source] || source;
   }
 
   getTask1Description(): string | null {

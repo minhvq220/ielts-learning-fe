@@ -17,6 +17,9 @@ export type Task2Type =
   | 'two-part-question'
   | 'positive-negative-development';
 
+// Nguồn đề (source)
+export type WritingTaskSource = 'CAMBRIDGE' | 'VOL' | 'ACTUAL_TESTS' | 'FORECAST' | 'OTHERS';
+
 // Base Writing Task Interface
 export interface BaseWritingTask {
   id: string;
@@ -25,6 +28,7 @@ export interface BaseWritingTask {
   difficulty: 'easy' | 'medium' | 'hard';
   timeLimit: number; // in minutes
   wordCount: number; // target word count
+  source?: WritingTaskSource; // Nguồn đề: Cambridge, VOL, Actual Tests, Forecast, Others
   createdAt: Date;
   updatedAt: Date;
   isActive: boolean;
@@ -126,6 +130,8 @@ export interface WritingTaskFilter {
   task1Type?: Task1Type;
   task2Type?: Task2Type;
   difficulty?: 'easy' | 'medium' | 'hard';
+  source?: WritingTaskSource;
+  tag?: string;
   isActive?: boolean;
   search?: string;
 }

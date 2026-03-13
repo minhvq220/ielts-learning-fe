@@ -376,7 +376,7 @@ interface MockTestResult {
       100% { transform: rotate(360deg); }
     }
 
-    /* Test Interface */
+    /* Test Interface - chiều cao lớn hơn để vùng làm bài đủ dài, giảm scroll khi viết bài dài */
     .test-interface {
       background: white;
       border-radius: 12px;
@@ -384,7 +384,8 @@ interface MockTestResult {
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      height: calc(100vh - 150px);
+      height: calc(100vh - 90px);
+      min-height: 720px;
     }
 
     .task-tabs {
@@ -580,12 +581,13 @@ interface MockTestResult {
       color: #374151;
     }
 
-    /* Right Column: Writing Area - Flexible width */
+    /* Right Column: Writing Area - đủ cao để viết bài dài, ít phải scroll */
     .writing-area {
       flex: 1;
       display: flex;
       flex-direction: column;
       height: 100%;
+      min-height: 520px;
       background: white;
       overflow: hidden;
     }
@@ -595,12 +597,13 @@ interface MockTestResult {
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      min-height: 480px;
     }
 
     .writing-textarea {
       width: 100%;
       height: 100%;
-      min-height: 100%;
+      min-height: 460px;
       padding: 2rem;
       border: none;
       font-size: 1.0625rem;
@@ -915,8 +918,8 @@ interface MockTestResult {
       }
 
       .writing-area {
-        height: calc(60vh - 200px);
-        min-height: 300px;
+        height: auto;
+        min-height: 420px;
       }
     }
   `]

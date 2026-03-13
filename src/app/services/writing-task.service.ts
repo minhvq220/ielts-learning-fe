@@ -12,6 +12,14 @@ import {
 } from '../models/writing-task.model';
 import { WritingTaskApiService, WritingTaskDto, WritingTask1Dto, WritingTask2Dto, WritingTaskStatsDto } from './writing-task-api.service';
 
+/** Admin stats from API (total counts), not from current page */
+export interface AdminStats {
+  totalTasks: number;
+  task1Count: number;
+  task2Count: number;
+  byDifficulty: { easy: number; medium: number; hard: number };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -30,6 +38,9 @@ export class WritingTaskService {
   private _totalElements = signal<number>(0);
   private _totalPages = signal<number>(0);
   private _currentPageNumber = signal<number>(0);
+
+  // Admin stats from API (for dashboard totals)
+  private _adminStats = signal<AdminStats | null>(null);
 
   // Computed values
   public filteredTasks = computed(() => {
@@ -138,6 +149,12 @@ export class WritingTaskService {
   public totalPages = computed(() => this._totalPages());
   public currentPageNumber = computed(() => this._currentPageNumber());
 
+  /** Current page content from API (for admin server-side pagination) */
+  public currentPageTasks = computed(() => this._tasks());
+
+  /** Admin dashboard stats from API (totals, not from current page) */
+  public adminStats = computed(() => this._adminStats());
+
   constructor() {
     this.loadTasks();
   }
@@ -153,6 +170,8 @@ export class WritingTaskService {
       task1Type: filter.task1Type,
       task2Type: filter.task2Type,
       difficulty: filter.difficulty,
+      source: filter.source,
+      tag: filter.tag,
       isActive: filter.isActive,
       search: filter.search,
       sortField: this._sort().field,
@@ -351,6 +370,26 @@ export class WritingTaskService {
     // Don't auto-reload here - let component call loadTasks with proper pagination
   }
 
+  /** Load statistics from API for admin dashboard */
+  loadStatistics(): void {
+    this.apiService.getStatistics().pipe(
+      tap((dto: WritingTaskStatsDto) => {
+        const byDifficulty = {
+          easy: dto.byDifficulty?.['EASY'] ?? 0,
+          medium: dto.byDifficulty?.['MEDIUM'] ?? 0,
+          hard: dto.byDifficulty?.['HARD'] ?? 0
+        };
+        this._adminStats.set({
+          totalTasks: dto.totalTasks ?? 0,
+          task1Count: dto.task1Count ?? 0,
+          task2Count: dto.task2Count ?? 0,
+          byDifficulty
+        });
+      }),
+      catchError(() => of(null))
+    ).subscribe();
+  }
+
   // Utility Methods
   private generateId(): string {
     return 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
@@ -365,6 +404,7 @@ export class WritingTaskService {
       difficulty: dto.difficulty.toLowerCase() as 'easy' | 'medium' | 'hard',
       timeLimit: dto.timeLimit,
       wordCount: dto.wordCount,
+      source: dto.source,
       createdAt: dto.createdAt ? new Date(dto.createdAt) : new Date(),
       updatedAt: dto.updatedAt ? new Date(dto.updatedAt) : new Date(),
       isActive: dto.isActive,
@@ -403,6 +443,7 @@ export class WritingTaskService {
       difficulty: task.difficulty.toUpperCase() as any,
       timeLimit: task.timeLimit,
       wordCount: task.wordCount,
+      source: task.source,
       sampleAnswer: task.sampleAnswer,
       writingGuide: task.writingGuide,
       isActive: task.isActive,
@@ -422,6 +463,7 @@ export class WritingTaskService {
       difficulty: task.difficulty.toUpperCase() as any,
       timeLimit: task.timeLimit,
       wordCount: task.wordCount,
+      source: task.source,
       sampleAnswer: task.sampleAnswer,
       writingGuide: task.writingGuide,
       isActive: task.isActive,

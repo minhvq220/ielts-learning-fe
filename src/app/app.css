@@ -41,17 +41,22 @@
 
 .main-content {
   display: flex;
+  flex-direction: column;
   flex: 1;
-  overflow: hidden;
+  overflow-y: auto;
   margin-top: 70px; /* Space for fixed header (height: 70px) */
 }
 
 .content-area {
-  flex: 1;
   width: 100%;
   padding: 20px;
-  overflow-y: auto;
+  flex-shrink: 0;
   background-color: #f8f9fa;
+}
+
+/* Ẩn footer khi đang ở màn chi tiết làm bài (writing component bật class này) */
+body.writing-detail-view app-footer {
+  display: none !important;
 }
 
 @media (max-width: 768px) {
