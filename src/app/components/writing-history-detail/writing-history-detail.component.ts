@@ -3537,19 +3537,33 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
     }
     
     // Check if we have a saved previous URL that's not the history list page
-    // This ensures we go back to /writing if user came from there, not /writing/history
+    // previousUrl có thể là full URL (http://localhost:4200/writing) hoặc chỉ path (/writing)
+    // nên xử lý dạng chuỗi thay vì dùng new URL(...) để tránh lỗi trên path tương đối.
     if (this.previousUrl) {
-      const url = new URL(this.previousUrl);
-      const path = url.pathname;
+      const urlStr = this.previousUrl;
+      
+      // Nếu previousUrl có dạng full URL, tách path ra; nếu không thì dùng luôn chuỗi đó
+      let path = urlStr;
+      try {
+        if (urlStr.startsWith('http://') || urlStr.startsWith('https://')) {
+          const parsed = new URL(urlStr);
+          path = parsed.pathname + parsed.search + parsed.hash;
+        }
+      } catch {
+        // Nếu parse URL lỗi thì giữ nguyên path là urlStr
+      }
+      
+      // Chuẩn hóa path chỉ lấy phần trước query/hash
+      const basePath = path.split(/[?#]/)[0];
       
       // If previous URL is /writing (not /writing/history), navigate there
-      if (path === '/writing' || path.startsWith('/writing?') || path.startsWith('/writing#')) {
+      if (basePath === '/writing') {
         this.router.navigate(['/writing']);
         return;
       }
       
       // If previous URL is /writing/history, navigate there
-      if (path === '/writing/history' || path.startsWith('/writing/history?')) {
+      if (basePath === '/writing/history') {
         this.router.navigate(['/writing/history']);
         return;
       }
