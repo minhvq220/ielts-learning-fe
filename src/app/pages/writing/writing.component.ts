@@ -69,11 +69,11 @@ interface AIEvaluation {
             </div>
             <div class="stats-header">
               <a routerLink="/writing/mock-test" class="mock-test-btn">
-                <span class="mock-test-icon">📝</span>
+                <span class="mock-test-icon">✎</span>
                 <span>Mock test (thi thử)</span>
               </a>
               <a routerLink="/writing/history" class="history-btn" *ngIf="authService.isAuthenticated()">
-                <span class="history-icon">📚</span>
+                <span class="history-icon">≡</span>
                 <span>Lịch sử làm bài</span>
               </a>
             </div>
@@ -140,7 +140,7 @@ interface AIEvaluation {
                 placeholder="Tìm theo tiêu đề, hướng dẫn, loại bài..."
                 class="search-input">
               <button class="btn btn-primary btn-search" (click)="triggerSearch()" type="button" title="Tìm kiếm">
-                <span class="search-icon">🔍</span>
+                <span class="search-icon">⌕</span>
               </button>
               <!-- Tạm ẩn nút bật/tắt bộ lọc nâng cao - bộ lọc luôn hiển thị
               <button class="btn btn-secondary btn-advanced" (click)="toggleAdvancedFilters()" type="button" [class.active]="showAdvancedFilters()" title="Tìm kiếm nâng cao">
@@ -157,6 +157,8 @@ interface AIEvaluation {
           <div 
             *ngFor="let task of paginatedTasks()" 
             class="task-card"
+            [class.task1]="task.type === 'task1'"
+            [class.task2]="task.type === 'task2'"
             [class.completed]="isTaskCompleted(task)"
             (click)="selectTask(task)">
             <div class="task-card-header">
@@ -173,14 +175,14 @@ interface AIEvaluation {
               <span class="chip difficulty-badge" [class]="task.difficulty">
                 {{ getDifficultyLabel(task.difficulty) }}
               </span>
-              <span class="chip meta-chip source-chip" *ngIf="task.source">
-                <span class="chip-icon">📚</span>{{ getSourceLabel(task.source) }}
+              <span class="chip meta-chip source-chip" *ngIf="task.source" [class.source-cambridge]="task.source === 'CAMBRIDGE'" [class.source-vol]="task.source === 'VOL'" [class.source-actual_tests]="task.source === 'ACTUAL_TESTS'" [class.source-forecast]="task.source === 'FORECAST'" [class.source-others]="task.source === 'OTHERS'">
+                <span class="chip-icon">≡</span>{{ getSourceLabel(task.source) }}
               </span>
-              <span class="chip meta-chip">
-                <span class="chip-icon">⏱️</span>{{ task.timeLimit }} phút
+              <span class="chip meta-chip time-chip">
+                <span class="chip-icon">⏱</span>{{ task.timeLimit }} phút
               </span>
-              <span class="chip meta-chip">
-                <span class="chip-icon">📝</span>{{ task.wordCount }} từ
+              <span class="chip meta-chip words-chip">
+                <span class="chip-icon">✎</span>{{ task.wordCount }} từ
               </span>
             </div>
 
@@ -243,7 +245,7 @@ interface AIEvaluation {
                 [class.active]="!isQuestionPanelCollapsed() && activeInfoTab() === 'guide'"
                 *ngIf="selectedTask()?.writingGuide"
                 (click)="setActiveInfoTab('guide')">
-                📝 Hướng dẫn
+                ✎ Hướng dẫn
               </button>
             </div>
 
@@ -271,8 +273,8 @@ interface AIEvaluation {
                       (load)="onImageLoad($event)">
                   </div>
                   <!-- Debug info for missing image -->
-                  <div *ngIf="selectedTask()?.type === 'task1' && !getTask1ImageUrl()" class="image-debug" style="padding: 0.5rem; background: #fff3cd; border-radius: 4px; margin: 0.5rem 0; font-size: 0.875rem;">
-                    <small>⚠️ Không có ảnh cho bài tập này. imageUrl: {{ getTask1ImageUrlRaw() || 'null' }}</small>
+                  <div *ngIf="selectedTask()?.type === 'task1' && !getTask1ImageUrl()" class="image-debug" style="padding: 0.5rem; background: #fff3cd; border-radius: 0; margin: 0.5rem 0; font-size: 0.875rem;">
+                    <small>! Không có ảnh cho bài tập này. imageUrl: {{ getTask1ImageUrlRaw() || 'null' }}</small>
                   </div>
                   <div *ngIf="getTask1Description()" class="task-description-compact">
                     <div class="section-label">Mô tả:</div>
@@ -299,17 +301,17 @@ interface AIEvaluation {
                     <span class="value-compact">Nguồn: {{ getSourceLabel(selectedTask()!.source) }}</span>
                   </div>
                   <div class="requirement-item-compact">
-                    <span class="label-compact">⏱️</span>
+                    <span class="label-compact">⏱</span>
                     <span class="value-compact">{{ selectedTask()!.timeLimit }} phút</span>
                   </div>
                   <div class="requirement-item-compact">
-                    <span class="label-compact">📝</span>
+                    <span class="label-compact">✎</span>
                     <span class="value-compact">{{ selectedTask()!.wordCount }} từ</span>
                   </div>
                 </div>
 
                 <div *ngIf="selectedTask()!.tips?.length" class="tips-section-compact">
-                  <div class="section-label">💡 Mẹo:</div>
+                  <div class="section-label">※ Mẹo:</div>
                   <ul class="compact-list">
                     <li *ngFor="let tip of selectedTask()!.tips">{{ tip }}</li>
                   </ul>
@@ -392,7 +394,7 @@ interface AIEvaluation {
           <div class="tools-right">
             <div class="timer-section-compact">
               <div class="timer-compact" [class.warning]="timeLeft() < 300">
-                ⏱️ {{ formatTime(timeLeft()) }}
+                ⏱ {{ formatTime(timeLeft()) }}
               </div>
               <button class="btn btn-sm btn-timer" (click)="toggleTimer()">
                 {{ isTimerRunning() ? '⏸️ Tạm dừng' : '▶️ Bắt đầu' }}
@@ -556,14 +558,14 @@ interface AIEvaluation {
   styles: [`
     .writing-container {
       min-height: 100vh;
-      background: #f8f9fa;
+      background: linear-gradient(180deg, #f0fdfa 0%, #faf5ff 50%, #f0f9ff 100%);
       position: relative;
       z-index: 1;
     }
     /* Màn chi tiết: kéo dài div để che footer, tránh ló 1 phần footer */
     .writing-container.writing-container--detail {
       min-height: calc(100vh - 70px + 400px);
-      background: #f8f9fa;
+      background: linear-gradient(180deg, #f0fdfa 0%, #f8fafc 100%);
     }
 
     .task-selection-panel {
@@ -585,14 +587,19 @@ interface AIEvaluation {
 
     .header-top h2 {
       margin: 0 0 0.5rem 0;
-      color: #2c3e50;
-      font-size: 1.75rem;
+      background: linear-gradient(135deg, #0f766e 0%, #7c3aed 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
     }
 
     .header-top p {
       margin: 0;
-      color: #6b7280;
-      font-size: 0.9375rem;
+      color: #64748b;
+      font-size: 0.9rem;
     }
 
     .task-filters {
@@ -614,19 +621,23 @@ interface AIEvaluation {
     }
 
     .filter-group label {
-      font-weight: 500;
-      color: #2c3e50;
+      font-weight: 600;
+      font-size: 0.8rem;
+      color: #475569;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
     .filter-group select,
     .filter-group input[type="text"] {
       padding: 0.5rem 0.6rem;
-      border: 1px solid #ddd;
-      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+      border-radius: 0;
       min-width: 120px;
       height: 2.25rem;
       box-sizing: border-box;
       line-height: 1.25;
+      background: #fff;
     }
     .filter-group input[type="text"] {
       min-width: 140px;
@@ -645,10 +656,11 @@ interface AIEvaluation {
 
     .search-input {
       flex: 1;
-      padding: 0.5rem;
-      border: 1px solid #ddd;
-      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0;
       font-size: 0.9rem;
+      background: #fff;
     }
 
     .btn-search,
@@ -660,35 +672,37 @@ interface AIEvaluation {
       align-items: center;
       justify-content: center;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       cursor: pointer;
-      font-weight: 500;
-      font-size: 1.1rem;
+      font-weight: 600;
+      font-size: 1rem;
     }
     
     .btn-search {
-      background: linear-gradient(135deg, #2563eb, #1e40af);
-      color: white;
+      background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
+      color: #fff;
+      box-shadow: 0 2px 6px rgba(13, 148, 136, 0.3);
     }
 
     .btn-search:hover {
-      background: linear-gradient(135deg, #1e40af, #1e3a8a);
+      background: linear-gradient(135deg, #0f766e 0%, #0e7490 100%);
+      color: #fff;
     }
     
     .btn-advanced {
-      background: #f3f4f6;
-      color: #374151;
-      border: 1px solid #d1d5db;
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #e2e8f0;
     }
     
     .btn-advanced:hover {
-      background: #e5e7eb;
+      background: #e2e8f0;
     }
     
     .btn-advanced.active {
-      background: linear-gradient(135deg, #2563eb, #1e40af);
-      color: white;
-      border-color: #2563eb;
+      background: linear-gradient(135deg, #0d9488 0%, #7c3aed 100%);
+      color: #fff;
+      border-color: transparent;
     }
     
     .search-icon {
@@ -711,29 +725,42 @@ interface AIEvaluation {
       gap: 1.5rem;
       align-items: flex-start;
       padding-bottom: 1rem;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e2e8f0;
       margin-bottom: 0;
     }
 
     .btn-clear,
     .btn-apply {
       padding: 0.5rem 1rem;
-      font-size: 0.875rem;
+      font-size: 0.8rem;
       white-space: nowrap;
+      border-radius: 0;
+      font-weight: 600;
+    }
+    .btn-clear {
+      background: #fff;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+    .btn-clear:hover {
+      background: #f8fafc;
+      border-color: #0d9488;
+      color: #0f766e;
     }
 
     .btn-apply {
-      background: linear-gradient(135deg, #2563eb, #1e40af);
-      color: white;
+      background: linear-gradient(135deg, #7c3aed 0%, #0d9488 100%);
+      color: #fff;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       cursor: pointer;
-      font-weight: 500;
+      font-weight: 600;
       margin-right: 0.5rem;
     }
 
     .btn-apply:hover {
-      background: linear-gradient(135deg, #1e40af, #1e3a8a);
+      opacity: 0.95;
+      color: #fff;
     }
 
     .filter-group:has(.btn-apply) {
@@ -745,7 +772,7 @@ interface AIEvaluation {
     .task-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.25rem;
+      gap: 1rem;
     }
 
     .task-pagination {
@@ -766,40 +793,46 @@ interface AIEvaluation {
 
     .task-pagination .page-btn {
       min-width: 36px;
-      background: #e5e7eb;
-      color: #1f2937;
+      background: #fff;
+      color: #334155;
       font-size: 0.85rem;
       padding: 0.35rem 0.65rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 0;
     }
 
     .task-pagination .page-btn.active {
-      background: #3b82f6;
+      background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
       color: #fff;
-      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
+      border-color: transparent;
     }
 
     .task-card {
-      background: white;
-      border-radius: 12px;
-      padding: 1rem;
-      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+      background: #fff;
+      border-radius: 0;
+      padding: 1.25rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
       cursor: pointer;
-      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-      border: 1px solid transparent;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+      border: 1px solid #e2e8f0;
+      border-left: 4px solid transparent;
       display: flex;
       flex-direction: column;
       gap: 0.75rem;
     }
+    .task-card.task1 { border-left-color: #0d9488; }
+    .task-card.task2 { border-left-color: #7c3aed; }
 
     .task-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.12);
-      border-color: #3b82f6;
+      box-shadow: 0 6px 20px rgba(13, 148, 136, 0.12), 0 0 0 1px rgba(124, 58, 237, 0.08);
+      border-color: #cbd5e1;
     }
 
     .task-card.completed {
-      border-left: 3px solid #22c55e;
+      border-left-width: 4px;
     }
+    .task-card.task1.completed { border-left-color: #059669; }
+    .task-card.task2.completed { border-left-color: #6d28d9; }
 
     .task-card-header {
       display: flex;
@@ -810,29 +843,31 @@ interface AIEvaluation {
 
     .task-title {
       margin: 0;
-      color: #1f2937;
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 0.95rem;
+      font-weight: 700;
       flex: 1;
+      letter-spacing: -0.01em;
     }
+    .task-card.task1 .task-title { color: #0f766e; }
+    .task-card.task2 .task-title { color: #6d28d9; }
 
     .status-badge {
-      padding: 0.25rem 0.6rem;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 500;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0;
+      font-size: 0.7rem;
+      font-weight: 600;
       white-space: nowrap;
+      letter-spacing: 0.02em;
     }
     
     .status-badge.completed {
-      background: #22c55e;
-      color: white;
+      background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+      color: #fff;
     }
     
     .status-badge.uncompleted {
-      background: #e5e7eb;
-      color: #6b7280;
-      font-weight: 600;
+      background: #f1f5f9;
+      color: #475569;
       white-space: nowrap;
     }
 
@@ -847,44 +882,65 @@ interface AIEvaluation {
       display: inline-flex;
       align-items: center;
       gap: 0.35rem;
-      padding: 0.25rem 0.6rem;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 500;
+      padding: 0.2rem 0.5rem;
+      border-radius: 0;
+      font-size: 0.7rem;
+      font-weight: 600;
       background: #f1f5f9;
-      color: #1e293b;
+      color: #334155;
       line-height: 1;
       white-space: nowrap;
     }
 
     .task-type-badge.task1 {
-      background: #dbeafe;
-      color: #1d4ed8;
+      background: #ccfbf1;
+      color: #0f766e;
+      font-weight: 700;
     }
 
     .task-type-badge.task2 {
-      background: #fee2e2;
-      color: #b91c1c;
+      background: #ede9fe;
+      color: #6d28d9;
+      font-weight: 700;
     }
 
     .difficulty-badge.easy {
-      background: #dcfce7;
-      color: #166534;
+      background: #d1fae5;
+      color: #047857;
+      font-weight: 600;
     }
 
     .difficulty-badge.medium {
       background: #fef3c7;
       color: #b45309;
+      font-weight: 600;
     }
 
     .difficulty-badge.hard {
-      background: #fee2e2;
-      color: #b91c1c;
+      background: #ffe4e6;
+      color: #be123c;
+      font-weight: 600;
     }
 
+    .source-chip.source-cambridge { background: #dbeafe; color: #1d4ed8; }
+    .source-chip.source-vol { background: #ede9fe; color: #6d28d9; }
+    .source-chip.source-actual_tests { background: #fef3c7; color: #b45309; }
+    .source-chip.source-forecast { background: #d1fae5; color: #047857; }
+    .source-chip.source-others { background: #e2e8f0; color: #475569; }
+
+    .meta-chip.time-chip {
+      background: #fef3c7;
+      color: #b45309;
+      font-weight: 600;
+    }
+    .meta-chip.words-chip {
+      background: #ccfbf1;
+      color: #0f766e;
+      font-weight: 600;
+    }
     .meta-chip {
       background: #f8fafc;
-      color: #334155;
+      color: #475569;
       font-weight: 500;
     }
 
@@ -893,10 +949,10 @@ interface AIEvaluation {
     }
 
     .task-preview {
-      color: #475569;
-      line-height: 1.45;
+      color: #64748b;
+      line-height: 1.5;
       margin: 0;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
@@ -906,9 +962,9 @@ interface AIEvaluation {
     .latest-attempt {
       margin: 0;
       padding: 0.6rem 0.75rem;
-      background: #f8fafc;
-      border-radius: 8px;
-      border-left: 3px solid #22c55e;
+      background: linear-gradient(90deg, #f0fdfa 0%, #f8fafc 100%);
+      border-radius: 0;
+      border-left: 3px solid #059669;
     }
 
     .attempt-info {
@@ -918,8 +974,8 @@ interface AIEvaluation {
     }
 
     .attempt-score {
-      font-weight: 600;
-      color: #16a34a;
+      font-weight: 700;
+      color: #047857;
       font-size: 0.85rem;
     }
 
@@ -935,10 +991,12 @@ interface AIEvaluation {
       justify-content: space-between;
       gap: 1.5rem;
       margin-top: 1rem;
-      padding: 1rem 1.25rem;
-      background: #f8fafc;
-      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      background: linear-gradient(135deg, #f0fdfa 0%, #faf5ff 100%);
+      border-radius: 0;
       border: 1px solid #e2e8f0;
+      border-left: 4px solid #0d9488;
+      box-shadow: 0 2px 8px rgba(13, 148, 136, 0.08);
     }
     
     .stats-content {
@@ -961,28 +1019,29 @@ interface AIEvaluation {
     }
 
     .summary-title {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #475569;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #64748b;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.08em;
     }
 
     .summary-value {
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       font-weight: 700;
-      color: #1d4ed8;
+      color: #0f766e;
+      letter-spacing: -0.02em;
     }
 
     .summary-sub {
-      font-size: 0.85rem;
-      color: #475569;
+      font-size: 0.8rem;
+      color: #64748b;
     }
 
     .stat-divider {
       width: 1px;
       align-self: stretch;
-      background: linear-gradient(to bottom, transparent, rgba(148, 163, 184, 0.4), transparent);
+      background: #e2e8f0;
     }
 
     .stat-groups {
@@ -992,30 +1051,31 @@ interface AIEvaluation {
     }
 
     .stat-mini {
-      background: white;
-      border-radius: 10px;
+      border-radius: 0;
       padding: 0.6rem 0.75rem;
-      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
       border: 1px solid #e2e8f0;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       gap: 0.2rem;
     }
+    .stat-groups .stat-mini:first-child { background: #ccfbf1; border-left: 3px solid #0d9488; }
+    .stat-groups .stat-mini:last-child { background: #ede9fe; border-left: 3px solid #7c3aed; }
 
     .mini-label {
-      font-size: 0.75rem;
-      font-weight: 600;
+      font-size: 0.65rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       color: #64748b;
     }
 
     .mini-value {
-      font-size: 1.1rem;
+      font-size: 1rem;
       font-weight: 700;
-      color: #0f172a;
     }
+    .stat-groups .stat-mini:first-child .mini-value { color: #0f766e; }
+    .stat-groups .stat-mini:last-child .mini-value { color: #6d28d9; }
 
     .task-tabs {
       display: flex;
@@ -1036,12 +1096,12 @@ interface AIEvaluation {
     }
 
     .tab-btn:hover {
-      color: #3b82f6;
+      color: #0f766e;
     }
 
     .tab-btn.active {
-      color: #3b82f6;
-      border-bottom-color: #3b82f6;
+      color: #0f766e;
+      border-bottom-color: #0d9488;
     }
 
     .task-tags {
@@ -1052,12 +1112,12 @@ interface AIEvaluation {
     }
 
     .tag {
-      background: #eef2ff;
-      color: #4338ca;
+      background: #ede9fe;
+      color: #5b21b6;
       padding: 0.2rem 0.45rem;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.7rem;
-      font-weight: 500;
+      font-weight: 600;
       line-height: 1;
     }
 
@@ -1114,7 +1174,7 @@ interface AIEvaluation {
     
     .collapse-header {
       padding: 0.75rem;
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      background: #f1f5f9;
       border-bottom: 1px solid #e2e8f0;
       display: flex;
       justify-content: center;
@@ -1126,15 +1186,15 @@ interface AIEvaluation {
       align-items: center;
       gap: 0.5rem;
       padding: 0.65rem 1.25rem;
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
       color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 0;
       cursor: pointer;
       font-size: 0.875rem;
       font-weight: 600;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      box-shadow: 0 4px 12px rgba(13, 148, 136, 0.35);
       position: relative;
       overflow: hidden;
     }
@@ -1155,24 +1215,24 @@ interface AIEvaluation {
     }
     
     .collapse-btn:hover {
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+      background: linear-gradient(135deg, #0f766e 0%, #0e7490 100%);
+      box-shadow: 0 6px 20px rgba(13, 148, 136, 0.4);
       transform: translateY(-2px);
     }
     
     .collapse-btn:active {
       transform: translateY(0);
-      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+      box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
     }
     
     .collapse-btn.collapsed {
-      background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-      box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+      background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+      box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
     }
     
     .collapse-btn.collapsed:hover {
-      background: linear-gradient(135deg, #475569 0%, #334155 100%);
-      box-shadow: 0 6px 20px rgba(100, 116, 139, 0.4);
+      background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%);
+      box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
     }
     
     .collapse-text {
@@ -1225,7 +1285,7 @@ interface AIEvaluation {
       color: #6b7280;
       font-size: 0.875rem;
       font-weight: 500;
-      border-radius: 6px;
+      border-radius: 0;
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
@@ -1240,29 +1300,30 @@ interface AIEvaluation {
     }
 
     .tab-btn:hover {
-      background: #f3f4f6;
-      color: #374151;
+      background: #f0fdfa;
+      color: #0f766e;
     }
 
     .tab-btn.active {
-      background: #3b82f6;
+      background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
       color: white;
-      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+      box-shadow: 0 2px 4px rgba(13, 148, 136, 0.35);
     }
     
     .tab-btn.active:hover {
-      background: #2563eb;
+      background: linear-gradient(135deg, #0f766e 0%, #0e7490 100%);
+      color: white;
     }
     
-    /* Style for collapsed state - make it blue to match active state */
     .left-column.collapsed .tab-btn:first-child {
-      background: #3b82f6;
+      background: linear-gradient(135deg, #0d9488 0%, #7c3aed 100%);
       color: #ffffff;
-      box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+      box-shadow: 0 2px 4px rgba(13, 148, 136, 0.35);
     }
     
     .left-column.collapsed .tab-btn:first-child:hover {
-      background: #2563eb;
+      background: linear-gradient(135deg, #0f766e 0%, #6d28d9 100%);
+      color: #fff;
     }
 
     /* Info Panel Container */
@@ -1286,12 +1347,12 @@ interface AIEvaluation {
 
     .info-panel::-webkit-scrollbar-track {
       background: #f1f5f9;
-      border-radius: 3px;
+      border-radius: 0;
     }
 
     .info-panel::-webkit-scrollbar-thumb {
       background: #cbd5e1;
-      border-radius: 3px;
+      border-radius: 0;
     }
 
     .info-panel::-webkit-scrollbar-thumb:hover {
@@ -1353,7 +1414,7 @@ interface AIEvaluation {
       margin: 1rem 0;
       padding: 0.75rem;
       background: white;
-      border-radius: 8px;
+      border-radius: 0;
       border: 1px solid #e5e7eb;
     }
 
@@ -1361,7 +1422,7 @@ interface AIEvaluation {
       width: 100%;
       max-width: 100%;
       height: auto;
-      border-radius: 6px;
+      border-radius: 0;
       display: block;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
@@ -1372,7 +1433,7 @@ interface AIEvaluation {
       margin: 1rem 0;
       padding: 0.75rem;
       background: #f8fafc;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 0.8125rem;
     }
 
@@ -1388,14 +1449,14 @@ interface AIEvaluation {
 
     .value-compact {
       font-weight: 600;
-      color: #3b82f6;
+      color: #0f766e;
     }
 
     .tips-section-compact {
       margin-top: 1rem;
       padding: 0.75rem;
       background: #fef3c7;
-      border-radius: 6px;
+      border-radius: 0;
       border-left: 3px solid #fbbf24;
     }
 
@@ -1469,7 +1530,7 @@ interface AIEvaluation {
     }
 
     .writing-guide-content ::ng-deep a {
-      color: #3b82f6;
+      color: #0d9488;
       text-decoration: underline;
       font-size: 0.875rem;
     }
@@ -1556,7 +1617,7 @@ interface AIEvaluation {
     .task-requirements {
       background: #f8f9fa;
       padding: 1rem;
-      border-radius: 8px;
+      border-radius: 0;
       margin-bottom: 1.5rem;
     }
 
@@ -1574,7 +1635,7 @@ interface AIEvaluation {
     .tips-section {
       background: #fff3cd;
       padding: 1rem;
-      border-radius: 8px;
+      border-radius: 0;
       border-left: 4px solid #ffc107;
     }
 
@@ -1699,8 +1760,8 @@ interface AIEvaluation {
 
     .current-words {
       font-weight: bold;
-      color: #007bff;
-      font-size: 0.875rem; /* Reduced font size */
+      color: #0f766e;
+      font-size: 0.875rem;
     }
 
     .word-target {
@@ -1712,14 +1773,14 @@ interface AIEvaluation {
       width: 100px; /* Reduced width */
       height: 6px; /* Reduced height */
       background: #e9ecef;
-      border-radius: 3px; /* Smaller border radius */
+      border-radius: 0; /* Smaller border radius */
       overflow: hidden;
       margin-left: 0.5rem;
     }
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #28a745, #20c997);
+      background: linear-gradient(90deg, #0d9488 0%, #0891b2 100%);
       transition: width 0.3s ease;
     }
 
@@ -1729,7 +1790,7 @@ interface AIEvaluation {
       gap: 0.5rem; /* Reduced gap */
       padding: 0.375rem 0.75rem; /* Reduced padding */
       background: #f8fafc;
-      border-radius: 4px; /* Smaller border radius */
+      border-radius: 0; /* Smaller border radius */
       border: 1px solid #e5e7eb;
     }
 
@@ -1773,7 +1834,7 @@ interface AIEvaluation {
       grid-column: 1 / -1;
       background: white;
       padding: 2rem;
-      border-radius: 12px;
+      border-radius: 0;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       margin-top: 2rem;
       display: flex;
@@ -1800,12 +1861,12 @@ interface AIEvaluation {
 
     .evaluation-scrollable::-webkit-scrollbar-track {
       background: #f1f5f9;
-      border-radius: 3px;
+      border-radius: 0;
     }
 
     .evaluation-scrollable::-webkit-scrollbar-thumb {
       background: #cbd5e1;
-      border-radius: 3px;
+      border-radius: 0;
     }
 
     .evaluation-scrollable::-webkit-scrollbar-thumb:hover {
@@ -1883,7 +1944,7 @@ interface AIEvaluation {
     
     .criteria-score-main {
       font-weight: 700;
-      color: #3b82f6;
+      color: #0f766e;
       font-size: 1rem;
     }
     
@@ -1915,13 +1976,13 @@ interface AIEvaluation {
       position: relative;
       height: 20px;
       background: #e9ecef;
-      border-radius: 10px;
+      border-radius: 0;
       overflow: hidden;
     }
 
     .score-fill {
       height: 100%;
-      background: linear-gradient(90deg, #28a745, #20c997);
+      background: linear-gradient(90deg, #0d9488 0%, #059669 100%);
       transition: width 0.3s ease;
     }
 
@@ -1973,7 +2034,7 @@ interface AIEvaluation {
     .sample-answer {
       background: #f8f9fa;
       padding: 1rem;
-      border-radius: 8px;
+      border-radius: 0;
       line-height: 1.6;
       font-style: italic;
     }
@@ -1981,7 +2042,7 @@ interface AIEvaluation {
     .btn {
       padding: 0.5rem 1.25rem; /* Reduced padding to make buttons smaller */
       border: none;
-      border-radius: 6px; /* Smaller border radius */
+      border-radius: 0; /* Smaller border radius */
       cursor: pointer;
       font-weight: 500;
       transition: all 0.3s;
@@ -1993,30 +2054,33 @@ interface AIEvaluation {
     }
 
     .btn-primary {
-      background: #007bff;
+      background: linear-gradient(135deg, #0d9488 0%, #7c3aed 100%);
       color: white;
+      box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
     }
 
     .btn-primary:hover:not(:disabled) {
-      background: #0056b3;
+      background: linear-gradient(135deg, #0f766e 0%, #6d28d9 100%);
+      color: white;
     }
 
     .btn-secondary {
-      background: #6c757d;
+      background: #64748b;
       color: white;
     }
 
     .btn-secondary:hover {
-      background: #545b62;
+      background: #475569;
     }
 
     .btn-success {
-      background: #28a745;
+      background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
       color: white;
     }
 
     .btn-success:hover:not(:disabled) {
-      background: #218838;
+      background: linear-gradient(135deg, #047857 0%, #0f766e 100%);
+      color: white;
     }
 
     .btn:disabled {
@@ -2113,28 +2177,28 @@ interface AIEvaluation {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      background: linear-gradient(135deg, #f59e0b, #d97706);
-      color: #f8fafc;
-      padding: 0.7rem 1.4rem;
-      border-radius: 999px;
+      background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+      color: #fff;
+      padding: 0.6rem 1.25rem;
+      border-radius: 0;
       text-decoration: none;
       font-weight: 600;
-      font-size: 0.9rem;
-      box-shadow: 0 12px 24px rgba(245, 158, 11, 0.28);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      font-size: 0.85rem;
       letter-spacing: 0.02em;
       border: none;
       margin-right: 0.75rem;
+      box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
 
     .mock-test-btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 16px 30px rgba(245, 158, 11, 0.32);
+      box-shadow: 0 4px 14px rgba(124, 58, 237, 0.45);
       color: #fff;
     }
 
     .mock-test-icon {
-      font-size: 1.15rem;
+      font-size: 1rem;
       line-height: 1;
     }
 
@@ -2142,27 +2206,27 @@ interface AIEvaluation {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      background: linear-gradient(135deg, #2563eb, #1e40af);
-      color: #f8fafc;
-      padding: 0.7rem 1.4rem;
-      border-radius: 999px;
+      background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+      color: #fff;
+      padding: 0.6rem 1.25rem;
+      border-radius: 0;
       text-decoration: none;
       font-weight: 600;
-      font-size: 0.9rem;
-      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.28);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      font-size: 0.85rem;
       letter-spacing: 0.02em;
       border: none;
+      box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
 
     .history-btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 16px 30px rgba(37, 99, 235, 0.32);
+      box-shadow: 0 4px 14px rgba(13, 148, 136, 0.4);
       color: #fff;
     }
 
     .history-icon {
-      font-size: 1.15rem;
+      font-size: 1rem;
       line-height: 1;
     }
 
@@ -2209,7 +2273,7 @@ interface AIEvaluation {
       color: #1f2937;
       font-size: 1.25rem;
       font-weight: 700;
-      border-bottom: 2px solid #3b82f6;
+      border-bottom: 2px solid #0d9488;
       padding-bottom: 0.5rem;
     }
     
@@ -2236,7 +2300,7 @@ interface AIEvaluation {
       padding: 0.4rem 0.75rem;
       background: #f1f5f9;
       border: 1px solid #cbd5e1;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 0.875rem;
       cursor: pointer;
       transition: all 0.2s;
@@ -2250,10 +2314,10 @@ interface AIEvaluation {
     }
     
     .word-tag.active {
-      background: #3b82f6;
+      background: linear-gradient(135deg, #0d9488 0%, #7c3aed 100%);
       color: white;
-      border-color: #2563eb;
-      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+      border-color: transparent;
+      box-shadow: 0 2px 8px rgba(13, 148, 136, 0.35);
     }
     
     .word-tag.repetition {
@@ -2278,7 +2342,7 @@ interface AIEvaluation {
       padding: 0.75rem;
       background: #fee2e2;
       border-left: 3px solid #ef4444;
-      border-radius: 4px;
+      border-radius: 0;
       font-size: 0.875rem;
       color: #991b1b;
     }
@@ -2884,8 +2948,8 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
     // Show error message to user
     const errorDiv = document.createElement('div');
     errorDiv.className = 'image-error';
-    errorDiv.style.cssText = 'padding: 0.5rem; background: #f8d7da; color: #721c24; border-radius: 4px; margin: 0.5rem 0; font-size: 0.875rem;';
-    errorDiv.textContent = `⚠️ Không thể tải ảnh: ${img.src.substring(0, 50)}...`;
+    errorDiv.style.cssText = 'padding: 0.5rem; background: #f8d7da; color: #721c24; border-radius: 0; margin: 0.5rem 0; font-size: 0.875rem;';
+    errorDiv.textContent = `! Không thể tải ảnh: ${img.src.substring(0, 50)}...`;
     img.parentElement?.appendChild(errorDiv);
   }
 

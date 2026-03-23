@@ -56,16 +56,16 @@ interface MockTestResult {
             [class.active]="activeTab() === 'task1'"
             [class.empty-answer]="!task1Answer.trim()"
             (click)="setActiveTab('task1')">
-            📝 Task 1 ({{ getWordCount('task1') }} từ)
-            <span *ngIf="!task1Answer.trim()" class="empty-warning">⚠️ Chưa trả lời</span>
+            Task 1 ({{ getWordCount('task1') }} từ)
+            <span *ngIf="!task1Answer.trim()" class="empty-warning">! Chưa trả lời</span>
           </button>
           <button 
             class="tab-btn" 
             [class.active]="activeTab() === 'task2'"
             [class.empty-answer]="!task2Answer.trim()"
             (click)="setActiveTab('task2')">
-            ✍️ Task 2 ({{ getWordCount('task2') }} từ)
-            <span *ngIf="!task2Answer.trim()" class="empty-warning">⚠️ Chưa trả lời</span>
+            Task 2 ({{ getWordCount('task2') }} từ)
+            <span *ngIf="!task2Answer.trim()" class="empty-warning">! Chưa trả lời</span>
           </button>
         </div>
 
@@ -78,7 +78,7 @@ interface MockTestResult {
                 <h3>{{ task1()!.title }}</h3>
                 <div class="task-info">
                   <span>⏱️ {{ task1()!.timeLimit }} phút</span>
-                  <span>📝 {{ task1()!.wordCount }} từ</span>
+                  <span>{{ task1()!.wordCount }} từ</span>
                 </div>
               </div>
 
@@ -125,7 +125,7 @@ interface MockTestResult {
                 <h3>{{ task2()!.title }}</h3>
                 <div class="task-info">
                   <span>⏱️ {{ task2()!.timeLimit }} phút</span>
-                  <span>📝 {{ task2()!.wordCount }} từ</span>
+                  <span>{{ task2()!.wordCount }} từ</span>
                 </div>
               </div>
 
@@ -205,7 +205,7 @@ interface MockTestResult {
         <div class="results-details">
           <div class="result-card" *ngIf="mockTestResult()!.task1Result">
             <div class="result-card-header">
-              <h3>📝 Task 1 - Chi tiết</h3>
+              <h3>Task 1 - Chi tiết</h3>
               <button class="btn btn-detail" (click)="viewTaskDetail(mockTestResult()!.task1Result!.id)">
                 Xem chi tiết →
               </button>
@@ -236,7 +236,7 @@ interface MockTestResult {
 
           <div class="result-card" *ngIf="mockTestResult()!.task2Result">
             <div class="result-card-header">
-              <h3>✍️ Task 2 - Chi tiết</h3>
+              <h3>Task 2 - Chi tiết</h3>
               <button class="btn btn-detail" (click)="viewTaskDetail(mockTestResult()!.task2Result!.id)">
                 Xem chi tiết →
               </button>
@@ -284,12 +284,12 @@ interface MockTestResult {
 
     /* Mock Test Banner */
     .mock-test-banner {
-      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
-      color: white;
+      background: #0d9488;
+      color: #fff;
       padding: 0.75rem 1.5rem;
-      box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       margin-bottom: 1rem;
-      border-radius: 6px;
+      border-radius: 0;
     }
 
     .banner-content {
@@ -325,7 +325,7 @@ interface MockTestResult {
       text-align: right;
       padding: 0.5rem 1rem;
       background: rgba(255, 255, 255, 0.2);
-      border-radius: 6px;
+      border-radius: 0;
       min-width: 160px;
     }
 
@@ -363,8 +363,8 @@ interface MockTestResult {
 
     .spinner {
       border: 4px solid #f3f3f3;
-      border-top: 4px solid #667eea;
-      border-radius: 50%;
+      border-top: 4px solid #0d9488;
+      border-radius: 0;
       width: 50px;
       height: 50px;
       animation: spin 1s linear infinite;
@@ -379,7 +379,7 @@ interface MockTestResult {
     /* Test Interface - chiều cao lớn hơn để vùng làm bài đủ dài, giảm scroll khi viết bài dài */
     .test-interface {
       background: white;
-      border-radius: 12px;
+      border-radius: 0;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
       overflow: hidden;
       display: flex;
@@ -413,8 +413,8 @@ interface MockTestResult {
     }
 
     .tab-btn.active {
-      color: #667eea;
-      border-bottom-color: #667eea;
+      color: #0d9488;
+      border-bottom-color: #0d9488;
       background: white;
     }
 
@@ -440,7 +440,7 @@ interface MockTestResult {
       font-weight: 600;
       padding: 0.25rem 0.5rem;
       background: rgba(255, 193, 7, 0.2);
-      border-radius: 4px;
+      border-radius: 0;
     }
 
     /* Task Content Wrapper - 2 Column Layout */
@@ -472,12 +472,12 @@ interface MockTestResult {
 
     .left-column::-webkit-scrollbar-track {
       background: #f1f5f9;
-      border-radius: 3px;
+      border-radius: 0;
     }
 
     .left-column::-webkit-scrollbar-thumb {
       background: #cbd5e1;
-      border-radius: 3px;
+      border-radius: 0;
     }
 
     .left-column::-webkit-scrollbar-thumb:hover {
@@ -534,7 +534,7 @@ interface MockTestResult {
       margin: 1.5rem 0;
       padding: 0.75rem;
       background: white;
-      border-radius: 8px;
+      border-radius: 0;
       border: 1px solid #e5e7eb;
     }
 
@@ -542,7 +542,7 @@ interface MockTestResult {
       width: 100%;
       max-width: 100%;
       height: auto;
-      border-radius: 6px;
+      border-radius: 0;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       display: block;
     }
@@ -565,7 +565,7 @@ interface MockTestResult {
       margin: 1.5rem 0;
       padding: 0.75rem;
       background: #fef3c7;
-      border-radius: 6px;
+      border-radius: 0;
       border-left: 3px solid #fbbf24;
     }
 
@@ -646,7 +646,7 @@ interface MockTestResult {
     .btn {
       padding: 1rem 2rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 0;
       font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
@@ -654,7 +654,7 @@ interface MockTestResult {
     }
 
     .btn-submit {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #0d9488;
       color: white;
       box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
     }
@@ -672,7 +672,7 @@ interface MockTestResult {
     /* Results View */
     .results-view {
       background: white;
-      border-radius: 12px;
+      border-radius: 0;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
       padding: 2rem;
     }
@@ -699,7 +699,7 @@ interface MockTestResult {
       padding: 0.75rem 1.5rem;
       background: #fff3cd;
       border: 1px solid #ffc107;
-      border-radius: 8px;
+      border-radius: 0;
       color: #856404;
       font-size: 0.9rem;
     }
@@ -707,7 +707,7 @@ interface MockTestResult {
     .spinner-small {
       border: 2px solid #f3f3f3;
       border-top: 2px solid #ffc107;
-      border-radius: 50%;
+      border-radius: 0;
       width: 20px;
       height: 20px;
       animation: spin 1s linear infinite;
@@ -723,9 +723,9 @@ interface MockTestResult {
     .summary-card {
       text-align: center;
       padding: 2rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #0d9488;
       color: white;
-      border-radius: 12px;
+      border-radius: 0;
       box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
 
@@ -750,8 +750,8 @@ interface MockTestResult {
     .result-card {
       padding: 1.5rem;
       background: #f8f9fa;
-      border-radius: 8px;
-      border-left: 4px solid #667eea;
+      border-radius: 0;
+      border-left: 4px solid #0d9488;
     }
 
     .result-card-header {
@@ -770,10 +770,10 @@ interface MockTestResult {
 
     .btn-detail {
       padding: 0.5rem 1.25rem;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #0d9488;
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
@@ -798,11 +798,11 @@ interface MockTestResult {
       justify-content: space-between;
       padding: 0.75rem;
       background: white;
-      border-radius: 6px;
+      border-radius: 0;
     }
 
     .score-item strong {
-      color: #667eea;
+      color: #0d9488;
       font-size: 1.1rem;
     }
 
@@ -832,7 +832,7 @@ interface MockTestResult {
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #0d9488;
       color: white;
     }
 
@@ -898,8 +898,8 @@ interface MockTestResult {
       }
 
       .tab-btn.active {
-        border-bottom-color: #667eea;
-        border-left: 3px solid #667eea;
+        border-bottom-color: #0d9488;
+        border-left: 3px solid #0d9488;
       }
 
       /* Mobile: Stack layout */

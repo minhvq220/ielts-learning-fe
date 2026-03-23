@@ -45,7 +45,7 @@ interface UpdateUserRequest {
 
       <div class="filters-section">
         <div class="filter-group search-group">
-          <label>🔍 Tìm kiếm:</label>
+          <label>⌕ Tìm kiếm:</label>
           <div class="search-input-wrapper">
             <input 
               type="text" 
@@ -54,7 +54,7 @@ interface UpdateUserRequest {
               placeholder="Tìm theo email hoặc tên..."
               class="search-input">
             <button class="btn btn-primary btn-search" (click)="loadUsers()" type="button">
-              🔍 Tìm kiếm
+              ⌕ Tìm kiếm
             </button>
           </div>
         </div>
@@ -124,14 +124,14 @@ interface UpdateUserRequest {
                     class="btn btn-sm btn-remove-admin" 
                     (click)="revokeAdminRole(user.id, user.email)"
                     title="Bỏ quyền Admin">
-                    🚫 Bỏ Admin
+                    Bỏ Admin
                   </button>
                   <button 
                     *ngIf="user.enabled"
                     class="btn btn-sm btn-lock" 
                     (click)="lockUser(user.id)"
                     title="Khóa tài khoản">
-                    🔒 Khóa
+                    Khóa
                   </button>
                   <button 
                     *ngIf="!user.enabled"
@@ -233,7 +233,7 @@ interface UpdateUserRequest {
     .filters-section {
       background: white;
       padding: 1.5rem;
-      border-radius: 8px;
+      border-radius: 0;
       margin-bottom: 2rem;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
@@ -262,21 +262,21 @@ interface UpdateUserRequest {
       flex: 1;
       padding: 0.75rem;
       border: 1px solid #ddd;
-      border-radius: 4px;
+      border-radius: 0;
       font-size: 1rem;
     }
 
     .btn {
       padding: 0.75rem 1.5rem;
       border: none;
-      border-radius: 4px;
+      border-radius: 0;
       cursor: pointer;
       font-size: 1rem;
       transition: all 0.3s;
     }
 
     .btn-primary {
-      background: #667eea;
+      background: #0d9488;
       color: white;
     }
 
@@ -347,8 +347,8 @@ interface UpdateUserRequest {
 
     .spinner {
       border: 4px solid #f3f3f3;
-      border-top: 4px solid #667eea;
-      border-radius: 50%;
+      border-top: 4px solid #0d9488;
+      border-radius: 0;
       width: 40px;
       height: 40px;
       animation: spin 1s linear infinite;
@@ -374,7 +374,7 @@ interface UpdateUserRequest {
     .users-table-wrapper {
       overflow-x: auto;
       background: white;
-      border-radius: 8px;
+      border-radius: 0;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
@@ -412,21 +412,21 @@ interface UpdateUserRequest {
     .role-badge {
       display: inline-block;
       padding: 0.25rem 0.75rem;
-      border-radius: 12px;
+      border-radius: 0;
       font-size: 0.875rem;
       background: #e9ecef;
       color: #495057;
     }
 
     .role-badge.admin {
-      background: #667eea;
+      background: #0d9488;
       color: white;
     }
 
     .status-badge {
       display: inline-block;
       padding: 0.25rem 0.75rem;
-      border-radius: 12px;
+      border-radius: 0;
       font-size: 0.875rem;
     }
 
@@ -472,7 +472,7 @@ interface UpdateUserRequest {
 
     .modal-content {
       background: white;
-      border-radius: 8px;
+      border-radius: 0;
       width: 90%;
       max-width: 500px;
       max-height: 90vh;
@@ -519,7 +519,7 @@ interface UpdateUserRequest {
       width: 100%;
       padding: 0.75rem;
       border: 1px solid #ddd;
-      border-radius: 4px;
+      border-radius: 0;
       font-size: 1rem;
     }
 

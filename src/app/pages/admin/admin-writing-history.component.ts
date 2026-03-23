@@ -30,7 +30,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
       <div class="filters-section">
         <!-- Search Box -->
         <div class="filter-group search-group">
-          <label>🔍 Tìm kiếm:</label>
+          <label>⌕ Tìm kiếm:</label>
           <div class="search-input-wrapper">
             <input 
               type="text" 
@@ -40,7 +40,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
               placeholder="Tìm theo nội dung bài viết, tiêu đề đề bài, user..."
               class="search-input">
             <button class="btn btn-primary btn-search" (click)="triggerSearch()" type="button">
-              🔍 Tìm kiếm
+              ⌕ Tìm kiếm
             </button>
           </div>
         </div>
@@ -84,7 +84,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
         </div>
 
         <div *ngIf="!loading() && historyPage() && historyPage()!.content.length === 0" class="empty-state">
-          <div class="empty-icon">📚</div>
+          <div class="empty-icon">≡</div>
           <h3>Không tìm thấy bài viết nào</h3>
           <p *ngIf="hasActiveFilters()">Không có kết quả phù hợp với bộ lọc. Hãy thử điều chỉnh bộ lọc hoặc xóa bộ lọc để xem tất cả.</p>
           <p *ngIf="!hasActiveFilters()">Chưa có bài viết nào.</p>
@@ -136,22 +136,22 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
                   {{ getDifficultyLabel(difficulty) }}
                 </span>
                 <span class="chip meta-chip" *ngIf="getTaskTimeLimit(item) as timeLimit">
-                  <span class="chip-icon">⏱️</span>Giới hạn: {{ timeLimit }} phút
+                  <span class="chip-icon">⏱</span>Giới hạn: {{ timeLimit }} phút
                 </span>
                 <span class="chip meta-chip" *ngIf="getTaskWordTarget(item) as wordTarget">
-                  <span class="chip-icon">📝</span>Mục tiêu: {{ wordTarget }} từ
+                  <span class="chip-icon">✎</span>Mục tiêu: {{ wordTarget }} từ
                 </span>
                 <span class="chip meta-chip">
-                  <span class="chip-icon">📝</span>{{ item.wordCount }} từ thực tế
+                  <span class="chip-icon">✎</span>{{ item.wordCount }} từ thực tế
                 </span>
                 <span class="chip meta-chip">
-                  <span class="chip-icon">⏱️</span>Đã làm: {{ formatDuration(item.timeSpent) }}
+                  <span class="chip-icon">⏱</span>Đã làm: {{ formatDuration(item.timeSpent) }}
                 </span>
                 <span class="chip meta-chip">
-                  <span class="chip-icon">📅</span>{{ formatDate(item.submittedAt) }} {{ formatTime(item.submittedAt) }}
+                  <span class="chip-icon">·</span>{{ formatDate(item.submittedAt) }} {{ formatTime(item.submittedAt) }}
                 </span>
                 <span class="chip meta-chip score-chip" *ngIf="item.aiScore">
-                  <span class="chip-icon">🎯</span>{{ item.aiScore.toFixed(1) }}/9
+                  <span class="chip-icon">◎</span>{{ item.aiScore.toFixed(1) }}/9
                 </span>
               </div>
 
@@ -259,7 +259,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
     .filters-section {
       background: #ffffff;
       padding: 1rem 1.25rem;
-      border-radius: 12px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
       margin-bottom: 1.5rem;
@@ -283,7 +283,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
     .filter-group select {
       padding: 0.5rem;
       border: 1px solid #d1d5db;
-      border-radius: 6px;
+      border-radius: 0;
       background: white;
     }
 
@@ -303,7 +303,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
       flex: 1;
       padding: 0.5rem;
       border: 1px solid #d1d5db;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 0.9rem;
     }
 
@@ -312,23 +312,23 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
       padding: 0.5rem 1rem;
       white-space: nowrap;
       font-size: 0.9rem;
-      background: linear-gradient(135deg, #2563eb, #1e40af);
+      background: #0d9488;
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       cursor: pointer;
       font-weight: 500;
     }
 
     .btn-search:hover,
     .btn-apply:hover {
-      background: linear-gradient(135deg, #1e40af, #1e3a8a);
+      background: #1e293b;
     }
 
     .date-input {
       padding: 0.5rem;
       border: 1px solid #d1d5db;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 0.85rem;
     }
 
@@ -362,7 +362,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
 
     .history-card {
       background: #ffffff;
-      border-radius: 12px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
       padding: 1rem 1.25rem;
@@ -390,7 +390,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
       margin: 0;
       font-size: 1rem;
       font-weight: 600;
-      color: #0f172a;
+      color: #0d9488;
     }
 
     .user-info {
@@ -415,7 +415,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
 
     .user-name {
       font-weight: 500;
-      color: #2563eb;
+      color: #0f766e;
     }
 
     .user-email {
@@ -432,7 +432,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
       color: #6b7280;
       background: #f1f5f9;
       padding: 0.2rem 0.4rem;
-      border-radius: 4px;
+      border-radius: 0;
     }
 
     .anonymous-badge {
@@ -453,7 +453,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
       align-items: center;
       gap: 0.35rem;
       padding: 0.35rem 0.65rem;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.75rem;
       font-weight: 500;
       background: #f1f5f9;
@@ -532,7 +532,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
     .answer-text {
       background: #f8fafc;
       padding: 0.85rem;
-      border-radius: 8px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       color: #1f2937;
       font-size: 0.875rem;
@@ -567,7 +567,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
       background: #312e81;
       color: #f8fafc;
       padding: 0.35rem 0.7rem;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.8rem;
       font-weight: 600;
     }
@@ -582,7 +582,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
       flex: 1 1 180px;
       background: #f1f5f9;
       border: 1px solid #e2e8f0;
-      border-radius: 10px;
+      border-radius: 0;
       padding: 0.75rem;
       display: flex;
       flex-direction: column;
@@ -606,13 +606,13 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
     .criteria-track {
       height: 6px;
       background: #e2e8f0;
-      border-radius: 999px;
+      border-radius: 0;
       overflow: hidden;
     }
 
     .criteria-fill {
       height: 100%;
-      background: linear-gradient(90deg, #3b82f6, #2563eb);
+      background: #0d9488;
     }
 
     .history-actions {
@@ -627,7 +627,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
     .btn {
       padding: 0.45rem 0.9rem;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
@@ -639,7 +639,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
     }
 
     .btn-primary {
-      background: #2563eb;
+      background: #0f766e;
       color: white;
     }
 
@@ -665,8 +665,8 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
       width: 40px;
       height: 40px;
       border: 4px solid #e5e7eb;
-      border-top: 4px solid #3b82f6;
-      border-radius: 50%;
+      border-top: 4px solid #0d9488;
+      border-radius: 0;
       animation: spin 1s linear infinite;
       margin: 0 auto 1rem;
     }
@@ -717,7 +717,7 @@ interface AdminWritingHistoryDto extends WritingHistoryDto {
     }
 
     .page-btn.active {
-      background: #3b82f6;
+      background: #0d9488;
       color: #ffffff;
       box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
     }

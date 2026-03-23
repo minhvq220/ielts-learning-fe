@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
       <div class="landing-container">
         <!-- Hero Section -->
         <div class="hero-section">
-          <div class="hero-icon">🎯</div>
+          <div class="hero-icon">◎</div>
           <h1 class="hero-title">Mock Test - Thi thử nghiêm ngặt</h1>
           <p class="hero-subtitle">Trải nghiệm bài thi IELTS Writing giống như thi thật với timer nghiêm ngặt</p>
         </div>
@@ -19,22 +19,22 @@ import { Router } from '@angular/router';
         <!-- Features Section -->
         <div class="features-section">
           <div class="feature-card">
-            <div class="feature-icon">⏱️</div>
+            <div class="feature-icon">⏱</div>
             <h3>Timer nghiêm ngặt</h3>
             <p>Thời gian được tính chính xác, tự động nộp bài khi hết giờ</p>
           </div>
           <div class="feature-card">
-            <div class="feature-icon">🚫</div>
+            <div class="feature-icon">✕</div>
             <h3>Không có gợi ý</h3>
             <p>Làm bài hoàn toàn độc lập, không có hỗ trợ hay gợi ý nào</p>
           </div>
           <div class="feature-card">
-            <div class="feature-icon">🤖</div>
+            <div class="feature-icon">◉</div>
             <h3>AI chấm điểm tự động</h3>
             <p>Nhận kết quả chấm điểm chi tiết ngay sau khi hoàn thành</p>
           </div>
           <div class="feature-card">
-            <div class="feature-icon">📊</div>
+            <div class="feature-icon">▣</div>
             <h3>Phân tích chi tiết</h3>
             <p>Xem điểm số theo từng tiêu chí và nhận xét cụ thể</p>
           </div>
@@ -115,7 +115,7 @@ import { Router } from '@angular/router';
   styles: [`
     .mock-test-landing {
       min-height: calc(100vh - 70px);
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #0d9488 0%, #7c3aed 100%);
       padding: 2rem 1rem;
     }
 
@@ -133,14 +133,10 @@ import { Router } from '@angular/router';
     }
 
     .hero-icon {
-      font-size: 5rem;
+      font-size: 2.5rem;
       margin-bottom: 1rem;
-      animation: float 3s ease-in-out infinite;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-20px); }
+      opacity: 0.9;
+      font-weight: 300;
     }
 
     .hero-title {
@@ -167,7 +163,7 @@ import { Router } from '@angular/router';
 
     .feature-card {
       background: white;
-      border-radius: 12px;
+      border-radius: 0;
       padding: 2rem;
       text-align: center;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
@@ -180,8 +176,9 @@ import { Router } from '@angular/router';
     }
 
     .feature-icon {
-      font-size: 3rem;
+      font-size: 1.5rem;
       margin-bottom: 1rem;
+      opacity: 0.85;
     }
 
     .feature-card h3 {
@@ -199,7 +196,7 @@ import { Router } from '@angular/router';
     /* Test Info Section */
     .test-info-section {
       background: white;
-      border-radius: 12px;
+      border-radius: 0;
       padding: 2rem;
       margin-bottom: 3rem;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
@@ -223,8 +220,8 @@ import { Router } from '@angular/router';
       flex-direction: column;
       padding: 1rem;
       background: #f8f9fa;
-      border-radius: 8px;
-      border-left: 4px solid #667eea;
+      border-radius: 0;
+      border-left: 4px solid #0d9488;
     }
 
     .info-label {
@@ -252,7 +249,7 @@ import { Router } from '@angular/router';
     .btn {
       padding: 1.25rem 2.5rem;
       border: none;
-      border-radius: 12px;
+      border-radius: 0;
       font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
@@ -266,13 +263,14 @@ import { Router } from '@angular/router';
 
     .btn-primary {
       background: white;
-      color: #667eea;
-      box-shadow: 0 4px 15px rgba(255,255,255,0.3);
+      color: #0f766e;
+      box-shadow: 0 4px 15px rgba(255,255,255,0.4);
     }
 
     .btn-primary:hover {
       transform: translateY(-3px);
-      box-shadow: 0 6px 25px rgba(255,255,255,0.4);
+      box-shadow: 0 6px 25px rgba(255,255,255,0.5);
+      color: #7c3aed;
     }
 
     .btn-secondary {
@@ -293,7 +291,7 @@ import { Router } from '@angular/router';
     /* Instructions Section */
     .instructions-section {
       background: white;
-      border-radius: 12px;
+      border-radius: 0;
       padding: 2rem;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
@@ -320,9 +318,9 @@ import { Router } from '@angular/router';
       flex-shrink: 0;
       width: 40px;
       height: 40px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #0d9488 0%, #7c3aed 100%);
       color: white;
-      border-radius: 50%;
+      border-radius: 0;
       display: flex;
       align-items: center;
       justify-content: center;

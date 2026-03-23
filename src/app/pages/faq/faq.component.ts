@@ -40,7 +40,7 @@ interface FaqItem {
 
         <div class="faq-actions">
           <a routerLink="/writing" class="btn btn-primary">← Về trang Writing</a>
-          <a routerLink="/guide" class="btn btn-secondary">📖 Xem hướng dẫn chi tiết</a>
+          <a routerLink="/guide" class="btn btn-secondary">Xem hướng dẫn chi tiết</a>
         </div>
       </div>
     </div>
@@ -48,7 +48,7 @@ interface FaqItem {
   styles: [`
     .faq-page {
       min-height: 100vh;
-      background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+      background: #f1f5f9;
       padding: 2rem 1rem 4rem;
       padding-top: calc(70px + 2rem);
     }
@@ -84,7 +84,7 @@ interface FaqItem {
 
     .faq-item {
       background: white;
-      border-radius: 12px;
+      border-radius: 0;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
       overflow: hidden;
       border: 1px solid #e2e8f0;
@@ -117,10 +117,10 @@ interface FaqItem {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #667eea;
-      color: white;
-      border-radius: 6px;
-      font-size: 1.1rem;
+      background: #0d9488;
+      color: #fff;
+      border-radius: 0;
+      font-size: 1rem;
       line-height: 1;
       font-weight: 400;
     }
@@ -176,7 +176,7 @@ interface FaqItem {
       align-items: center;
       gap: 0.5rem;
       padding: 0.75rem 1.5rem;
-      border-radius: 8px;
+      border-radius: 0;
       font-weight: 600;
       text-decoration: none;
       transition: all 0.2s;
@@ -186,26 +186,25 @@ interface FaqItem {
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+      background: #0d9488;
+      color: #fff;
     }
 
     .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.45);
+      background: #1e293b;
+      color: #fff;
     }
 
     .btn-secondary {
-      background: white;
-      color: #64748b;
-      border: 2px solid #e2e8f0;
+      background: #fff;
+      color: #475569;
+      border: 1px solid #e2e8f0;
     }
 
     .btn-secondary:hover {
       background: #f8fafc;
-      border-color: #cbd5e1;
-      color: #475569;
+      border-color: #0d9488;
+      color: #0d9488;
     }
 
     @media (max-width: 768px) {

@@ -81,28 +81,28 @@ interface Page<T> {
       <div class="stats-section" *ngIf="userStats()">
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-icon">📝</div>
+            <div class="stat-icon">✎</div>
             <div class="stat-content">
               <div class="stat-number">{{ userStats()!.totalCompleted }}</div>
               <div class="stat-label">Tổng bài đã làm</div>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">📊</div>
+            <div class="stat-icon">▣</div>
             <div class="stat-content">
               <div class="stat-number">{{ userStats()!.averageScore?.toFixed(1) || 'N/A' }}</div>
               <div class="stat-label">Điểm trung bình</div>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">📈</div>
+            <div class="stat-icon">▤</div>
             <div class="stat-content">
               <div class="stat-number">{{ userStats()!.task1Completed }}</div>
               <div class="stat-label">Task 1</div>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">📋</div>
+            <div class="stat-icon">≡</div>
             <div class="stat-content">
               <div class="stat-number">{{ userStats()!.task2Completed }}</div>
               <div class="stat-label">Task 2</div>
@@ -159,7 +159,7 @@ interface Page<T> {
               placeholder="Tìm theo đề bài, nội dung bài viết..."
               class="search-input">
             <button class="btn btn-primary btn-search" (click)="triggerSearch()" type="button" title="Tìm kiếm">
-              <span class="search-icon">🔍</span>
+              <span class="search-icon">⌕</span>
             </button>
             <button class="btn btn-secondary btn-advanced" (click)="toggleAdvancedFilters()" type="button" [class.active]="showAdvancedFilters()" title="Tìm kiếm nâng cao">
               <svg class="filter-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -177,7 +177,7 @@ interface Page<T> {
         </div>
 
         <div *ngIf="!loading() && historyPage() && historyPage()!.content.length === 0" class="empty-state">
-          <div class="empty-icon">📚</div>
+          <div class="empty-icon">≡</div>
           <h3>Không tìm thấy bài tự kiểm tra nào</h3>
           <p *ngIf="hasActiveFilters()">Không có kết quả phù hợp với bộ lọc. Hãy thử điều chỉnh bộ lọc hoặc xóa bộ lọc để xem tất cả.</p>
           <p *ngIf="!hasActiveFilters()">Hãy bắt đầu tự kiểm tra để xem lịch sử ở đây!</p>
@@ -193,7 +193,7 @@ interface Page<T> {
                     {{ item.taskType === 'TASK1' ? 'Task 1' : 'Task 2' }}
                   </span>
                   <span class="chip meta-chip">
-                    <span class="chip-icon">📝</span>{{ item.wordCount }} từ
+                    <span class="chip-icon">✎</span>{{ item.wordCount }} từ
                   </span>
                 </div>
               </div>
@@ -216,13 +216,13 @@ interface Page<T> {
 
               <div class="result-chips">
                 <span class="chip meta-chip">
-                  <span class="chip-icon">📝</span>{{ item.wordCount }} từ thực tế
+                  <span class="chip-icon">✎</span>{{ item.wordCount }} từ thực tế
                 </span>
                 <span class="chip meta-chip score-chip" *ngIf="item.aiScore">
-                  <span class="chip-icon">🎯</span>{{ item.aiScore.toFixed(1) }}/9
+                  <span class="chip-icon">◎</span>{{ item.aiScore.toFixed(1) }}/9
                 </span>
                 <span class="chip meta-chip">
-                  <span class="chip-icon">📅</span>{{ formatDate(item.submittedAt) }} {{ formatTime(item.submittedAt) }}
+                  <span class="chip-icon">·</span>{{ formatDate(item.submittedAt) }} {{ formatTime(item.submittedAt) }}
                 </span>
               </div>
 
@@ -340,7 +340,7 @@ interface Page<T> {
     .stat-card {
       background: #ffffff;
       padding: 1rem 1.1rem;
-      border-radius: 10px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
       display: flex;
@@ -359,7 +359,7 @@ interface Page<T> {
     .stat-number {
       font-size: 1.5rem;
       font-weight: 700;
-      color: #3b82f6;
+      color: #0d9488;
     }
 
     .stat-label {
@@ -370,7 +370,7 @@ interface Page<T> {
     .filters-section {
       background: #ffffff;
       padding: 1rem 1.25rem;
-      border-radius: 12px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
       margin-bottom: 1.5rem;
@@ -394,7 +394,7 @@ interface Page<T> {
     .filter-group select {
       padding: 0.5rem;
       border: 1px solid #d1d5db;
-      border-radius: 6px;
+      border-radius: 0;
       background: white;
       font-size: 0.875rem;
       min-width: 150px;
@@ -415,7 +415,7 @@ interface Page<T> {
       flex: 1;
       padding: 0.5rem;
       border: 1px solid #d1d5db;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 0.9rem;
     }
 
@@ -426,16 +426,16 @@ interface Page<T> {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #2563eb, #1e40af);
+      background: #0d9488;
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       cursor: pointer;
       font-weight: 500;
     }
 
     .btn-search:hover {
-      background: linear-gradient(135deg, #1e40af, #1e3a8a);
+      background: #1e293b;
     }
 
     .btn-advanced {
@@ -446,7 +446,7 @@ interface Page<T> {
       align-items: center;
       justify-content: center;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       cursor: pointer;
       font-weight: 500;
     }
@@ -462,9 +462,9 @@ interface Page<T> {
     }
     
     .btn-advanced.active {
-      background: linear-gradient(135deg, #2563eb, #1e40af);
+      background: #0d9488;
       color: white;
-      border-color: #2563eb;
+      border-color: #0f766e;
     }
 
     .search-icon {
@@ -504,7 +504,7 @@ interface Page<T> {
     .date-input {
       padding: 0.5rem;
       border: 1px solid #d1d5db;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 0.85rem;
       min-width: 120px;
     }
@@ -545,7 +545,7 @@ interface Page<T> {
 
     .history-card {
       background: #ffffff;
-      border-radius: 12px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
       padding: 1rem 1.25rem;
@@ -573,7 +573,7 @@ interface Page<T> {
       margin: 0;
       font-size: 1rem;
       font-weight: 600;
-      color: #0f172a;
+      color: #0d9488;
     }
 
     .meta-chips,
@@ -588,7 +588,7 @@ interface Page<T> {
       align-items: center;
       gap: 0.35rem;
       padding: 0.35rem 0.65rem;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.75rem;
       font-weight: 500;
       background: #f1f5f9;
@@ -650,7 +650,7 @@ interface Page<T> {
     .answer-text {
       background: #f8fafc;
       padding: 0.85rem;
-      border-radius: 8px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       color: #1f2937;
       font-size: 0.875rem;
@@ -695,7 +695,7 @@ interface Page<T> {
       background: #312e81;
       color: #f8fafc;
       padding: 0.35rem 0.7rem;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.8rem;
       font-weight: 600;
     }
@@ -710,7 +710,7 @@ interface Page<T> {
       flex: 1 1 180px;
       background: #f1f5f9;
       border: 1px solid #e2e8f0;
-      border-radius: 10px;
+      border-radius: 0;
       padding: 0.75rem;
       display: flex;
       flex-direction: column;
@@ -734,13 +734,13 @@ interface Page<T> {
     .criteria-track {
       height: 6px;
       background: #e2e8f0;
-      border-radius: 999px;
+      border-radius: 0;
       overflow: hidden;
     }
 
     .criteria-fill {
       height: 100%;
-      background: linear-gradient(90deg, #3b82f6, #2563eb);
+      background: #0d9488;
     }
 
     .history-actions {
@@ -755,7 +755,7 @@ interface Page<T> {
     .btn {
       padding: 0.45rem 0.9rem;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
@@ -767,7 +767,7 @@ interface Page<T> {
     }
 
     .btn-primary {
-      background: #2563eb;
+      background: #0f766e;
       color: white;
     }
 
@@ -793,8 +793,8 @@ interface Page<T> {
       width: 40px;
       height: 40px;
       border: 4px solid #e5e7eb;
-      border-top: 4px solid #3b82f6;
-      border-radius: 50%;
+      border-top: 4px solid #0d9488;
+      border-radius: 0;
       animation: spin 1s linear infinite;
       margin: 0 auto 1rem;
     }
@@ -845,7 +845,7 @@ interface Page<T> {
     }
 
     .page-btn.active {
-      background: #3b82f6;
+      background: #0d9488;
       color: #ffffff;
       box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
     }

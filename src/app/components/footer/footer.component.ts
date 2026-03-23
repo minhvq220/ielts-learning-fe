@@ -80,8 +80,8 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
   `,
   styles: [`
     .footer {
-      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-      color: #e2e8f0;
+      background: linear-gradient(135deg, #0d9488 0%, #0891b2 50%, #7c3aed 100%);
+      color: #f1f5f9;
       padding: 2.5rem 1.5rem 1.5rem;
     }
     .footer-inner {
@@ -101,12 +101,12 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
       letter-spacing: -0.02em;
     }
     .footer-logo:hover {
-      color: #93c5fd;
+      color: #bae6fd;
     }
     .footer-slogan {
       margin: 0.5rem 0 0;
       font-size: 0.9rem;
-      color: #94a3b8;
+      color: #dbeafe;
       line-height: 1.5;
       max-width: 420px;
     }
@@ -121,7 +121,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: #94a3b8;
+      color: #e2e8f0;
       margin: 0 0 1rem;
     }
     .footer-links {
@@ -133,9 +133,10 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
       margin-bottom: 0.5rem;
     }
     .footer-links a {
-      color: #cbd5e1;
+      color: #f1f5f9;
       text-decoration: none;
       font-size: 0.95rem;
+      text-underline-offset: 2px;
     }
     .footer-links a:hover {
       color: #fff;
@@ -143,7 +144,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
     }
     .footer-cta {
       font-size: 0.9rem;
-      color: #94a3b8;
+      color: #e0f2fe;
       line-height: 1.5;
       font-style: italic;
       margin-top: 0.5rem;
@@ -160,14 +161,15 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
       justify-content: center;
       width: 40px;
       height: 40px;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.1);
-      color: #e2e8f0;
+      border-radius: 0;
+      background: rgba(15, 23, 42, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #f8fafc;
       text-decoration: none;
       transition: background 0.2s, color 0.2s;
     }
     .social-link:hover {
-      background: rgba(255,255,255,0.2);
+      background: rgba(15, 23, 42, 0.45);
       color: #fff;
     }
     .social-icon {
@@ -175,7 +177,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
     }
     .footer-no-social {
       font-size: 0.9rem;
-      color: #64748b;
+      color: #e2e8f0;
     }
     .footer-bottom {
       padding-top: 1.5rem;
@@ -185,7 +187,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
     .footer-copy {
       margin: 0;
       font-size: 0.85rem;
-      color: #64748b;
+      color: #cbd5e1;
     }
     @media (max-width: 768px) {
       .footer { padding: 1.5rem 1rem 1rem; }

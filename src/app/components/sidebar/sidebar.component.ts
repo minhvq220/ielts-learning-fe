@@ -14,25 +14,25 @@ import { RouterModule } from '@angular/router';
           <ul class="skill-list">
             <!-- <li>
               <a routerLink="/reading" routerLinkActive="active" class="skill-link">
-                <span class="skill-icon">📖</span>
+                <span class="skill-icon">≡</span>
                 <span>Reading</span>
               </a>
             </li> -->
             <!-- <li>
               <a routerLink="/listening" routerLinkActive="active" class="skill-link">
-                <span class="skill-icon">🎧</span>
+                <span class="skill-icon">◐</span>
                 <span>Listening</span>
               </a>
             </li> -->
             <li>
               <a routerLink="/writing" routerLinkActive="active" class="skill-link">
-                <span class="skill-icon">✍️</span>
+                <span class="skill-icon">✎</span>
                 <span>Writing</span>
               </a>
             </li>
             <!-- <li>
               <a routerLink="/speaking" routerLinkActive="active" class="skill-link">
-                <span class="skill-icon">🎤</span>
+                <span class="skill-icon">◉</span>
                 <span>Speaking</span>
               </a>
             </li> -->
@@ -111,7 +111,7 @@ import { RouterModule } from '@angular/router';
       padding: 0.75rem;
       color: #bdc3c7;
       text-decoration: none;
-      border-radius: 8px;
+      border-radius: 0;
       transition: all 0.3s;
     }
 
@@ -150,14 +150,14 @@ import { RouterModule } from '@angular/router';
       flex: 1;
       height: 8px;
       background-color: #34495e;
-      border-radius: 4px;
+      border-radius: 0;
       margin: 0 0.5rem;
       overflow: hidden;
     }
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #3498db, #2ecc71);
+      background: #334155;
       transition: width 0.3s ease;
     }
 

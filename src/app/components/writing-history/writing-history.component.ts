@@ -24,28 +24,28 @@ import flatpickr from 'flatpickr';
       <div class="stats-section" *ngIf="userStats()">
         <div class="stats-grid">
           <div class="stat-card">
-            <div class="stat-icon">📝</div>
+            <div class="stat-icon">✎</div>
             <div class="stat-content">
               <div class="stat-number">{{ userStats()!.totalCompleted }}</div>
               <div class="stat-label">Tổng bài đã làm</div>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">📊</div>
+            <div class="stat-icon">▣</div>
             <div class="stat-content">
               <div class="stat-number">{{ userStats()!.averageScore?.toFixed(1) || 'N/A' }}</div>
               <div class="stat-label">Điểm trung bình</div>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">📈</div>
+            <div class="stat-icon">▤</div>
             <div class="stat-content">
               <div class="stat-number">{{ userStats()!.task1Completed }}</div>
               <div class="stat-label">Task 1</div>
             </div>
           </div>
           <div class="stat-card">
-            <div class="stat-icon">📋</div>
+            <div class="stat-icon">≡</div>
             <div class="stat-content">
               <div class="stat-number">{{ userStats()!.task2Completed }}</div>
               <div class="stat-label">Task 2</div>
@@ -102,7 +102,7 @@ import flatpickr from 'flatpickr';
               placeholder="Tìm theo nội dung bài viết, tiêu đề đề bài..."
               class="search-input">
             <button class="btn btn-primary btn-search" (click)="triggerSearch()" type="button" title="Tìm kiếm">
-              <span class="search-icon">🔍</span>
+              <span class="search-icon">⌕</span>
             </button>
             <button class="btn btn-secondary btn-advanced" (click)="toggleAdvancedFilters()" type="button" [class.active]="showAdvancedFilters()" title="Tìm kiếm nâng cao">
               <svg class="filter-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -120,7 +120,7 @@ import flatpickr from 'flatpickr';
         </div>
 
         <div *ngIf="!loading() && historyPage() && historyPage()!.content.length === 0" class="empty-state">
-          <div class="empty-icon">📚</div>
+          <div class="empty-icon">≡</div>
           <h3>Không tìm thấy bài viết nào</h3>
           <p *ngIf="hasActiveFilters()">Không có kết quả phù hợp với bộ lọc. Hãy thử điều chỉnh bộ lọc hoặc xóa bộ lọc để xem tất cả.</p>
           <p *ngIf="!hasActiveFilters()">Hãy bắt đầu làm bài để xem lịch sử ở đây!</p>
@@ -160,22 +160,22 @@ import flatpickr from 'flatpickr';
                   {{ getDifficultyLabel(difficulty) }}
                 </span>
                 <span class="chip meta-chip" *ngIf="getTaskTimeLimit(item) as timeLimit">
-                  <span class="chip-icon">⏱️</span>Giới hạn: {{ timeLimit }} phút
+                  <span class="chip-icon">⏱</span>Giới hạn: {{ timeLimit }} phút
                 </span>
                 <span class="chip meta-chip" *ngIf="getTaskWordTarget(item) as wordTarget">
-                  <span class="chip-icon">📝</span>Mục tiêu: {{ wordTarget }} từ
+                  <span class="chip-icon">✎</span>Mục tiêu: {{ wordTarget }} từ
                 </span>
                 <span class="chip meta-chip">
-                  <span class="chip-icon">📝</span>{{ item.wordCount }} từ thực tế
+                  <span class="chip-icon">✎</span>{{ item.wordCount }} từ thực tế
                 </span>
                 <span class="chip meta-chip">
-                  <span class="chip-icon">⏱️</span>Đã làm: {{ formatDuration(item.timeSpent) }}
+                  <span class="chip-icon">⏱</span>Đã làm: {{ formatDuration(item.timeSpent) }}
                 </span>
                 <span class="chip meta-chip">
-                  <span class="chip-icon">📅</span>{{ formatDate(item.submittedAt) }} {{ formatTime(item.submittedAt) }}
+                  <span class="chip-icon">·</span>{{ formatDate(item.submittedAt) }} {{ formatTime(item.submittedAt) }}
                 </span>
                 <span class="chip meta-chip score-chip" *ngIf="item.aiScore">
-                  <span class="chip-icon">🎯</span>{{ item.aiScore.toFixed(1) }}/9
+                  <span class="chip-icon">◎</span>{{ item.aiScore.toFixed(1) }}/9
                 </span>
               </div>
 
@@ -293,7 +293,7 @@ import flatpickr from 'flatpickr';
     .stat-card {
       background: #ffffff;
       padding: 1rem 1.1rem;
-      border-radius: 10px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
       display: flex;
@@ -312,7 +312,7 @@ import flatpickr from 'flatpickr';
     .stat-number {
       font-size: 1.5rem;
       font-weight: 700;
-      color: #3b82f6;
+      color: #0d9488;
     }
 
     .stat-label {
@@ -323,7 +323,7 @@ import flatpickr from 'flatpickr';
     .filters-section {
       background: #ffffff;
       padding: 1rem 1.25rem;
-      border-radius: 12px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
       margin-bottom: 1.5rem;
@@ -347,7 +347,7 @@ import flatpickr from 'flatpickr';
     .filter-group select {
       padding: 0.5rem;
       border: 1px solid #d1d5db;
-      border-radius: 6px;
+      border-radius: 0;
       background: white;
       font-size: 0.875rem;
       min-width: 150px;
@@ -368,7 +368,7 @@ import flatpickr from 'flatpickr';
       flex: 1;
       padding: 0.5rem;
       border: 1px solid #d1d5db;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 0.9rem;
     }
 
@@ -379,16 +379,16 @@ import flatpickr from 'flatpickr';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #2563eb, #1e40af);
+      background: #0d9488;
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       cursor: pointer;
       font-weight: 500;
     }
 
     .btn-search:hover {
-      background: linear-gradient(135deg, #1e40af, #1e3a8a);
+      background: #1e293b;
     }
 
     .btn-advanced {
@@ -399,7 +399,7 @@ import flatpickr from 'flatpickr';
       align-items: center;
       justify-content: center;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       cursor: pointer;
       font-weight: 500;
     }
@@ -415,9 +415,9 @@ import flatpickr from 'flatpickr';
     }
     
     .btn-advanced.active {
-      background: linear-gradient(135deg, #2563eb, #1e40af);
+      background: #0d9488;
       color: white;
-      border-color: #2563eb;
+      border-color: #0f766e;
     }
 
     .search-icon {
@@ -457,7 +457,7 @@ import flatpickr from 'flatpickr';
     .date-input {
       padding: 0.5rem;
       border: 1px solid #d1d5db;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 0.85rem;
       min-width: 120px;
     }
@@ -505,7 +505,7 @@ import flatpickr from 'flatpickr';
 
     .history-card {
       background: #ffffff;
-      border-radius: 12px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
       padding: 1rem 1.25rem;
@@ -533,7 +533,7 @@ import flatpickr from 'flatpickr';
       margin: 0;
       font-size: 1rem;
       font-weight: 600;
-      color: #0f172a;
+      color: #0d9488;
     }
 
     .all-chips {
@@ -555,7 +555,7 @@ import flatpickr from 'flatpickr';
       align-items: center;
       gap: 0.35rem;
       padding: 0.35rem 0.65rem;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.75rem;
       font-weight: 500;
       background: #f1f5f9;
@@ -640,7 +640,7 @@ import flatpickr from 'flatpickr';
     .answer-text {
       background: #f8fafc;
       padding: 0.85rem;
-      border-radius: 8px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       color: #1f2937;
       font-size: 0.875rem;
@@ -691,7 +691,7 @@ import flatpickr from 'flatpickr';
       flex: 1 1 180px;
       background: #f1f5f9;
       border: 1px solid #e2e8f0;
-      border-radius: 10px;
+      border-radius: 0;
       padding: 0.75rem;
       display: flex;
       flex-direction: column;
@@ -715,13 +715,13 @@ import flatpickr from 'flatpickr';
     .criteria-track {
       height: 6px;
       background: #e2e8f0;
-      border-radius: 999px;
+      border-radius: 0;
       overflow: hidden;
     }
 
     .criteria-fill {
       height: 100%;
-      background: linear-gradient(90deg, #3b82f6, #2563eb);
+      background: #0d9488;
     }
 
     .history-actions {
@@ -736,7 +736,7 @@ import flatpickr from 'flatpickr';
     .btn {
       padding: 0.45rem 0.9rem;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
@@ -748,7 +748,7 @@ import flatpickr from 'flatpickr';
     }
 
     .btn-primary {
-      background: #2563eb;
+      background: #0f766e;
       color: white;
     }
 
@@ -774,8 +774,8 @@ import flatpickr from 'flatpickr';
       width: 40px;
       height: 40px;
       border: 4px solid #e5e7eb;
-      border-top: 4px solid #3b82f6;
-      border-radius: 50%;
+      border-top: 4px solid #0d9488;
+      border-radius: 0;
       animation: spin 1s linear infinite;
       margin: 0 auto 1rem;
     }
@@ -826,7 +826,7 @@ import flatpickr from 'flatpickr';
     }
 
     .page-btn.active {
-      background: #3b82f6;
+      background: #0d9488;
       color: #ffffff;
       box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
     }

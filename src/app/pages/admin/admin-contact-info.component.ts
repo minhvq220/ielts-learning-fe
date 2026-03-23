@@ -22,7 +22,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
       <form *ngIf="!loading()" (ngSubmit)="saveContactInfo()" class="contact-info-form">
         <div class="form-group">
           <label for="email">
-            <span class="label-icon">📧</span>
+            <span class="label-icon">@</span>
             Email
           </label>
           <input
@@ -36,7 +36,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
 
         <div class="form-group">
           <label for="facebookUrl">
-            <span class="label-icon">📘</span>
+            <span class="label-icon">f</span>
             Facebook URL
           </label>
           <input
@@ -50,7 +50,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
 
         <div class="form-group">
           <label for="instagramUrl">
-            <span class="label-icon">📷</span>
+            <span class="label-icon">i</span>
             Instagram URL
           </label>
           <input
@@ -64,7 +64,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
 
         <div class="form-group">
           <label for="telegramUrl">
-            <span class="label-icon">✈️</span>
+            <span class="label-icon">t</span>
             Telegram URL
           </label>
           <input
@@ -78,11 +78,11 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
 
         <div class="form-actions">
           <button type="submit" class="btn btn-primary" [disabled]="saving()">
-            <span *ngIf="!saving()">💾 Lưu thông tin</span>
-            <span *ngIf="saving()">⏳ Đang lưu...</span>
+            <span *ngIf="!saving()">Lưu thông tin</span>
+            <span *ngIf="saving()">Đang lưu...</span>
           </button>
           <button type="button" class="btn btn-secondary" (click)="loadContactInfo()" [disabled]="saving()">
-            🔄 Làm mới
+            ↻ Làm mới
           </button>
         </div>
 
@@ -128,8 +128,8 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
       width: 40px;
       height: 40px;
       border: 4px solid #e2e8f0;
-      border-top-color: #667eea;
-      border-radius: 50%;
+      border-top-color: #0d9488;
+      border-radius: 0;
       animation: spin 1s linear infinite;
       margin-bottom: 1rem;
     }
@@ -140,7 +140,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
 
     .contact-info-form {
       background: white;
-      border-radius: 12px;
+      border-radius: 0;
       padding: 2rem;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
@@ -167,7 +167,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
       width: 100%;
       padding: 0.75rem 1rem;
       border: 2px solid #e2e8f0;
-      border-radius: 8px;
+      border-radius: 0;
       font-size: 1rem;
       transition: border-color 0.2s;
       box-sizing: border-box;
@@ -175,7 +175,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
 
     .form-input:focus {
       outline: none;
-      border-color: #667eea;
+      border-color: #0d9488;
     }
 
     .form-input::placeholder {
@@ -193,7 +193,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
     .btn {
       padding: 0.75rem 1.5rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 0;
       font-weight: 600;
       font-size: 1rem;
       cursor: pointer;
@@ -206,7 +206,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #0d9488;
       color: white;
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
@@ -230,7 +230,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
     .message {
       margin-top: 1.5rem;
       padding: 1rem;
-      border-radius: 8px;
+      border-radius: 0;
       font-weight: 500;
     }
 

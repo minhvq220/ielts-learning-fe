@@ -42,8 +42,8 @@ import { LoadingService } from '../../services/loading.service';
       width: 60px;
       height: 60px;
       border: 4px solid #f3f3f3;
-      border-top: 4px solid #007bff;
-      border-radius: 50%;
+      border-top: 4px solid #0d9488;
+      border-radius: 0;
       animation: spin 1s linear infinite;
       margin: 0 auto 2rem;
     }
@@ -63,14 +63,14 @@ import { LoadingService } from '../../services/loading.service';
       width: 100%;
       height: 8px;
       background-color: #e9ecef;
-      border-radius: 4px;
+      border-radius: 0;
       overflow: hidden;
       margin-bottom: 1rem;
     }
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #007bff, #28a745);
+      background: #0d9488;
       transition: width 0.3s ease;
     }
 

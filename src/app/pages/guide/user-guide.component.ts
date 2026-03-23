@@ -10,7 +10,7 @@ import { RouterModule } from '@angular/router';
     <div class="guide-page">
       <div class="guide-container">
         <header class="guide-header">
-          <h1>📖 Hướng dẫn sử dụng</h1>
+          <h1>Hướng dẫn sử dụng</h1>
           <p>Làm quen với EssayRater – luyện viết IELTS Writing và nhận chấm điểm bằng AI</p>
         </header>
 
@@ -96,7 +96,7 @@ import { RouterModule } from '@angular/router';
   styles: [`
     .guide-page {
       min-height: 100vh;
-      background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+      background: #f1f5f9;
       padding: 2rem 1rem 4rem;
       padding-top: calc(70px + 2rem);
     }
@@ -126,7 +126,7 @@ import { RouterModule } from '@angular/router';
 
     .guide-toc {
       background: white;
-      border-radius: 12px;
+      border-radius: 0;
       padding: 1.25rem 1.5rem;
       margin-bottom: 2rem;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
@@ -152,7 +152,7 @@ import { RouterModule } from '@angular/router';
     }
 
     .guide-toc a {
-      color: #667eea;
+      color: #0d9488;
       text-decoration: none;
       font-weight: 500;
       cursor: pointer;
@@ -162,12 +162,12 @@ import { RouterModule } from '@angular/router';
 
     .guide-toc a:hover {
       text-decoration: underline;
-      color: #5a67d8;
+      color: #334155;
     }
 
     .guide-content {
       background: white;
-      border-radius: 12px;
+      border-radius: 0;
       padding: 2rem;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
     }
@@ -217,7 +217,7 @@ import { RouterModule } from '@angular/router';
       align-items: center;
       gap: 0.5rem;
       padding: 0.75rem 1.5rem;
-      border-radius: 8px;
+      border-radius: 0;
       font-weight: 600;
       text-decoration: none;
       transition: all 0.2s;
@@ -226,14 +226,13 @@ import { RouterModule } from '@angular/router';
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+      background: #0d9488;
+      color: #fff;
     }
 
     .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.45);
+      background: #1e293b;
+      color: #fff;
     }
 
     @media (max-width: 768px) {

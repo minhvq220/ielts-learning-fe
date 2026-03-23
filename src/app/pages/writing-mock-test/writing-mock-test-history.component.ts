@@ -22,7 +22,7 @@ interface MockTestSession {
   template: `
     <div class="mock-test-history-container">
       <div class="history-header">
-        <h2>🎯 Lịch sử Mock Test</h2>
+        <h2>Lịch sử Mock Test</h2>
         <p>Xem lại các bài Mock Test đã hoàn thành</p>
       </div>
 
@@ -33,7 +33,7 @@ interface MockTestSession {
         </div>
 
         <div *ngIf="!loading() && mockTestSessions().length === 0" class="empty-state">
-          <div class="empty-icon">📚</div>
+          <div class="empty-icon">≡</div>
           <h3>Chưa có Mock Test nào</h3>
           <p>Hãy làm Mock Test để xem lịch sử ở đây!</p>
           <button class="btn btn-primary" (click)="goToStartMockTest()">Làm Mock Test ngay</button>
@@ -56,7 +56,7 @@ interface MockTestSession {
               <!-- Task 1 -->
               <div class="task-card" *ngIf="session.task1">
                 <div class="task-header">
-                  <h4>📝 Task 1</h4>
+                  <h4>Task 1</h4>
                   <div class="task-score" *ngIf="session.task1.aiScore">
                     {{ session.task1.aiScore.toFixed(1) }} / 9.0
                   </div>
@@ -87,7 +87,7 @@ interface MockTestSession {
               <!-- Task 2 -->
               <div class="task-card" *ngIf="session.task2">
                 <div class="task-header">
-                  <h4>✍️ Task 2</h4>
+                  <h4>Task 2</h4>
                   <div class="task-score" *ngIf="session.task2.aiScore">
                     {{ session.task2.aiScore.toFixed(1) }} / 9.0
                   </div>
@@ -172,8 +172,8 @@ interface MockTestSession {
 
     .spinner {
       border: 4px solid #f3f3f3;
-      border-top: 4px solid #667eea;
-      border-radius: 50%;
+      border-top: 4px solid #0d9488;
+      border-radius: 0;
       width: 50px;
       height: 50px;
       animation: spin 1s linear infinite;
@@ -189,7 +189,7 @@ interface MockTestSession {
       text-align: center;
       padding: 4rem 2rem;
       background: white;
-      border-radius: 12px;
+      border-radius: 0;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
 
@@ -214,10 +214,10 @@ interface MockTestSession {
 
     .session-card {
       background: white;
-      border-radius: 12px;
+      border-radius: 0;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
       padding: 1.5rem;
-      border-left: 4px solid #667eea;
+      border-left: 4px solid #0d9488;
     }
 
     .session-header {
@@ -252,7 +252,7 @@ interface MockTestSession {
     .score-value {
       font-size: 1.5rem;
       font-weight: 700;
-      color: #667eea;
+      color: #0d9488;
     }
 
     .session-tasks {
@@ -264,8 +264,8 @@ interface MockTestSession {
     .task-card {
       padding: 1rem;
       background: #f8f9fa;
-      border-radius: 8px;
-      border-left: 3px solid #667eea;
+      border-radius: 0;
+      border-left: 3px solid #0d9488;
     }
 
     .task-header {
@@ -283,7 +283,7 @@ interface MockTestSession {
     .task-score {
       font-size: 1.1rem;
       font-weight: 600;
-      color: #667eea;
+      color: #0d9488;
     }
 
     .task-details {
@@ -314,7 +314,7 @@ interface MockTestSession {
     .btn {
       padding: 0.5rem 1.25rem;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 0.9rem;
       font-weight: 600;
       cursor: pointer;
@@ -322,25 +322,25 @@ interface MockTestSession {
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #0d9488;
       color: white;
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
     }
 
     .btn-detail {
       width: 100%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #0d9488;
       color: white;
       margin-top: 0.5rem;
     }
 
     .btn-detail:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.25);
     }
 
     .btn-secondary {

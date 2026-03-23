@@ -40,14 +40,14 @@ import Quill from 'quill';
 
     :host ::ng-deep .ql-snow.ql-toolbar {
       border: 1px solid #d1d5db;
-      border-radius: 8px 8px 0 0;
+      border-radius: 0;
       background: #f9fafb;
     }
 
     :host ::ng-deep .ql-snow .ql-container {
       border: 1px solid #d1d5db;
       border-top: none;
-      border-radius: 0 0 8px 8px;
+      border-radius: 0;
     }
   `]
 })

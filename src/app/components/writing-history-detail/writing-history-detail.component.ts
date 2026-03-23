@@ -61,7 +61,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       </div>
 
       <div class="error-section" *ngIf="error()">
-        <div class="error-icon">❌</div>
+        <div class="error-icon">✕</div>
         <h3>Không thể tải bài viết</h3>
         <p>{{ error() }}</p>
         <button class="btn btn-primary" *ngIf="!isAdminRoute()" (click)="goBack()">Quay lại lịch sử</button>
@@ -198,7 +198,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
             <!-- Nhận xét -->
             <div class="feedback-card" *ngIf="historyItem()!.aiFeedback">
               <div class="feedback-header">
-                <div class="feedback-icon">💬</div>
+                <div class="feedback-icon">●</div>
                 <h3 class="feedback-title">Nhận xét</h3>
               </div>
               <div class="feedback-content">
@@ -209,7 +209,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
             <!-- Gợi ý cải thiện -->
             <div class="suggestions-card" *ngIf="historyItem()!.aiSuggestions?.length">
               <div class="suggestions-header">
-                <div class="suggestions-icon">💡</div>
+                <div class="suggestions-icon">※</div>
                 <h3 class="suggestions-title">Gợi ý cải thiện</h3>
               </div>
               <div class="suggestions-content">
@@ -238,7 +238,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
                 *ngIf="getWritingGuide()"
                 [class.active]="!isQuestionPanelCollapsed() && activeInfoTab() === 'guide'"
                 (click)="setActiveInfoTab('guide')">
-                📝 Hướng dẫn
+                ✎ Hướng dẫn
               </button>
             </div>
 
@@ -272,17 +272,17 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
                 <div class="task-requirements-compact">
                   <div class="requirement-item-compact">
-                    <span class="label-compact">⏱️</span>
+                    <span class="label-compact">⏱</span>
                     <span class="value-compact">{{ getTaskTimeLimit() }} phút</span>
                   </div>
                   <div class="requirement-item-compact">
-                    <span class="label-compact">📝</span>
+                    <span class="label-compact">✎</span>
                     <span class="value-compact">{{ getTaskWordCount() }} từ</span>
                   </div>
                 </div>
 
                 <div class="tips-section-compact" *ngIf="getTaskTips().length">
-                  <div class="section-label">💡 Mẹo:</div>
+                  <div class="section-label">※ Mẹo:</div>
                   <ul class="compact-list">
                     <li *ngFor="let tip of getTaskTips()">{{ tip }}</li>
                   </ul>
@@ -430,7 +430,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
               </div>
               <div class="tools-right">
                 <div class="timer-section-compact">
-                  <div class="timer-compact">⏱️ {{ formatDuration(historyItem()!.timeSpent) }}</div>
+                  <div class="timer-compact">⏱ {{ formatDuration(historyItem()!.timeSpent) }}</div>
                 </div>
                 <div class="writing-actions" *ngIf="!isAdminRoute()">
                   <button class="btn btn-secondary" (click)="goBack()">Quay lại</button>
@@ -526,7 +526,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       color: white;
       border: none;
       padding: 0.65rem 1.4rem;
-      border-radius: 10px;
+      border-radius: 0;
       cursor: pointer;
       font-weight: 600;
       transition: all 0.2s;
@@ -542,7 +542,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
     .header-content h1 {
       margin: 0 0 1rem 0;
-      color: #0f172a;
+      color: #0d9488;
       font-size: 1.85rem;
       font-weight: 700;
     }
@@ -551,7 +551,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       margin-bottom: 0.75rem;
       padding: 0.5rem 0.75rem;
       background: #f1f5f9;
-      border-radius: 8px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       display: flex;
       align-items: center;
@@ -596,7 +596,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       align-items: center;
       gap: 0.35rem;
       padding: 0.35rem 0.75rem;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.8rem;
       font-weight: 600;
       background: #f1f5f9;
@@ -680,12 +680,12 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     
     .collapse-header {
       padding: 0.75rem;
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      background: #f1f5f9;
       border-bottom: 1px solid #e2e8f0;
       display: flex;
       justify-content: center;
       align-items: center;
-      border-radius: 12px 12px 0 0;
+      border-radius: 0;
     }
     
     .collapse-btn {
@@ -693,10 +693,10 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       align-items: center;
       gap: 0.5rem;
       padding: 0.65rem 1.25rem;
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      background: #0d9488;
       color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: 0;
       cursor: pointer;
       font-size: 0.875rem;
       font-weight: 600;
@@ -722,7 +722,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     }
     
     .collapse-btn:hover {
-      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+      background: #1e293b;
       box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
       transform: translateY(-2px);
     }
@@ -733,12 +733,12 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     }
     
     .collapse-btn.collapsed {
-      background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+      background: #475569;
       box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
     }
     
     .collapse-btn.collapsed:hover {
-      background: linear-gradient(135deg, #475569 0%, #334155 100%);
+      background: #334155;
       box-shadow: 0 6px 20px rgba(100, 116, 139, 0.4);
     }
     
@@ -764,7 +764,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       gap: 0.5rem;
       background: #ffffff;
       padding: 0.5rem;
-      border-radius: 0 12px 12px 0;
+      border-radius: 0;
       box-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
     }
     
@@ -790,7 +790,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       color: #64748b;
       font-size: 0.875rem;
       font-weight: 500;
-      border-radius: 8px;
+      border-radius: 0;
       cursor: pointer;
       transition: all 0.2s;
       display: flex;
@@ -810,24 +810,24 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     }
 
     .tab-btn.active {
-      background: #3b82f6;
+      background: #0d9488;
       color: #ffffff;
       box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
     }
     
     .tab-btn.active:hover {
-      background: #2563eb;
+      background: #0f766e;
     }
     
     /* Style for collapsed state - make it blue to match active state */
     .left-column.collapsed .tab-btn:first-child {
-      background: #3b82f6;
+      background: #0d9488;
       color: #ffffff;
       box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
     }
     
     .left-column.collapsed .tab-btn:first-child:hover {
-      background: #2563eb;
+      background: #0f766e;
     }
 
     .info-panel {
@@ -837,7 +837,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .task-instruction-panel-compact {
       background: #ffffff;
       padding: 1.25rem;
-      border-radius: 0 14px 14px 0;
+      border-radius: 0;
       box-shadow: 0 18px 35px rgba(15, 23, 42, 0.12);
       display: flex;
       flex-direction: column;
@@ -847,7 +847,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .task-title-compact {
       font-size: 1.05rem;
       font-weight: 600;
-      color: #0f172a;
+      color: #0d9488;
       padding-bottom: 0.75rem;
       border-bottom: 1px solid #e2e8f0;
     }
@@ -861,13 +861,13 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .task1-image-compact {
       background: #f8fafc;
       padding: 0.75rem;
-      border-radius: 10px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
     }
 
     .task-image {
       width: 100%;
-      border-radius: 8px;
+      border-radius: 0;
       box-shadow: 0 12px 24px rgba(15, 23, 42, 0.15);
     }
 
@@ -906,7 +906,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       gap: 1rem;
       background: #f1f5f9;
       padding: 0.75rem;
-      border-radius: 10px;
+      border-radius: 0;
     }
 
     .requirement-item-compact {
@@ -919,14 +919,14 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
     .value-compact {
       font-weight: 600;
-      color: #0f172a;
+      color: #0d9488;
     }
 
     .tips-section-compact {
       background: #fff7ed;
       border-left: 4px solid #f97316;
       padding: 0.75rem 1rem;
-      border-radius: 10px;
+      border-radius: 0;
     }
 
     .compact-list {
@@ -940,7 +940,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       background: #fff7ed;
       border-left: 4px solid #f97316;
       padding: 1.25rem;
-      border-radius: 0 14px 14px 0;
+      border-radius: 0;
       box-shadow: 0 18px 35px rgba(249, 115, 22, 0.18);
       max-height: 420px;
       overflow-y: auto;
@@ -964,7 +964,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .statistics-panel {
       width: 100%;
       background: white;
-      border-radius: 14px 0 0 14px;
+      border-radius: 0;
       box-shadow: 0 18px 35px rgba(15, 23, 42, 0.12);
       padding: 1.5rem;
       height: fit-content;
@@ -976,7 +976,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       color: #1f2937;
       font-size: 1.25rem;
       font-weight: 700;
-      border-bottom: 2px solid #3b82f6;
+      border-bottom: 2px solid #0d9488;
       padding-bottom: 0.5rem;
     }
     
@@ -1003,7 +1003,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       padding: 0.4rem 0.75rem;
       background: #f1f5f9;
       border: 1px solid #cbd5e1;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 0.875rem;
       cursor: pointer;
       transition: all 0.2s;
@@ -1017,9 +1017,9 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     }
     
     .word-tag.active {
-      background: #3b82f6;
+      background: #0d9488;
       color: white;
-      border-color: #2563eb;
+      border-color: #0f766e;
       box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
     }
     
@@ -1045,7 +1045,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     /* Word highlighting in essay */
     .essay-text.word-highlighted {
       background: rgba(59, 130, 246, 0.2);
-      border-radius: 3px;
+      border-radius: 0;
       padding: 0 2px;
     }
     
@@ -1074,7 +1074,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
     .writing-textarea-container {
       background: #ffffff;
-      border-radius: 14px;
+      border-radius: 0;
       box-shadow: 0 18px 35px rgba(15, 23, 42, 0.12);
       padding: 1.5rem;
       width: 100%;
@@ -1083,7 +1083,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
     .writing-display {
       background: #ffffff;
-      border-radius: 12px;
+      border-radius: 0;
       padding: 1.25rem;
       min-height: auto;
       max-height: none;
@@ -1101,7 +1101,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       font-family: 'Times New Roman', serif;
       font-size: 1rem;
       line-height: 1.65;
-      color: #0f172a;
+      color: #0d9488;
       white-space: pre-wrap;
       word-break: break-word;
     }
@@ -1121,7 +1121,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .essay-title {
       font-size: 1rem;
       font-weight: 700;
-      color: #0f172a;
+      color: #0d9488;
     }
 
     .essay-subtitle {
@@ -1132,7 +1132,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
     .ai-highlight {
       padding: 0 2px;
-      border-radius: 4px;
+      border-radius: 0;
       transition: background 0.2s ease, box-shadow 0.2s ease, border 0.2s ease;
       cursor: pointer;
       border-bottom: 2px solid transparent;
@@ -1225,13 +1225,13 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       gap: 0.35rem;
       padding: 0.2rem 0.5rem;
       background: #f8fafc;
-      border-radius: 999px;
+      border-radius: 0;
     }
 
     .legend-swatch {
       width: 14px;
       height: 14px;
-      border-radius: 999px;
+      border-radius: 0;
       border: 1px solid rgba(148, 163, 184, 0.4);
     }
 
@@ -1264,7 +1264,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       gap: 1.5rem;
       background: #ffffff;
       padding: 1rem 1.5rem;
-      border-radius: 14px;
+      border-radius: 0;
       box-shadow: 0 18px 35px rgba(15, 23, 42, 0.12);
     }
 
@@ -1283,7 +1283,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
     .current-words {
       font-weight: 700;
-      color: #3b82f6;
+      color: #0d9488;
       font-size: 1rem;
     }
 
@@ -1296,13 +1296,13 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       width: 140px;
       height: 6px;
       background: #e2e8f0;
-      border-radius: 999px;
+      border-radius: 0;
       overflow: hidden;
     }
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #10b981, #14b8a6);
+      background: #0d9488;
       transition: width 0.3s ease;
     }
 
@@ -1318,7 +1318,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       gap: 0.75rem;
       background: #f8fafc;
       padding: 0.5rem 1rem;
-      border-radius: 10px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       font-weight: 600;
       color: #334155;
@@ -1329,14 +1329,15 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       gap: 0.75rem;
     }
 
-    /* Evaluation Panel - Above essay */
+    /* Evaluation Panel - Above essay (neutral palette, easy on eyes) */
     .evaluation-panel {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 16px;
-      box-shadow: 0 20px 40px rgba(102, 126, 234, 0.25);
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08);
       padding: 2rem;
       margin-bottom: 2rem;
-      color: white;
+      border: 1px solid #e2e8f0;
+      color: #334155;
     }
 
     .evaluation-header {
@@ -1345,13 +1346,15 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       align-items: flex-start;
       gap: 2rem;
       margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid #e2e8f0;
     }
 
     .evaluation-title-section h3 {
       margin: 0 0 0.75rem 0;
       font-size: 1.5rem;
       font-weight: 700;
-      color: white;
+      color: #1e293b;
     }
 
     .evaluation-meta {
@@ -1359,14 +1362,14 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       gap: 1rem;
       flex-wrap: wrap;
       font-size: 0.85rem;
-      color: rgba(255, 255, 255, 0.9);
+      color: #64748b;
     }
 
     .evaluation-meta span {
-      background: rgba(255, 255, 255, 0.15);
+      background: #f1f5f9;
       padding: 0.4rem 0.8rem;
-      border-radius: 8px;
-      backdrop-filter: blur(10px);
+      border-radius: 6px;
+      color: #475569;
     }
 
     .overall-score {
@@ -1374,23 +1377,22 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.2);
-      backdrop-filter: blur(10px);
+      background: #f8fafc;
       padding: 1.5rem 2rem;
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
     }
 
     .score-value {
       font-size: 3rem;
       font-weight: 800;
       line-height: 1;
-      color: white;
+      color: #4f46e5;
     }
 
     .score-label {
       font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.9);
+      color: #64748b;
       margin-top: 0.5rem;
       font-weight: 500;
     }
@@ -1402,11 +1404,10 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     }
 
     .criteria-item {
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
+      background: #f8fafc;
       padding: 1.25rem;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
     }
 
     .criteria-header {
@@ -1426,31 +1427,31 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .criteria-name {
       font-size: 0.9rem;
       font-weight: 600;
-      color: rgba(255, 255, 255, 0.95);
+      color: #334155;
     }
     
     .criteria-score-main {
       font-size: 1rem;
       font-weight: 700;
-      color: white;
-      background: rgba(255, 255, 255, 0.2);
+      color: #4f46e5;
+      background: #eef2ff;
       padding: 0.3rem 0.6rem;
-      border-radius: 8px;
+      border-radius: 6px;
     }
 
     .criteria-score-value {
       font-size: 1rem;
       font-weight: 700;
-      color: white;
-      background: rgba(255, 255, 255, 0.2);
+      color: #4f46e5;
+      background: #eef2ff;
       padding: 0.3rem 0.6rem;
-      border-radius: 8px;
+      border-radius: 6px;
     }
     
     .detailed-subscores {
       margin-top: 0.75rem;
       padding-left: 1rem;
-      border-left: 2px solid rgba(255, 255, 255, 0.3);
+      border-left: 2px solid #cbd5e1;
     }
     
     .subscore-item {
@@ -1462,30 +1463,29 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     }
     
     .subscore-label {
-      color: rgba(255, 255, 255, 0.85);
+      color: #64748b;
       font-weight: 500;
     }
     
     .subscore-value {
-      color: white;
+      color: #475569;
       font-weight: 600;
     }
 
     .score-bar {
       width: 100%;
       height: 8px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 999px;
+      background: #e2e8f0;
+      border-radius: 4px;
       overflow: hidden;
       position: relative;
     }
 
     .score-fill {
       height: 100%;
-      background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%);
-      border-radius: 999px;
+      background: linear-gradient(90deg, #6366f1, #4f46e5);
+      border-radius: 4px;
       transition: width 0.6s ease;
-      box-shadow: 0 2px 8px rgba(251, 191, 36, 0.4);
     }
 
     /* AI Feedback and Suggestions Section */
@@ -1503,7 +1503,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .feedback-card,
     .suggestions-card {
       background: #ffffff;
-      border-radius: 16px;
+      border-radius: 0;
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.1);
       padding: 1.5rem;
       border: 1px solid #e2e8f0;
@@ -1534,12 +1534,14 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       justify-content: center;
       width: 40px;
       height: 40px;
-      border-radius: 10px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 8px;
+      background: #4f46e5;
+      color: #fff;
     }
 
     .suggestions-icon {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      background: #475569;
+      color: #fff;
     }
 
     .feedback-title,
@@ -1547,7 +1549,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       margin: 0;
       font-size: 1.25rem;
       font-weight: 700;
-      color: #0f172a;
+      color: #1e293b;
     }
 
     .feedback-content,
@@ -1577,7 +1579,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       gap: 0.75rem;
       padding: 0.75rem;
       background: #f8fafc;
-      border-radius: 8px;
+      border-radius: 0;
       border-left: 3px solid #f59e0b;
       transition: all 0.2s ease;
     }
@@ -1632,7 +1634,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .corrections-panel {
       margin-top: 1.5rem;
       background: #ffffff;
-      border-radius: 14px;
+      border-radius: 0;
       box-shadow: 0 18px 35px rgba(15, 23, 42, 0.12);
       padding: 1.5rem;
       display: flex;
@@ -1644,7 +1646,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .corrected-essay-panel {
       margin-top: 1.75rem;
       background: #ffffff;
-      border-radius: 14px;
+      border-radius: 0;
       box-shadow: 0 18px 35px rgba(15, 23, 42, 0.12);
       padding: 1.5rem;
       display: flex;
@@ -1656,8 +1658,8 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .corrected-essay-panel-full {
       width: 100%;
       margin-top: 2rem;
-      background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-      border-radius: 16px;
+      background: #f8fafc;
+      border-radius: 0;
       box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
       padding: 2rem;
       display: flex;
@@ -1684,7 +1686,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       margin: 0;
       font-size: 1.5rem;
       font-weight: 700;
-      color: #0f172a;
+      color: #0d9488;
     }
 
     .corrected-header {
@@ -1697,7 +1699,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .corrected-header h3 {
       margin: 0;
       font-size: 1.1rem;
-      color: #0f172a;
+      color: #0d9488;
     }
 
     .corrected-note {
@@ -1706,14 +1708,14 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       color: #64748b;
       background: #f1f5f9;
       padding: 0.4rem 0.8rem;
-      border-radius: 8px;
+      border-radius: 0;
       display: inline-block;
     }
 
     .corrected-content-full {
       background: white;
       padding: 2rem;
-      border-radius: 12px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
     }
@@ -1816,15 +1818,15 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
     .correction-selection-menu {
       position: fixed;
-      background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
-      border-radius: 12px;
+      background: #fff;
+      border-radius: 0;
       box-shadow: 0 16px 40px rgba(59, 130, 246, 0.3), 0 8px 20px rgba(59, 130, 246, 0.2);
       z-index: 1000;
       min-width: 320px;
       max-width: 500px;
       max-height: 70vh;
       overflow-y: auto;
-      border: 2px solid #3b82f6;
+      border: 2px solid #0d9488;
       animation: menuFadeIn 0.2s ease-out;
     }
 
@@ -1844,9 +1846,9 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       justify-content: space-between;
       align-items: center;
       padding: 1rem 1.25rem;
-      border-bottom: 2px solid #3b82f6;
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-      border-radius: 12px 12px 0 0;
+      border-bottom: 2px solid #0d9488;
+      background: #0d9488;
+      border-radius: 0;
       color: white;
     }
 
@@ -1870,7 +1872,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 6px;
+      border-radius: 0;
       transition: background 0.2s, color 0.2s;
       font-weight: 600;
       line-height: 1;
@@ -1892,7 +1894,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     .menu-item {
       background: white;
       border: 1.5px solid #dbeafe;
-      border-radius: 8px;
+      border-radius: 0;
       padding: 0.75rem;
       cursor: pointer;
       text-align: left;
@@ -1904,8 +1906,8 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
     }
 
     .menu-item:hover {
-      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-      border-color: #3b82f6;
+      background: #f1f5f9;
+      border-color: #0d9488;
       box-shadow: 0 6px 16px rgba(59, 130, 246, 0.25);
       transform: translateY(-2px);
     }
@@ -1921,14 +1923,14 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       background: #ede9fe;
       color: #5b21b6;
       padding: 0.2rem 0.5rem;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.75rem;
       font-weight: 600;
     }
 
     .menu-item-severity {
       padding: 0.2rem 0.5rem;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.7rem;
       font-weight: 600;
       text-transform: uppercase;
@@ -1974,15 +1976,15 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       font-style: italic;
       background: #f8fafc;
       padding: 0.4rem 0.6rem;
-      border-radius: 6px;
-      border-left: 3px solid #3b82f6;
+      border-radius: 0;
+      border-left: 3px solid #0d9488;
     }
 
     /* Correction Details Popup */
     .correction-popup {
       position: fixed;
       background: white;
-      border-radius: 8px;
+      border-radius: 0;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.12);
       z-index: 1000;
       width: 380px;
@@ -2002,12 +2004,12 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
     .correction-popup::-webkit-scrollbar-track {
       background: #f1f5f9;
-      border-radius: 3px;
+      border-radius: 0;
     }
 
     .correction-popup::-webkit-scrollbar-thumb {
       background: #cbd5e1;
-      border-radius: 3px;
+      border-radius: 0;
     }
 
     .correction-popup::-webkit-scrollbar-thumb:hover {
@@ -2032,7 +2034,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       padding: 0.5rem 0.75rem;
       border-bottom: 1px solid #e2e8f0;
       background: #f8fafc;
-      border-radius: 8px 8px 0 0;
+      border-radius: 0;
       position: sticky;
       top: 0;
       z-index: 1;
@@ -2050,14 +2052,14 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       background: #ede9fe;
       color: #5b21b6;
       padding: 0.15rem 0.4rem;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.65rem;
       font-weight: 600;
     }
 
     .popup-severity {
       padding: 0.15rem 0.4rem;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.6rem;
       font-weight: 600;
       text-transform: uppercase;
@@ -2089,7 +2091,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
 
     .popup-summary {
       font-weight: 600;
-      color: #0f172a;
+      color: #0d9488;
       font-size: 0.75rem;
       line-height: 1.3;
     }
@@ -2116,8 +2118,8 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       color: #1f2937;
       background: #f8fafc;
       padding: 0.4rem 0.55rem;
-      border-radius: 4px;
-      border-left: 2px solid #3b82f6;
+      border-radius: 0;
+      border-left: 2px solid #0d9488;
       word-wrap: break-word;
       overflow-wrap: break-word;
     }
@@ -2132,7 +2134,7 @@ import { WritingTask, WritingTask1, WritingTask2 } from '../../models/writing-ta
       color: #64748b;
       background: #f1f5f9;
       padding: 0.4rem 0.55rem;
-      border-radius: 4px;
+      border-radius: 0;
       text-align: center;
       font-style: italic;
       flex-shrink: 0;

@@ -44,25 +44,25 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
         <div class="menu-content">
           <!-- IELTS Writing Task 1 -->
           <a class="menu-item" (click)="navigateToWritingWithFilter('task1')">
-            <span class="menu-icon">📝</span>
+            <span class="menu-icon">✎</span>
             <span>IELTS Writing Task 1</span>
           </a>
 
           <!-- IELTS Writing Task 2 -->
           <a class="menu-item" (click)="navigateToWritingWithFilter('task2')">
-            <span class="menu-icon">✍️</span>
+            <span class="menu-icon">✎</span>
             <span>IELTS Writing Task 2</span>
           </a>
 
           <!-- Mock test -->
           <a class="menu-item" routerLink="/writing/mock-test" (click)="closeMenu()">
-            <span class="menu-icon">📋</span>
+            <span class="menu-icon">☰</span>
             <span>Mock test (Thi thử)</span>
           </a>
 
           <!-- Hỗ trợ (with submenu) -->
           <div class="menu-item menu-item-with-submenu" (click)="toggleSubmenu('support')">
-            <span class="menu-icon">💬</span>
+            <span class="menu-icon">●</span>
             <span>Hỗ trợ</span>
             <span class="submenu-arrow" [class.open]="isSubmenuOpen('support')">▼</span>
           </div>
@@ -76,7 +76,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
                  [href]="'mailto:' + contactInfo()!.email" 
                  target="_blank"
                  (click)="closeMenu()">
-                <span class="contact-icon">📧</span>
+                <span class="contact-icon">@</span>
                 <span>{{ contactInfo()!.email }}</span>
               </a>
               <a *ngIf="contactInfo()?.facebookUrl" 
@@ -84,7 +84,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
                  [href]="contactInfo()!.facebookUrl" 
                  target="_blank"
                  (click)="closeMenu()">
-                <span class="contact-icon">📘</span>
+                <span class="contact-icon">f</span>
                 <span>Facebook</span>
               </a>
               <a *ngIf="contactInfo()?.instagramUrl" 
@@ -92,7 +92,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
                  [href]="contactInfo()!.instagramUrl" 
                  target="_blank"
                  (click)="closeMenu()">
-                <span class="contact-icon">📷</span>
+                <span class="contact-icon">i</span>
                 <span>Instagram</span>
               </a>
               <a *ngIf="contactInfo()?.telegramUrl" 
@@ -100,7 +100,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
                  [href]="contactInfo()!.telegramUrl" 
                  target="_blank"
                  (click)="closeMenu()">
-                <span class="contact-icon">✈️</span>
+                <span class="contact-icon">t</span>
                 <span>Telegram</span>
               </a>
               <div *ngIf="!hasContactInfo()" class="submenu-item no-contact">
@@ -117,10 +117,10 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
   `,
   styles: [`
     .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      background: linear-gradient(135deg, #0d9488 0%, #0891b2 50%, #7c3aed 100%);
+      color: #fff;
       padding: 0;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      box-shadow: 0 2px 12px rgba(13, 148, 136, 0.25);
       position: fixed;
       top: 0;
       left: 0;
@@ -146,9 +146,9 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
 
     /* Hamburger Button */
     .hamburger-btn {
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 0;
       color: white;
       cursor: pointer;
       padding: 0.75rem 1rem;
@@ -227,48 +227,46 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
     }
 
     .btn {
-      padding: 0.75rem 1.5rem;
+      padding: 0.6rem 1.25rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 0;
       cursor: pointer;
       font-weight: 600;
-      transition: all 0.3s;
-      font-size: 1rem;
+      transition: background 0.2s, color 0.2s;
+      font-size: 0.9rem;
       text-decoration: none;
       display: inline-block;
     }
 
     .btn-login {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      color: white;
-      box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+      background: #fff;
+      color: #0d9488;
     }
 
     .btn-login:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
+      background: #f1f5f9;
+      color: #0d9488;
     }
 
     .btn-logout {
-      background: rgba(255, 255, 255, 0.2);
-      color: white;
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      background: transparent;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.4);
     }
 
     .btn-logout:hover {
-      background: rgba(255, 255, 255, 0.3);
-      border-color: rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.6);
     }
 
     .btn-admin {
-      background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-      color: white;
-      box-shadow: 0 4px 15px rgba(250, 112, 154, 0.4);
+      background: #075985;
+      color: #fff;
     }
 
     .btn-admin:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(250, 112, 154, 0.6);
+      background: #475569;
+      color: #fff;
     }
 
     /* Dropdown Menu */
@@ -277,9 +275,9 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
       top: 70px;
       left: 0;
       width: 320px;
-      background: white;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
-      border-radius: 0 0 12px 0;
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-radius: 0;
       max-height: calc(100vh - 70px);
       overflow-y: auto;
       transform: translateX(-100%);
@@ -311,8 +309,8 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
     }
 
     .menu-item:hover {
-      background: #f8f9fa;
-      border-left-color: #667eea;
+      background: #f1f5f9;
+      border-left-color: #0d9488;
       padding-left: 2rem;
     }
 
@@ -322,9 +320,11 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
 
     .menu-icon {
       margin-right: 1rem;
-      font-size: 1.2rem;
-      width: 24px;
+      font-size: 1rem;
+      width: 20px;
       text-align: center;
+      opacity: 0.9;
+      font-weight: 400;
     }
 
     .submenu-arrow {
@@ -341,7 +341,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
       max-height: 0;
       overflow: hidden;
       transition: max-height 0.3s ease-in-out;
-      background: #f8f9fa;
+      background: #f8fafc;
     }
 
     .submenu.open {
@@ -354,11 +354,11 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
 
     .submenu-title {
       padding: 0.75rem 1.5rem 0.5rem 3.5rem;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: #667eea;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #64748b;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.06em;
     }
 
     .submenu-item {
@@ -372,9 +372,9 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
     }
 
     .submenu-item:hover {
-      background: #e9ecef;
+      background: #e2e8f0;
       padding-left: 4rem;
-      color: #667eea;
+      color: #0d9488;
     }
 
     .contact-item {
@@ -384,9 +384,11 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
     }
 
     .contact-icon {
-      font-size: 1rem;
-      width: 20px;
+      font-size: 0.85rem;
+      width: 18px;
       text-align: center;
+      opacity: 0.85;
+      font-weight: 500;
     }
 
     .no-contact {

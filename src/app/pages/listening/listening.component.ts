@@ -204,7 +204,7 @@ interface ListeningQuestion {
       color: #28a745;
       padding: 0.5rem 1rem;
       background: #f8f9fa;
-      border-radius: 8px;
+      border-radius: 0;
     }
 
     .timer.warning {
@@ -251,7 +251,7 @@ interface ListeningQuestion {
     .audio-player {
       background: #f8f9fa;
       padding: 2rem;
-      border-radius: 12px;
+      border-radius: 0;
       margin-bottom: 2rem;
     }
 
@@ -259,14 +259,14 @@ interface ListeningQuestion {
       width: 100%;
       height: 8px;
       background: #ddd;
-      border-radius: 4px;
+      border-radius: 0;
       margin-bottom: 1rem;
       overflow: hidden;
     }
 
     .progress-fill {
       height: 100%;
-      background: linear-gradient(90deg, #007bff, #28a745);
+      background: #0d9488;
       transition: width 0.1s ease;
     }
 
@@ -290,7 +290,7 @@ interface ListeningQuestion {
     .instructions {
       background: #e3f2fd;
       padding: 1.5rem;
-      border-radius: 12px;
+      border-radius: 0;
       border-left: 4px solid #2196f3;
     }
 
@@ -334,7 +334,7 @@ interface ListeningQuestion {
       border: 1px solid #ddd;
       background: white;
       cursor: pointer;
-      border-radius: 8px;
+      border-radius: 0;
       transition: all 0.3s;
     }
 
@@ -349,15 +349,15 @@ interface ListeningQuestion {
     }
 
     .nav-btn.current {
-      background: #007bff;
+      background: #0d9488;
       color: white;
-      border-color: #007bff;
+      border-color: #0d9488;
     }
 
     .question-content {
       background: white;
       padding: 1.5rem;
-      border-radius: 12px;
+      border-radius: 0;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
@@ -385,7 +385,7 @@ interface ListeningQuestion {
       width: 100%;
       padding: 0.75rem;
       border: 1px solid #ddd;
-      border-radius: 8px;
+      border-radius: 0;
       font-size: 1rem;
     }
 
@@ -410,7 +410,7 @@ interface ListeningQuestion {
       flex: 1;
       padding: 0.5rem;
       border: 1px solid #ddd;
-      border-radius: 6px;
+      border-radius: 0;
     }
 
     .question-navigation {
@@ -422,7 +422,7 @@ interface ListeningQuestion {
     .btn {
       padding: 0.75rem 1.5rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 0;
       cursor: pointer;
       font-weight: 500;
       transition: all 0.3s;
@@ -434,7 +434,7 @@ interface ListeningQuestion {
     }
 
     .btn-primary {
-      background: #007bff;
+      background: #0d9488;
       color: white;
     }
 

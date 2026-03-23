@@ -43,21 +43,21 @@ import {
       <!-- Statistics Dashboard (from API) -->
       <div class="stats-dashboard">
         <div class="stat-card">
-          <div class="stat-icon">📝</div>
+          <div class="stat-icon">✎</div>
           <div class="stat-content">
             <h3>{{ adminStats()?.totalTasks ?? 0 }}</h3>
             <p>Tổng số bài</p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">📊</div>
+          <div class="stat-icon">▣</div>
           <div class="stat-content">
             <h3>{{ adminStats()?.task1Count ?? 0 }}</h3>
             <p>Task 1</p>
           </div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon">✍️</div>
+          <div class="stat-icon">✎</div>
           <div class="stat-content">
             <h3>{{ adminStats()?.task2Count ?? 0 }}</h3>
             <p>Task 2</p>
@@ -80,7 +80,7 @@ import {
             placeholder="Tìm kiếm bài viết..."
             [(ngModel)]="searchTerm"
             (input)="onSearchChange()">
-          <span class="search-icon">🔍</span>
+          <span class="search-icon">⌕</span>
         </div>
         
         <div class="filter-controls">
@@ -272,10 +272,10 @@ import {
     }
 
     .admin-header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #0d9488;
       color: white;
       padding: 2rem;
-      border-radius: 12px;
+      border-radius: 0;
       margin-bottom: 2rem;
     }
 
@@ -298,7 +298,7 @@ import {
     .btn {
       padding: 0.75rem 1.5rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 0;
       cursor: pointer;
       font-weight: 500;
       transition: all 0.3s;
@@ -313,7 +313,7 @@ import {
     }
 
     .btn-primary {
-      background: #007bff;
+      background: #0d9488;
       color: white;
     }
 
@@ -354,7 +354,7 @@ import {
     .stat-card {
       background: white;
       padding: 1.5rem;
-      border-radius: 12px;
+      border-radius: 0;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       display: flex;
       align-items: center;
@@ -366,7 +366,7 @@ import {
       width: 60px;
       height: 60px;
       background: #f8f9fa;
-      border-radius: 50%;
+      border-radius: 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -387,7 +387,7 @@ import {
     .filters-section {
       background: white;
       padding: 1.5rem;
-      border-radius: 12px;
+      border-radius: 0;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       margin-bottom: 2rem;
     }
@@ -401,7 +401,7 @@ import {
       width: 100%;
       padding: 0.75rem 1rem 0.75rem 3rem;
       border: 1px solid #ddd;
-      border-radius: 8px;
+      border-radius: 0;
       font-size: 1rem;
     }
 
@@ -423,7 +423,7 @@ import {
     .filter-controls .filter-tag-input {
       padding: 0.5rem 0.6rem;
       border: 1px solid #ddd;
-      border-radius: 6px;
+      border-radius: 0;
       min-width: 150px;
       height: 2.25rem;
       box-sizing: border-box;
@@ -435,7 +435,7 @@ import {
 
     .tasks-table-container {
       background: white;
-      border-radius: 12px;
+      border-radius: 0;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       overflow: hidden;
     }
@@ -510,7 +510,7 @@ import {
       background: #e3f2fd;
       color: #1976d2;
       padding: 0.25rem 0.5rem;
-      border-radius: 12px;
+      border-radius: 0;
       font-size: 0.8rem;
       margin-right: 0.5rem;
     }
@@ -522,7 +522,7 @@ import {
       align-items: center;
       justify-content: center;
       padding: 0.2rem 0.6rem;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.75rem;
       font-weight: 500;
       line-height: 1;
@@ -550,7 +550,7 @@ import {
       padding: 0.2rem 0.5rem;
       background: #e8eaf6;
       color: #3949ab;
-      border-radius: 4px;
+      border-radius: 0;
     }
 
     .source-empty {
@@ -618,7 +618,7 @@ import {
     }
 
     .page-btn.active {
-      background: #007bff;
+      background: #0d9488;
       color: #fff;
       box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
     }

@@ -7,8 +7,8 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f8f9fa;
-  color: #2c3e50;
+  background-color: #f0f9ff;
+  color: #1e293b;
 }
 
 /* Utility Classes */
@@ -37,7 +37,7 @@ body {
   display: inline-block;
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 0;
   cursor: pointer;
   font-weight: 500;
   text-decoration: none;
@@ -46,22 +46,24 @@ body {
 }
 
 .btn-primary {
-  background-color: #007bff;
+  background: linear-gradient(135deg, #0d9488 0%, #0891b2 100%);
   color: white;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
 }
 
 .btn-primary:hover {
-  background-color: #0056b3;
+  background: linear-gradient(135deg, #0f766e 0%, #0e7490 100%);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
 }
 
 .btn-secondary {
-  background-color: #6c757d;
+  background-color: #64748b;
   color: white;
 }
 
 .btn-secondary:hover {
-  background-color: #545b62;
+  background-color: #475569;
 }
 
 .btn-success {

@@ -106,7 +106,7 @@ import { filter } from 'rxjs/operators';
 
     .admin-sidebar {
       width: 200px;
-      background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(180deg, #0d9488 0%, #0891b2 50%, #7c3aed 100%);
       color: white;
       display: flex;
       flex-direction: column;
@@ -188,7 +188,7 @@ import { filter } from 'rxjs/operators';
       font-size: 0.8125rem;
       transition: all 0.3s ease;
       padding: 0.5rem;
-      border-radius: 6px;
+      border-radius: 0;
     }
 
     .back-link:hover {

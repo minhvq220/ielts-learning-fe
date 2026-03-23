@@ -317,7 +317,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
 
     .modal-content {
       background: white;
-      border-radius: 12px;
+      border-radius: 0;
       width: 90%;
       max-width: 800px;
       max-height: 90vh;
@@ -395,20 +395,20 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
       width: 100%;
       padding: 0.75rem;
       border: 1px solid #ddd;
-      border-radius: 6px;
+      border-radius: 0;
       font-size: 1rem;
     }
 
     .form-control:focus {
       outline: none;
-      border-color: #007bff;
+      border-color: #0d9488;
       box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
     }
 
     .btn {
       padding: 0.75rem 1.5rem;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       cursor: pointer;
       font-weight: 500;
       transition: all 0.3s;
@@ -420,7 +420,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
     }
 
     .btn-primary {
-      background: #007bff;
+      background: #0d9488;
       color: white;
     }
 
@@ -453,7 +453,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
 
     .tags-input {
       border: 1px solid #ddd;
-      border-radius: 6px;
+      border-radius: 0;
       padding: 0.5rem;
       min-height: 50px;
     }
@@ -469,7 +469,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
       background: #e3f2fd;
       color: #1976d2;
       padding: 0.25rem 0.5rem;
-      border-radius: 12px;
+      border-radius: 0;
       font-size: 0.8rem;
       display: flex;
       align-items: center;
@@ -493,7 +493,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
     .additional-questions,
     .tips-input {
       border: 1px solid #ddd;
-      border-radius: 6px;
+      border-radius: 0;
       padding: 0.5rem;
     }
 
@@ -523,7 +523,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
 
     .image-upload-container {
       border: 2px dashed #ddd;
-      border-radius: 8px;
+      border-radius: 0;
       padding: 1rem;
       background: #f9f9f9;
     }
@@ -533,7 +533,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
       width: 100%;
       padding: 0.5rem;
       border: 1px solid #ddd;
-      border-radius: 6px;
+      border-radius: 0;
       cursor: pointer;
     }
 
@@ -545,7 +545,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
     .preview-image {
       max-width: 100%;
       max-height: 300px;
-      border-radius: 8px;
+      border-radius: 0;
       border: 1px solid #ddd;
       display: block;
       margin-bottom: 0.5rem;

@@ -44,13 +44,13 @@ import { LoadingService } from '../../services/loading.service';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #0d9488 0%, #7c3aed 100%);
       padding: 2rem;
     }
 
     .login-card {
       background: white;
-      border-radius: 16px;
+      border-radius: 0;
       box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
       padding: 3rem;
       max-width: 400px;
@@ -89,7 +89,7 @@ import { LoadingService } from '../../services/loading.service';
       padding: 0.875rem 1.5rem;
       background: white;
       border: 1px solid #dadce0;
-      border-radius: 8px;
+      border-radius: 0;
       font-size: 1rem;
       font-weight: 500;
       color: #3c4043;
@@ -116,7 +116,7 @@ import { LoadingService } from '../../services/loading.service';
       padding: 0.75rem;
       background: #fee2e2;
       border: 1px solid #fecaca;
-      border-radius: 8px;
+      border-radius: 0;
       color: #991b1b;
       font-size: 0.875rem;
       text-align: center;

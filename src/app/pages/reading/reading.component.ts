@@ -244,7 +244,7 @@ interface WordDefinition {
       color: #28a745;
       padding: 0.5rem 1rem;
       background: #f8f9fa;
-      border-radius: 8px;
+      border-radius: 0;
     }
 
     .timer.warning {
@@ -286,7 +286,7 @@ interface WordDefinition {
     .mode-toggle {
       display: flex;
       background: #f8f9fa;
-      border-radius: 8px;
+      border-radius: 0;
       padding: 4px;
     }
 
@@ -295,12 +295,12 @@ interface WordDefinition {
       border: none;
       background: transparent;
       cursor: pointer;
-      border-radius: 4px;
+      border-radius: 0;
       transition: all 0.3s;
     }
 
     .mode-btn.active {
-      background: #007bff;
+      background: #0d9488;
       color: white;
     }
 
@@ -313,7 +313,7 @@ interface WordDefinition {
       cursor: pointer;
       background: #e3f2fd;
       padding: 2px 4px;
-      border-radius: 4px;
+      border-radius: 0;
       transition: background 0.3s;
     }
 
@@ -346,7 +346,7 @@ interface WordDefinition {
       border: 1px solid #ddd;
       background: white;
       cursor: pointer;
-      border-radius: 8px;
+      border-radius: 0;
       transition: all 0.3s;
     }
 
@@ -361,15 +361,15 @@ interface WordDefinition {
     }
 
     .nav-btn.current {
-      background: #007bff;
+      background: #0d9488;
       color: white;
-      border-color: #007bff;
+      border-color: #0d9488;
     }
 
     .question-content {
       background: white;
       padding: 1.5rem;
-      border-radius: 12px;
+      border-radius: 0;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
 
@@ -397,7 +397,7 @@ interface WordDefinition {
       width: 100%;
       padding: 0.75rem;
       border: 1px solid #ddd;
-      border-radius: 8px;
+      border-radius: 0;
       font-size: 1rem;
     }
 
@@ -416,7 +416,7 @@ interface WordDefinition {
     .btn {
       padding: 0.75rem 1.5rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 0;
       cursor: pointer;
       font-weight: 500;
       transition: all 0.3s;
@@ -428,7 +428,7 @@ interface WordDefinition {
     }
 
     .btn-primary {
-      background: #007bff;
+      background: #0d9488;
       color: white;
     }
 
@@ -474,7 +474,7 @@ interface WordDefinition {
 
     .dictionary-content {
       background: white;
-      border-radius: 12px;
+      border-radius: 0;
       width: 90%;
       max-width: 500px;
       max-height: 80vh;

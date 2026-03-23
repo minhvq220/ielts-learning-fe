@@ -56,14 +56,14 @@ interface FileValidationConfig {
           <p>Nhập đề bài và bài viết của bạn để được AI chấm điểm</p>
         </div>
         <a routerLink="/writing-self-check/history" class="history-btn" *ngIf="authService.isAuthenticated()">
-          <span class="history-icon">📚</span>
+          <span class="history-icon">≡</span>
           <span>Lịch sử tự kiểm tra</span>
         </a>
       </div>
 
       <!-- Search Box for Self-Check History Reference -->
       <div class="search-reference" *ngIf="false">
-        <p>💡 <strong>Mẹo:</strong> Sau khi chấm bài, bạn có thể tìm kiếm lại bài viết trong <a routerLink="/writing-self-check/history">Lịch sử tự kiểm tra</a> để xem chi tiết.</p>
+        <p><strong>※ Mẹo:</strong> Sau khi chấm bài, bạn có thể tìm kiếm lại bài viết trong <a routerLink="/writing-self-check/history">Lịch sử tự kiểm tra</a> để xem chi tiết.</p>
       </div>
 
       <form (ngSubmit)="onSubmit()" class="self-check-form">
@@ -192,10 +192,10 @@ interface FileValidationConfig {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      background: linear-gradient(135deg, #2563eb, #1e40af);
+      background: #0d9488;
       color: #f8fafc;
       padding: 0.7rem 1.4rem;
-      border-radius: 999px;
+      border-radius: 0;
       text-decoration: none;
       font-weight: 600;
       font-size: 0.9rem;
@@ -219,7 +219,7 @@ interface FileValidationConfig {
     .self-check-form {
       background: white;
       padding: 2rem;
-      border-radius: 8px;
+      border-radius: 0;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
 
@@ -260,7 +260,7 @@ interface FileValidationConfig {
       width: 100%;
       padding: 0.75rem;
       border: 1px solid #ddd;
-      border-radius: 4px;
+      border-radius: 0;
       font-size: 1rem;
       box-sizing: border-box;
       font-family: inherit;
@@ -299,7 +299,7 @@ interface FileValidationConfig {
       max-width: 100%;
       max-height: 400px;
       border: 1px solid #ddd;
-      border-radius: 4px;
+      border-radius: 0;
       display: block;
     }
 
@@ -309,7 +309,7 @@ interface FileValidationConfig {
       background: #e74c3c;
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 0;
       cursor: pointer;
     }
 
@@ -321,7 +321,7 @@ interface FileValidationConfig {
       padding: 1rem;
       background: #fee;
       border: 1px solid #fcc;
-      border-radius: 4px;
+      border-radius: 0;
       color: #c33;
       margin-bottom: 1rem;
     }
@@ -337,7 +337,7 @@ interface FileValidationConfig {
     .btn {
       padding: 0.75rem 2rem;
       border: none;
-      border-radius: 4px;
+      border-radius: 0;
       font-size: 1rem;
       cursor: pointer;
       transition: all 0.2s;

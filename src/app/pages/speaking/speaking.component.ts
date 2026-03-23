@@ -102,7 +102,7 @@ interface SpeakingEvaluation {
                   class="btn btn-primary btn-record"
                   [class.recording]="isRecording()"
                   (click)="toggleRecording()">
-                  {{ isRecording() ? '⏹️ Dừng ghi âm' : '🎤 Bắt đầu ghi âm' }}
+                  {{ isRecording() ? '■ Dừng ghi âm' : 'Bắt đầu ghi âm' }}
                 </button>
                 <button 
                   class="btn btn-secondary"
@@ -285,7 +285,7 @@ interface SpeakingEvaluation {
       color: #28a745;
       padding: 0.5rem 1rem;
       background: #f8f9fa;
-      border-radius: 8px;
+      border-radius: 0;
     }
 
     .timer.warning {
@@ -316,7 +316,7 @@ interface SpeakingEvaluation {
       display: flex;
       margin-bottom: 2rem;
       background: #f8f9fa;
-      border-radius: 8px;
+      border-radius: 0;
       padding: 4px;
     }
 
@@ -328,11 +328,11 @@ interface SpeakingEvaluation {
       cursor: pointer;
       font-weight: 500;
       transition: all 0.3s;
-      border-radius: 4px;
+      border-radius: 0;
     }
 
     .part-btn.active {
-      background: #007bff;
+      background: #0d9488;
       color: white;
     }
 
@@ -360,9 +360,9 @@ interface SpeakingEvaluation {
     .question-text {
       background: #f8f9fa;
       padding: 1.5rem;
-      border-radius: 12px;
+      border-radius: 0;
       margin-bottom: 2rem;
-      border-left: 4px solid #007bff;
+      border-left: 4px solid #0d9488;
     }
 
     .question-text h4 {
@@ -400,7 +400,7 @@ interface SpeakingEvaluation {
     .recording-status {
       padding: 1rem;
       background: #f8d7da;
-      border-radius: 8px;
+      border-radius: 0;
       border-left: 4px solid #dc3545;
     }
 
@@ -416,7 +416,7 @@ interface SpeakingEvaluation {
       width: 12px;
       height: 12px;
       background: #dc3545;
-      border-radius: 50%;
+      border-radius: 0;
       animation: blink 1s infinite;
     }
 
@@ -442,7 +442,7 @@ interface SpeakingEvaluation {
       min-height: 120px;
       padding: 1rem;
       border: 1px solid #ddd;
-      border-radius: 8px;
+      border-radius: 0;
       font-size: 1rem;
       line-height: 1.6;
       resize: vertical;
@@ -451,7 +451,7 @@ interface SpeakingEvaluation {
     .notes-textarea:focus,
     .answer-textarea:focus {
       outline: none;
-      border-color: #007bff;
+      border-color: #0d9488;
       box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
     }
 
@@ -517,13 +517,13 @@ interface SpeakingEvaluation {
       position: relative;
       height: 20px;
       background: #e9ecef;
-      border-radius: 10px;
+      border-radius: 0;
       overflow: hidden;
     }
 
     .score-fill {
       height: 100%;
-      background: linear-gradient(90deg, #28a745, #20c997);
+      background: #0d9488;
       transition: width 0.3s ease;
     }
 
@@ -568,7 +568,7 @@ interface SpeakingEvaluation {
     .pronunciation-item {
       background: white;
       padding: 1rem;
-      border-radius: 8px;
+      border-radius: 0;
       border-left: 4px solid #ffc107;
     }
 
@@ -620,17 +620,17 @@ interface SpeakingEvaluation {
     }
 
     .vocab-item {
-      background: #007bff;
+      background: #0d9488;
       color: white;
       padding: 0.25rem 0.75rem;
-      border-radius: 20px;
+      border-radius: 0;
       font-size: 0.9rem;
     }
 
     .sample-answer {
       background: white;
       padding: 1rem;
-      border-radius: 8px;
+      border-radius: 0;
       line-height: 1.6;
       font-style: italic;
       border-left: 4px solid #28a745;
@@ -639,7 +639,7 @@ interface SpeakingEvaluation {
     .btn {
       padding: 0.75rem 1.5rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 0;
       cursor: pointer;
       font-weight: 500;
       transition: all 0.3s;
@@ -651,7 +651,7 @@ interface SpeakingEvaluation {
     }
 
     .btn-primary {
-      background: #007bff;
+      background: #0d9488;
       color: white;
     }
 

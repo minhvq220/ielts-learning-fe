@@ -84,7 +84,7 @@ interface Page<T> {
         </div>
 
         <div *ngIf="!loading() && paginatedHistory().length === 0" class="empty-state">
-          <div class="empty-icon">📚</div>
+          <div class="empty-icon">≡</div>
           <h3>Chưa có bài tự kiểm tra nào</h3>
           <p>Chưa có người dùng nào thực hiện tự kiểm tra.</p>
         </div>
@@ -126,10 +126,10 @@ interface Page<T> {
                   {{ item.taskType === 'TASK1' ? 'Task 1' : 'Task 2' }}
                 </span>
                 <span class="chip meta-chip">
-                  <span class="chip-icon">📝</span>{{ item.wordCount }} từ thực tế
+                  <span class="chip-icon">✎</span>{{ item.wordCount }} từ thực tế
                 </span>
                 <span class="chip user-chip">
-                  <span class="chip-icon">👤</span>
+                  <span class="chip-icon">·</span>
                   <span *ngIf="item.userName || item.userEmail">
                     <span *ngIf="item.userName">{{ item.userName }}</span>
                     <span *ngIf="item.userName && item.userEmail"> · </span>
@@ -138,10 +138,10 @@ interface Page<T> {
                   <span *ngIf="!item.userName && !item.userEmail">ID: {{ item.userId }}</span>
                 </span>
                 <span class="chip meta-chip">
-                  <span class="chip-icon">📅</span>{{ formatDate(item.submittedAt) }} {{ formatTime(item.submittedAt) }}
+                  <span class="chip-icon">·</span>{{ formatDate(item.submittedAt) }} {{ formatTime(item.submittedAt) }}
                 </span>
                 <span class="chip meta-chip score-chip" *ngIf="item.aiScore">
-                  <span class="chip-icon">🎯</span>{{ item.aiScore.toFixed(1) }}/9
+                  <span class="chip-icon">◎</span>{{ item.aiScore.toFixed(1) }}/9
                 </span>
               </div>
 
@@ -244,7 +244,7 @@ interface Page<T> {
     .filters-section {
       background: #ffffff;
       padding: 1rem 1.25rem;
-      border-radius: 12px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
       margin-bottom: 1.5rem;
@@ -268,7 +268,7 @@ interface Page<T> {
     .filter-group select {
       padding: 0.5rem;
       border: 1px solid #d1d5db;
-      border-radius: 6px;
+      border-radius: 0;
       background: white;
     }
 
@@ -284,7 +284,7 @@ interface Page<T> {
 
     .history-card {
       background: #ffffff;
-      border-radius: 12px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
       padding: 1rem 1.25rem;
@@ -312,7 +312,7 @@ interface Page<T> {
       margin: 0;
       font-size: 1rem;
       font-weight: 600;
-      color: #0f172a;
+      color: #0d9488;
     }
 
     .user-info {
@@ -337,7 +337,7 @@ interface Page<T> {
 
     .user-name {
       font-weight: 500;
-      color: #2563eb;
+      color: #0f766e;
     }
 
     .user-email {
@@ -354,7 +354,7 @@ interface Page<T> {
       color: #6b7280;
       background: #f1f5f9;
       padding: 0.2rem 0.4rem;
-      border-radius: 4px;
+      border-radius: 0;
     }
 
     .anonymous-badge {
@@ -382,7 +382,7 @@ interface Page<T> {
       align-items: center;
       gap: 0.35rem;
       padding: 0.35rem 0.65rem;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.75rem;
       font-weight: 500;
       background: #f1f5f9;
@@ -444,7 +444,7 @@ interface Page<T> {
     .answer-text {
       background: #f8fafc;
       padding: 0.85rem;
-      border-radius: 8px;
+      border-radius: 0;
       border: 1px solid #e2e8f0;
       color: #1f2937;
       font-size: 0.875rem;
@@ -489,7 +489,7 @@ interface Page<T> {
       background: #312e81;
       color: #f8fafc;
       padding: 0.35rem 0.7rem;
-      border-radius: 999px;
+      border-radius: 0;
       font-size: 0.8rem;
       font-weight: 600;
     }
@@ -504,7 +504,7 @@ interface Page<T> {
       flex: 1 1 180px;
       background: #f1f5f9;
       border: 1px solid #e2e8f0;
-      border-radius: 10px;
+      border-radius: 0;
       padding: 0.75rem;
       display: flex;
       flex-direction: column;
@@ -528,13 +528,13 @@ interface Page<T> {
     .criteria-track {
       height: 6px;
       background: #e2e8f0;
-      border-radius: 999px;
+      border-radius: 0;
       overflow: hidden;
     }
 
     .criteria-fill {
       height: 100%;
-      background: linear-gradient(90deg, #3b82f6, #2563eb);
+      background: #0d9488;
     }
 
     .history-actions {
@@ -549,7 +549,7 @@ interface Page<T> {
     .btn {
       padding: 0.45rem 0.9rem;
       border: none;
-      border-radius: 6px;
+      border-radius: 0;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
@@ -561,7 +561,7 @@ interface Page<T> {
     }
 
     .btn-primary {
-      background: #2563eb;
+      background: #0f766e;
       color: white;
     }
 
@@ -587,8 +587,8 @@ interface Page<T> {
       width: 40px;
       height: 40px;
       border: 4px solid #e5e7eb;
-      border-top: 4px solid #3b82f6;
-      border-radius: 50%;
+      border-top: 4px solid #0d9488;
+      border-radius: 0;
       animation: spin 1s linear infinite;
       margin: 0 auto 1rem;
     }
@@ -639,7 +639,7 @@ interface Page<T> {
     }
 
     .page-btn.active {
-      background: #3b82f6;
+      background: #0d9488;
       color: #ffffff;
       box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
     }
