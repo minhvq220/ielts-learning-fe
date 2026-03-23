@@ -17,6 +17,7 @@ export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./components/login/login.component').then(m => m.LoginComponent) },
   { path: 'guide', loadComponent: () => import('./pages/guide/user-guide.component').then(m => m.UserGuideComponent) },
   { path: 'faq', loadComponent: () => import('./pages/faq/faq.component').then(m => m.FaqComponent) },
+  { path: 'feedback', loadComponent: () => import('./pages/feedback/feedback.component').then(m => m.FeedbackComponent), canActivate: [authGuard] },
   {
     path: 'admin',
     loadComponent: () => import('./layouts/admin-layout.component').then(m => m.AdminLayoutComponent),
@@ -30,6 +31,7 @@ export const routes: Routes = [
       { path: 'writing-self-check/history/:id', loadComponent: () => import('./pages/writing-self-check/writing-self-check-history-detail.component').then(m => m.WritingSelfCheckHistoryDetailComponent) },
       { path: 'users', loadComponent: () => import('./pages/admin/admin-users.component').then(m => m.AdminUsersComponent) },
       { path: 'contact-info', loadComponent: () => import('./pages/admin/admin-contact-info.component').then(m => m.AdminContactInfoComponent) },
+      { path: 'feedback', loadComponent: () => import('./pages/admin/admin-feedback.component').then(m => m.AdminFeedbackComponent) },
     ]
   },
   { path: 'writing/self-check', loadComponent: () => import('./pages/writing-self-check/writing-self-check.component').then(m => m.WritingSelfCheckComponent) },

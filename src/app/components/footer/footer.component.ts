@@ -23,6 +23,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
             <ul class="footer-links">
               <li><a routerLink="/writing">Luyện tập IELTS Writing</a></li>
               <li><a routerLink="/writing">Chấm điểm miễn phí</a></li>
+              <li><a routerLink="/feedback">Góp ý & báo lỗi</a></li>
               <li class="footer-cta">Access detailed Writing feedback aligned with IELTS criteria.</li>
             </ul>
           </div>
@@ -82,19 +83,19 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
     .footer {
       background: linear-gradient(135deg, #0d9488 0%, #0891b2 50%, #7c3aed 100%);
       color: #f1f5f9;
-      padding: 2.5rem 1.5rem 1.5rem;
+      padding: 2rem 1.25rem 1.15rem;
     }
     .footer-inner {
       max-width: 1200px;
       margin: 0 auto;
     }
     .footer-brand {
-      margin-bottom: 2rem;
-      padding-bottom: 1.5rem;
+      margin-bottom: 1.4rem;
+      padding-bottom: 1rem;
       border-bottom: 1px solid rgba(255,255,255,0.1);
     }
     .footer-logo {
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       font-weight: 700;
       color: #fff;
       text-decoration: none;
@@ -105,24 +106,24 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
     }
     .footer-slogan {
       margin: 0.5rem 0 0;
-      font-size: 0.9rem;
+      font-size: 0.84rem;
       color: #dbeafe;
-      line-height: 1.5;
+      line-height: 1.45;
       max-width: 420px;
     }
     .footer-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 2rem;
-      margin-bottom: 2rem;
+      gap: 1.35rem;
+      margin-bottom: 1.35rem;
     }
     .footer-title {
-      font-size: 0.85rem;
+      font-size: 0.78rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: #e2e8f0;
-      margin: 0 0 1rem;
+      margin: 0 0 0.7rem;
     }
     .footer-links {
       list-style: none;
@@ -130,12 +131,12 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
       padding: 0;
     }
     .footer-links li {
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.4rem;
     }
     .footer-links a {
       color: #f1f5f9;
       text-decoration: none;
-      font-size: 0.95rem;
+      font-size: 0.88rem;
       text-underline-offset: 2px;
     }
     .footer-links a:hover {
@@ -143,16 +144,16 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
       text-decoration: underline;
     }
     .footer-cta {
-      font-size: 0.9rem;
+      font-size: 0.83rem;
       color: #e0f2fe;
-      line-height: 1.5;
+      line-height: 1.4;
       font-style: italic;
       margin-top: 0.5rem;
     }
     .footer-social {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.75rem;
+      gap: 0.6rem;
       align-items: center;
     }
     .social-link {
@@ -160,7 +161,8 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
       align-items: center;
       justify-content: center;
       width: 40px;
-      height: 40px;
+      height: 36px;
+      width: 36px;
       border-radius: 0;
       background: rgba(15, 23, 42, 0.28);
       border: 1px solid rgba(255, 255, 255, 0.2);
@@ -173,26 +175,26 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
       color: #fff;
     }
     .social-icon {
-      font-size: 1.1rem;
+      font-size: 0.98rem;
     }
     .footer-no-social {
-      font-size: 0.9rem;
+      font-size: 0.82rem;
       color: #e2e8f0;
     }
     .footer-bottom {
-      padding-top: 1.5rem;
+      padding-top: 1rem;
       border-top: 1px solid rgba(255,255,255,0.1);
       text-align: center;
     }
     .footer-copy {
       margin: 0;
-      font-size: 0.85rem;
+      font-size: 0.78rem;
       color: #cbd5e1;
     }
     @media (max-width: 768px) {
-      .footer { padding: 1.5rem 1rem 1rem; }
-      .footer-grid { grid-template-columns: 1fr; gap: 1.5rem; }
-      .footer-brand { margin-bottom: 1.5rem; }
+      .footer { padding: 1.25rem 0.9rem 0.9rem; }
+      .footer-grid { grid-template-columns: 1fr; gap: 1.1rem; }
+      .footer-brand { margin-bottom: 1rem; }
     }
   `]
 })

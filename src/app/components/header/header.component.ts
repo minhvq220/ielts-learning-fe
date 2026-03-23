@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ContactInfoService, ContactInfo } from '../../services/contact-info.service';
+import { NotificationService, NotificationDto } from '../../services/notification.service';
 
 @Component({
   selector: 'app-header',
@@ -33,6 +34,26 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
             <button class="btn btn-login" (click)="goToLogin()">Đăng nhập</button>
           </div>
           <div *ngIf="authService.isAuthenticated()" class="user-info">
+            <div class="notification-wrapper">
+              <button class="bell-btn" [class.has-unread]="unreadCount() > 0" (click)="toggleNotifications($event)" title="Thông báo">
+                <svg class="bell-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M15 18a3 3 0 0 1-6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M18 16V11a6 6 0 1 0-12 0v5l-1.5 2h15L18 16z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+                </svg>
+                <span class="bell-badge" *ngIf="unreadCount() > 0">{{ unreadCount() > 99 ? '99+' : unreadCount() }}</span>
+              </button>
+              <div class="notification-dropdown" *ngIf="isNotificationOpen()">
+                <div class="notification-header">
+                  <strong>Thông báo</strong>
+                  <button class="mark-all-btn" (click)="markAllAsRead($event)" *ngIf="unreadCount() > 0">Đánh dấu đã đọc</button>
+                </div>
+                <div class="notification-item" *ngFor="let n of notifications()" (click)="openNotification(n, $event)" [class.unread]="!n.isRead">
+                  <div class="notification-title">{{ n.title }}</div>
+                  <div class="notification-message">{{ n.message }}</div>
+                </div>
+                <div class="notification-empty" *ngIf="!notifications().length">Chưa có thông báo mới</div>
+              </div>
+            </div>
             <span class="user-name">{{ authService.getAuthState().user?.name }}</span>
             <button class="btn btn-logout" (click)="logout()">Đăng xuất</button>
           </div>
@@ -69,6 +90,7 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
           <div class="submenu" [class.open]="isSubmenuOpen('support')">
             <a class="submenu-item" routerLink="/faq" (click)="closeMenu()">Câu hỏi thường gặp</a>
             <a class="submenu-item" routerLink="/guide" (click)="closeMenu()">Hướng dẫn sử dụng</a>
+            <a class="submenu-item" routerLink="/feedback" (click)="closeMenu()">Góp ý & Báo lỗi</a>
             <div class="submenu-section">
               <div class="submenu-title">Liên hệ hỗ trợ</div>
               <a *ngIf="contactInfo()?.email" 
@@ -218,6 +240,84 @@ import { ContactInfoService, ContactInfo } from '../../services/contact-info.ser
       display: flex;
       align-items: center;
       gap: 1rem;
+    }
+    .notification-wrapper { position: relative; }
+    .bell-btn {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.95);
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s ease, transform 0.15s ease, color 0.2s ease;
+    }
+    .bell-btn:hover {
+      background: rgba(255, 255, 255, 0.14);
+      color: #ffffff;
+      transform: translateY(-1px);
+    }
+    .bell-btn:active { transform: translateY(0); }
+    .bell-btn.has-unread {
+      color: #fef9c3;
+      background: rgba(250, 204, 21, 0.12);
+      box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.22) inset;
+    }
+    .bell-btn.has-unread .bell-icon {
+      animation: bell-ring 1.8s ease-in-out infinite;
+      transform-origin: top center;
+    }
+    .bell-icon {
+      width: 19px;
+      height: 19px;
+      display: block;
+    }
+    .bell-badge {
+      position: absolute;
+      top: -2px;
+      right: -3px;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: #ef4444;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      font-size: 0.64rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .notification-dropdown {
+      position: absolute; right: 0; top: 48px; width: 320px; max-height: 380px; overflow: auto;
+      background: #fff; color: #0f172a; border: 1px solid #e2e8f0; box-shadow: 0 12px 30px rgba(15,23,42,0.16); z-index: 1200;
+    }
+    .notification-header {
+      display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.75rem; border-bottom: 1px solid #e2e8f0;
+    }
+    .mark-all-btn {
+      border: none; background: #f1f5f9; color: #0f172a; cursor: pointer; font-size: 0.78rem; padding: 0.35rem 0.5rem;
+    }
+    .notification-item { padding: 0.65rem 0.75rem; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+    .notification-item.unread { background: #eff6ff; }
+    .notification-item:hover { background: #f8fafc; }
+    .notification-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.2rem; }
+    .notification-message { font-size: 0.82rem; color: #334155; line-height: 1.4; }
+    .notification-empty { padding: 0.75rem; color: #64748b; font-size: 0.85rem; }
+    @keyframes bell-ring {
+      0%, 72%, 100% { transform: rotate(0deg); }
+      76% { transform: rotate(12deg); }
+      80% { transform: rotate(-10deg); }
+      84% { transform: rotate(8deg); }
+      88% { transform: rotate(-6deg); }
+      92% { transform: rotate(4deg); }
+      96% { transform: rotate(-2deg); }
     }
 
     .user-name {
@@ -455,13 +555,18 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isMenuOpen = signal(false);
   openSubmenus = signal<Set<string>>(new Set());
   contactInfo = signal<ContactInfo | null>(null);
+  unreadCount = signal(0);
+  notifications = signal<NotificationDto[]>([]);
+  isNotificationOpen = signal(false);
   private lastScrollTop = 0;
   private scrollHandler: (() => void) | null = null;
+  private notificationPollingTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
     public authService: AuthService,
     private router: Router,
-    private contactInfoService: ContactInfoService
+    private contactInfoService: ContactInfoService,
+    private notificationService: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -470,6 +575,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
     
     // Load contact info
     this.loadContactInfo();
+    if (this.authService.isAuthenticated()) {
+      this.loadUnreadCount();
+      this.notificationPollingTimer = setInterval(() => this.loadUnreadCount(), 30000);
+    }
     
     // Setup scroll listener
     let scrollUpdateFrame: number | null = null;
@@ -491,14 +600,19 @@ export class HeaderComponent implements OnInit, OnDestroy {
       const target = event.target as HTMLElement;
       const menu = document.querySelector('.dropdown-menu');
       const hamburger = document.querySelector('.hamburger-btn');
+      const bell = document.querySelector('.bell-btn');
+      const notificationDropdown = document.querySelector('.notification-dropdown');
       
       // Don't close if clicking on menu or hamburger button
-      if (menu?.contains(target) || hamburger?.contains(target)) {
+      if (menu?.contains(target) || hamburger?.contains(target) || bell?.contains(target) || notificationDropdown?.contains(target)) {
         return;
       }
       
       if (this.isMenuOpen()) {
         this.closeMenu();
+      }
+      if (this.isNotificationOpen()) {
+        this.isNotificationOpen.set(false);
       }
     });
   }
@@ -507,6 +621,9 @@ export class HeaderComponent implements OnInit, OnDestroy {
     // Cleanup scroll listener
     if (this.scrollHandler) {
       window.removeEventListener('scroll', this.scrollHandler, true);
+    }
+    if (this.notificationPollingTimer) {
+      clearInterval(this.notificationPollingTimer);
     }
   }
 
@@ -601,5 +718,58 @@ export class HeaderComponent implements OnInit, OnDestroy {
   hasContactInfo(): boolean {
     const info = this.contactInfo();
     return !!(info?.email || info?.facebookUrl || info?.instagramUrl || info?.telegramUrl);
+  }
+
+  toggleNotifications(event: Event): void {
+    event.stopPropagation();
+    const opening = !this.isNotificationOpen();
+    this.isNotificationOpen.set(opening);
+    if (opening) {
+      this.closeMenu();
+      this.loadNotifications();
+    }
+  }
+
+  loadUnreadCount(): void {
+    if (!this.authService.isAuthenticated()) return;
+    this.notificationService.getUnreadCount().subscribe({
+      next: res => this.unreadCount.set(res.count || 0),
+      error: err => console.error('loadUnreadCount error', err)
+    });
+  }
+
+  loadNotifications(): void {
+    this.notificationService.getMyNotifications(0, 10).subscribe({
+      next: page => this.notifications.set(page.content || []),
+      error: err => console.error('loadNotifications error', err)
+    });
+  }
+
+  openNotification(notification: NotificationDto, event: Event): void {
+    event.stopPropagation();
+    if (!notification.isRead) {
+      this.notificationService.markAsRead(notification.id).subscribe({
+        next: () => {
+          this.notifications.update(list => list.map(n => n.id === notification.id ? { ...n, isRead: true } : n));
+          this.unreadCount.update(c => Math.max(c - 1, 0));
+        },
+        error: err => console.error('markAsRead error', err)
+      });
+    }
+    this.isNotificationOpen.set(false);
+    if (notification.targetType === 'FEEDBACK') {
+      this.router.navigate(['/feedback']);
+    }
+  }
+
+  markAllAsRead(event: Event): void {
+    event.stopPropagation();
+    this.notificationService.markAllAsRead().subscribe({
+      next: () => {
+        this.notifications.update(list => list.map(n => ({ ...n, isRead: true })));
+        this.unreadCount.set(0);
+      },
+      error: err => console.error('markAllAsRead error', err)
+    });
   }
 }

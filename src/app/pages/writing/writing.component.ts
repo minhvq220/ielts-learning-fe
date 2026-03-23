@@ -2381,7 +2381,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   isEvaluating = signal(false);
   currentAnswer = signal('');
   currentPage = signal(1);
-  itemsPerPage = 9;
+  itemsPerPage = 15;
   
   // Filter state
   searchQuery = '';
