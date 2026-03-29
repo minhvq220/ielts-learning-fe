@@ -113,9 +113,24 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
             <!-- Image Upload for Task 1 -->
             <div class="form-group" *ngIf="taskData.type === 'task1'">
               <label>Ảnh đính kèm (Biểu đồ/Đồ thị)</label>
+              <p class="form-hint image-source-hint">
+                Chọn file từ máy <strong>hoặc</strong> dán link ảnh HTTPS (CDN / hệ thống khác). Chỉ cần một trong hai.
+              </p>
+              <label class="sub-label" for="imageUrlLink">Link ảnh (HTTPS)</label>
+              <input
+                type="url"
+                id="imageUrlLink"
+                name="imageUrlLink"
+                class="form-control image-url-input"
+                [(ngModel)]="imageLinkInput"
+                (ngModelChange)="onImageLinkChange($event)"
+                placeholder="https://example.com/path/to/chart.png"
+                autocomplete="off">
               <div class="image-upload-container">
+                <label class="sub-label" for="imageFileInput">Tải file ảnh</label>
                 <input 
                   type="file" 
+                  id="imageFileInput"
                   #imageInput
                   (change)="onImageSelected($event)"
                   accept="image/*"
@@ -127,7 +142,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                   </button>
                 </div>
                 <div class="upload-hint" *ngIf="!taskData.imageUrl">
-                  Chọn ảnh để đính kèm (JPG, PNG, GIF)
+                  Chọn ảnh để đính kèm (JPG, PNG, GIF) — hoặc dán link phía trên
                 </div>
               </div>
             </div>
@@ -564,6 +579,24 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
       padding: 0.5rem;
     }
 
+    .image-source-hint {
+      margin: 0 0 0.75rem 0;
+      font-size: 0.875rem;
+      color: #4b5563;
+    }
+
+    .sub-label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 0.35rem;
+    }
+
+    .image-url-input {
+      margin-bottom: 1rem;
+    }
+
     @media (max-width: 768px) {
       .modal-content {
         width: 95%;
@@ -609,6 +642,9 @@ export class WritingFormComponent implements OnInit, OnChanges {
     imageUrl: ''
   };
 
+  /** Text field for pasted HTTPS image URL (mutually exclusive with file → data URL in taskData.imageUrl) */
+  imageLinkInput = '';
+
   isEditMode = computed(() => !!this.task);
 
   ngOnInit() {
@@ -633,6 +669,12 @@ export class WritingFormComponent implements OnInit, OnChanges {
           ? [...this.task.additionalQuestions] 
           : []
       };
+      const img = this.task.type === 'task1' ? (this.task as WritingTask1).imageUrl : '';
+      if (img && typeof img === 'string' && /^https?:\/\//i.test(img.trim())) {
+        this.imageLinkInput = img.trim();
+      } else {
+        this.imageLinkInput = '';
+      }
     } else if (this.isVisible) {
       // Add mode - initialize with defaults
       this.resetFormData();
@@ -661,6 +703,7 @@ export class WritingFormComponent implements OnInit, OnChanges {
       data: {},
       imageUrl: ''
     };
+    this.imageLinkInput = '';
   }
 
   onTaskTypeChange() {
@@ -694,6 +737,23 @@ export class WritingFormComponent implements OnInit, OnChanges {
         question: this.taskData.question || '',
         additionalQuestions: this.taskData.additionalQuestions || []
       };
+      this.imageLinkInput = '';
+    }
+  }
+
+  onImageLinkChange(value: string): void {
+    const v = (value ?? '').trim();
+    if (v && /^https?:\/\//i.test(v)) {
+      this.taskData.imageUrl = v;
+      const fileInput = document.getElementById('imageFileInput') as HTMLInputElement;
+      if (fileInput) {
+        fileInput.value = '';
+      }
+    } else if (!v) {
+      const cur = this.taskData.imageUrl || '';
+      if (cur.startsWith('http://') || cur.startsWith('https://')) {
+        this.taskData.imageUrl = '';
+      }
     }
   }
 
@@ -740,6 +800,7 @@ export class WritingFormComponent implements OnInit, OnChanges {
         return;
       }
       
+      this.imageLinkInput = '';
       // Convert to Base64
       const reader = new FileReader();
       reader.onload = (e: any) => {
@@ -754,8 +815,8 @@ export class WritingFormComponent implements OnInit, OnChanges {
 
   removeImage(): void {
     this.taskData.imageUrl = '';
-    // Reset file input
-    const fileInput = document.querySelector('.image-input') as HTMLInputElement;
+    this.imageLinkInput = '';
+    const fileInput = document.getElementById('imageFileInput') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
     }

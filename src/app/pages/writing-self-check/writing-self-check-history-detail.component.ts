@@ -30,6 +30,8 @@ interface WritingSelfCheckHistoryDto {
   wordCount: number;
   imageData?: string;
   imageMimeType?: string;
+  /** Signed HTTPS URL when image is stored in object storage */
+  imageUrl?: string;
   aiScore?: number;
   taskAchievement?: number;
   coherenceCohesion?: number;
@@ -2376,8 +2378,11 @@ export class WritingSelfCheckHistoryDetailComponent implements OnInit, AfterView
 
   getImageUrl(): string {
     const item = this.historyItem();
-    if (!item || !item.imageData) return '';
-    
+    if (!item) return '';
+    if (item.imageUrl) {
+      return item.imageUrl;
+    }
+    if (!item.imageData) return '';
     if (item.imageData.startsWith('data:')) {
       return item.imageData;
     }

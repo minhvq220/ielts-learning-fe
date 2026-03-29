@@ -18,6 +18,7 @@ interface WritingSelfCheckHistoryDto {
   wordCount: number;
   imageData?: string;
   imageMimeType?: string;
+  imageUrl?: string;
   aiScore?: number;
   taskAchievement?: number;
   coherenceCohesion?: number;

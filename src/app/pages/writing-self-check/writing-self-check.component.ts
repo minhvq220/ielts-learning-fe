@@ -18,6 +18,7 @@ interface WritingSelfCheckHistoryDto {
   wordCount: number;
   imageData?: string;
   imageMimeType?: string;
+  imageUrl?: string;
   aiScore?: number;
   taskAchievement?: number;
   coherenceCohesion?: number;
@@ -111,6 +112,7 @@ interface FileValidationConfig {
         <!-- Image Upload for Task 1 -->
         <div class="form-group" *ngIf="taskType() === 'TASK1'">
           <label for="imageFile">Ảnh/Biểu đồ <span class="required">*</span></label>
+          <p class="form-text" style="margin: 0 0 0.5rem 0;">Tải file từ máy, hoặc dán link ảnh HTTPS từ hệ thống khác (một trong hai).</p>
           <input 
             type="file" 
             id="imageFile"
@@ -121,6 +123,16 @@ interface FileValidationConfig {
             Loại file cho phép: {{ allowedImageTypes }} | 
             Kích thước tối đa: {{ maxFileSizeMB }} MB
           </small>
+          <label for="imageUrlLink" style="display:block;margin-top:1rem;">Hoặc link ảnh (HTTPS)</label>
+          <input
+            type="url"
+            id="imageUrlLink"
+            name="imageUrlLink"
+            class="form-control"
+            placeholder="https://..."
+            [ngModel]="imageUrlFromLink()"
+            (ngModelChange)="onImageUrlLinkChange($event)"
+          />
           <div *ngIf="fileError()" class="alert alert-error">
             {{ fileError() }}
           </div>
@@ -379,6 +391,8 @@ export class WritingSelfCheckComponent {
   imagePreview = signal<string | null>(null);
   imageBase64 = signal<string | null>(null);
   imageMimeType = signal<string | null>(null);
+  /** External image URL (backend fetches once for AI; DB stores this string only) */
+  imageUrlFromLink = signal<string>('');
 
   // File validation config (will be loaded from backend)
   allowedImageTypes = 'image/jpeg,image/jpg,image/png,image/gif,image/webp';
@@ -413,6 +427,14 @@ export class WritingSelfCheckComponent {
     // Clear image when switching to Task 2
     if (this.taskType() === 'TASK2') {
       this.removeImage();
+      this.imageUrlFromLink.set('');
+    }
+  }
+
+  onImageUrlLinkChange(value: string): void {
+    this.imageUrlFromLink.set(value ?? '');
+    if ((value ?? '').trim()) {
+      this.removeImage();
     }
   }
 
@@ -435,6 +457,7 @@ export class WritingSelfCheckComponent {
       }
 
       this.imageFile = file;
+      this.imageUrlFromLink.set('');
       const reader = new FileReader();
       reader.onload = (e) => {
         const result = e.target?.result as string;
@@ -483,7 +506,7 @@ export class WritingSelfCheckComponent {
     if (!this.taskQuestion().trim() || !this.userAnswer().trim()) {
       return false;
     }
-    if (this.taskType() === 'TASK1' && !this.imageBase64()) {
+    if (this.taskType() === 'TASK1' && !this.imageBase64() && !this.imageUrlFromLink().trim()) {
       return false;
     }
     if (this.fileError()) {
@@ -502,13 +525,15 @@ export class WritingSelfCheckComponent {
 
     this.isSubmitting.set(true);
 
+    const link = this.taskType() === 'TASK1' ? this.imageUrlFromLink().trim() : '';
     const request = {
       taskType: this.taskType(),
       taskQuestion: this.taskQuestion().trim(),
       userAnswer: this.userAnswer().trim(),
       wordCount: this.getWordCount(),
-      imageData: this.taskType() === 'TASK1' ? this.imageBase64() : null,
-      imageMimeType: this.taskType() === 'TASK1' ? this.imageMimeType() : null
+      imageData: this.taskType() === 'TASK1' && !link ? this.imageBase64() : null,
+      imageMimeType: this.taskType() === 'TASK1' && !link ? this.imageMimeType() : null,
+      imageUrl: this.taskType() === 'TASK1' && link ? link : null
     };
 
     console.log('Submitting self-check request:', {
@@ -516,8 +541,9 @@ export class WritingSelfCheckComponent {
       taskQuestionLength: request.taskQuestion.length,
       userAnswerLength: request.userAnswer.length,
       wordCount: request.wordCount,
-      hasImage: request.imageData != null,
-      imageMimeType: request.imageMimeType
+      hasImage: request.imageData != null || !!request.imageUrl,
+      imageMimeType: request.imageMimeType,
+      imageUrl: request.imageUrl ? '(set)' : null
     });
 
     this.http.post<WritingSelfCheckHistoryDto>(`${AppConfig.api.baseUrl}/api/writing-self-check/score`, request).subscribe({
