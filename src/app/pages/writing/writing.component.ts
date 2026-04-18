@@ -72,6 +72,10 @@ interface AIEvaluation {
                 <span class="mock-test-icon">✎</span>
                 <span>Mock test (thi thử)</span>
               </a>
+              <a routerLink="/writing/self-check" class="self-check-btn">
+                <span class="self-check-icon">✓</span>
+                <span>Self-Check (tự chấm)</span>
+              </a>
               <a routerLink="/writing/history" class="history-btn" *ngIf="authService.isAuthenticated()">
                 <span class="history-icon">≡</span>
                 <span>Lịch sử làm bài</span>
@@ -1010,6 +1014,8 @@ interface AIEvaluation {
       display: flex;
       align-items: center;
       flex-shrink: 0;
+      flex-wrap: wrap;
+      gap: 0.75rem;
     }
 
     .stat-summary {
@@ -2186,7 +2192,6 @@ interface AIEvaluation {
       font-size: 0.85rem;
       letter-spacing: 0.02em;
       border: none;
-      margin-right: 0.75rem;
       box-shadow: 0 2px 8px rgba(124, 58, 237, 0.35);
       transition: transform 0.2s, box-shadow 0.2s;
     }
@@ -2230,6 +2235,34 @@ interface AIEvaluation {
       line-height: 1;
     }
 
+    .self-check-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, #0369a1 0%, #0ea5e9 100%);
+      color: #fff;
+      padding: 0.6rem 1.25rem;
+      border-radius: 0;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+      letter-spacing: 0.02em;
+      border: none;
+      box-shadow: 0 2px 8px rgba(14, 165, 233, 0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .self-check-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(14, 165, 233, 0.45);
+      color: #fff;
+    }
+
+    .self-check-icon {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
     @media (max-width: 768px) {
       .stats-header {
         flex-direction: column;
@@ -2240,7 +2273,13 @@ interface AIEvaluation {
       .mock-test-btn {
         padding: 0.6rem 1.2rem;
         font-size: 0.85rem;
-        margin-right: 0;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .self-check-btn {
+        padding: 0.6rem 1.2rem;
+        font-size: 0.85rem;
         width: 100%;
         justify-content: center;
       }

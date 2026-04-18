@@ -59,10 +59,13 @@ import { RouterModule } from '@angular/router';
             <h2>4. Self-Check (Tự chấm)</h2>
             <p>Nếu bạn đã viết bài trên giấy hoặc file khác, có thể dùng <strong>Writing Self-Check</strong>:</p>
             <ul>
-              <li>Vào <strong>Writing Self-Check</strong> (từ menu hoặc link trong ứng dụng).</li>
+              <li>Vào menu (≡) → <strong>Self-Check (Tự chấm)</strong>, hoặc nút cùng tên trên trang Writing, hoặc mở trực tiếp trang Self-Check bên dưới.</li>
               <li>Chọn loại bài (Task 1 / Task 2), nhập hoặc dán nội dung bài viết (có thể đính kèm ảnh đề nếu có).</li>
               <li>Gửi bài để nhận chấm điểm và nhận xét từ AI.</li>
             </ul>
+            <p class="guide-open-self-check">
+              <a routerLink="/writing/self-check" class="btn btn-primary">Mở Self-Check</a>
+            </p>
           </section>
 
           <section id="history" class="guide-section">
@@ -88,6 +91,7 @@ import { RouterModule } from '@angular/router';
         </main>
 
         <div class="guide-actions">
+          <a routerLink="/writing/self-check" class="btn btn-outline">Self-Check (Tự chấm)</a>
           <a routerLink="/writing" class="btn btn-primary">← Về trang Writing</a>
         </div>
       </div>
@@ -207,9 +211,17 @@ import { RouterModule } from '@angular/router';
       margin-bottom: 0.5rem;
     }
 
+    .guide-open-self-check {
+      margin-top: 1.25rem;
+    }
+
     .guide-actions {
       margin-top: 2rem;
-      text-align: center;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+      align-items: center;
     }
 
     .btn {
@@ -233,6 +245,17 @@ import { RouterModule } from '@angular/router';
     .btn-primary:hover {
       background: #1e293b;
       color: #fff;
+    }
+
+    .btn-outline {
+      background: #fff;
+      color: #0d9488;
+      border: 2px solid #0d9488;
+    }
+
+    .btn-outline:hover {
+      background: #ecfdf5;
+      color: #0f766e;
     }
 
     @media (max-width: 768px) {

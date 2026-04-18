@@ -81,6 +81,12 @@ import { NotificationService, NotificationDto } from '../../services/notificatio
             <span>Mock test (Thi thử)</span>
           </a>
 
+          <!-- Self-Check (paste bài viết để chấm AI) -->
+          <a class="menu-item" routerLink="/writing/self-check" (click)="closeMenu()">
+            <span class="menu-icon">✓</span>
+            <span>Self-Check (Tự chấm)</span>
+          </a>
+
           <!-- Hỗ trợ (with submenu) -->
           <div class="menu-item menu-item-with-submenu" (click)="toggleSubmenu('support')">
             <span class="menu-icon">●</span>
