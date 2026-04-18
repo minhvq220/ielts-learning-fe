@@ -1,12 +1,15 @@
-import { Component, signal, computed, inject, OnInit } from '@angular/core';
+import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { WritingTaskService } from '../../services/writing-task.service';
 import {
   downloadWritingTasksTemplate,
-  parseWritingTasksExcel
+  parseWritingTasksExcel,
+  WRITING_IMPORT_KEYS
 } from '../../utils/writing-tasks-excel.util';
+import { AppConfig } from '../../config/app.config';
 import { WritingFormComponent } from '../../components/writing-form/writing-form.component';
 import { 
   WritingTask, 
@@ -280,6 +283,49 @@ import {
               Sheet <strong>Bài viết</strong>: dòng 1 là mô tả tiếng Việt, dòng 2 là tên cột tiếng Anh (trùng API/DB),
               từ dòng 3 là dữ liệu. Xem sheet <strong>Chú thích</strong> trong file mẫu để biết giá trị cho phép.
             </p>
+            <div class="import-url-suggest">
+              <h3 class="import-url-suggest-title">Gợi ý từ URL (Engnovate)</h3>
+              <p class="import-url-suggest-hint">
+                Dán URL trang bài (https, host được phép trên server). AI điền các cột giống nhập Excel — bạn kiểm tra rồi dán TSV hoặc nhập Excel.
+              </p>
+              <div class="import-url-row">
+                <input
+                  type="url"
+                  class="import-url-input"
+                  placeholder="https://engnovate.com/..."
+                  [(ngModel)]="suggestSourceUrl"
+                  [disabled]="suggestFromUrlLoading()"
+                  name="suggestSourceUrl">
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  [disabled]="suggestFromUrlLoading() || !suggestSourceUrl.trim()"
+                  (click)="runSuggestFromUrl()">
+                  {{ suggestFromUrlLoading() ? 'Đang gọi AI…' : 'Lấy gợi ý' }}
+                </button>
+              </div>
+              <p *ngIf="suggestFromUrlError()" class="import-error-banner">{{ suggestFromUrlError() }}</p>
+              <div *ngIf="suggestFieldsReady()" class="suggest-fields-block">
+                <div class="suggest-fields-actions">
+                  <button type="button" class="btn btn-secondary btn-sm" (click)="copySuggestRowAsTsv()">Sao chép một dòng TSV</button>
+                </div>
+                <p
+                  *ngIf="tsvCopyFeedback() as fb"
+                  class="tsv-copy-feedback"
+                  [class.tsv-copy-feedback--ok]="fb.ok"
+                  [class.tsv-copy-feedback--err]="!fb.ok"
+                  role="status"
+                  aria-live="polite">
+                  {{ fb.text }}
+                </p>
+                <div class="suggest-fields-scroll">
+                  <div class="suggest-field-row" *ngFor="let key of importKeys">
+                    <label [for]="'sf-' + key">{{ key }}</label>
+                    <input [id]="'sf-' + key" type="text" [(ngModel)]="suggestFields[key]" [name]="'sf-' + key">
+                  </div>
+                </div>
+              </div>
+            </div>
             <div class="import-actions">
               <button type="button" class="btn btn-primary" (click)="downloadImportTemplate()">
                 Tải file mẫu (.xlsx)
@@ -781,6 +827,93 @@ import {
       justify-content: flex-end;
     }
 
+    .import-url-suggest {
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .import-url-suggest-title {
+      margin: 0 0 0.35rem 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .import-url-suggest-hint {
+      margin: 0 0 0.75rem 0;
+      font-size: 0.85rem;
+      color: #4b5563;
+      line-height: 1.45;
+    }
+
+    .import-url-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .import-url-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.5rem 0.65rem;
+      border: 1px solid #d1d5db;
+      font-size: 0.9rem;
+    }
+
+    .suggest-fields-block {
+      margin-top: 0.75rem;
+    }
+
+    .suggest-fields-actions {
+      margin-bottom: 0.5rem;
+    }
+
+    .tsv-copy-feedback {
+      margin: 0.35rem 0 0 0;
+      font-size: 0.85rem;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+
+    .tsv-copy-feedback--ok {
+      color: #047857;
+    }
+
+    .tsv-copy-feedback--err {
+      color: #b91c1c;
+    }
+
+    .suggest-fields-scroll {
+      max-height: 220px;
+      overflow: auto;
+      border: 1px solid #e5e7eb;
+      padding: 0.5rem;
+      background: #fafafa;
+    }
+
+    .suggest-field-row {
+      display: grid;
+      grid-template-columns: minmax(100px, 140px) 1fr;
+      gap: 0.35rem 0.5rem;
+      align-items: center;
+      margin-bottom: 0.35rem;
+      font-size: 0.8rem;
+    }
+
+    .suggest-field-row label {
+      color: #374151;
+      word-break: break-all;
+    }
+
+    .suggest-field-row input {
+      width: 100%;
+      padding: 0.35rem 0.45rem;
+      border: 1px solid #d1d5db;
+      font-size: 0.8rem;
+    }
+
     @media (max-width: 768px) {
       .writing-admin-container {
         padding: 1rem;
@@ -815,10 +948,12 @@ import {
     }
   `]
 })
-export class WritingAdminComponent implements OnInit {
+export class WritingAdminComponent implements OnInit, OnDestroy {
   private writingService = inject(WritingTaskService);
+  private http = inject(HttpClient);
 
   readonly pageSize = 10;
+  readonly importKeys = [...WRITING_IMPORT_KEYS];
 
   // Server-side: current page content and pagination info from API
   public loading = this.writingService.loading;
@@ -849,6 +984,17 @@ export class WritingAdminComponent implements OnInit {
   importBannerMessage = signal<string | null>(null);
   importSummary = signal<{ success: number; failed: { row: number; msg: string }[] } | null>(null);
 
+  suggestSourceUrl = '';
+  suggestFromUrlLoading = signal(false);
+  suggestFromUrlError = signal<string | null>(null);
+  suggestFieldsReady = signal(false);
+  /** Editable copy of AI-suggested row (keys = WRITING_IMPORT_KEYS) */
+  suggestFields: Record<string, string> = {};
+
+  /** User feedback after TSV copy (auto-clears). */
+  tsvCopyFeedback = signal<{ text: string; ok: boolean } | null>(null);
+  private tsvCopyFeedbackTimer: ReturnType<typeof setTimeout> | null = null;
+
   /** 1-based current page for UI */
   currentPage = computed(() => this.currentPageNumber() + 1);
 
@@ -856,6 +1002,10 @@ export class WritingAdminComponent implements OnInit {
     this.applyFilterAndSort();
     this.writingService.loadTasks(0, this.pageSize);
     this.writingService.loadStatistics();
+  }
+
+  ngOnDestroy(): void {
+    this.clearTsvCopyFeedbackTimer();
   }
 
   onSearchChange(): void {
@@ -1055,11 +1205,97 @@ export class WritingAdminComponent implements OnInit {
   openImportModal(): void {
     this.importBannerMessage.set(null);
     this.importSummary.set(null);
+    this.resetSuggestFromUrl();
     this.showImportModal.set(true);
   }
 
   closeImportModal(): void {
+    this.clearTsvCopyFeedback();
     this.showImportModal.set(false);
+  }
+
+  private clearTsvCopyFeedbackTimer(): void {
+    if (this.tsvCopyFeedbackTimer != null) {
+      clearTimeout(this.tsvCopyFeedbackTimer);
+      this.tsvCopyFeedbackTimer = null;
+    }
+  }
+
+  private clearTsvCopyFeedback(): void {
+    this.clearTsvCopyFeedbackTimer();
+    this.tsvCopyFeedback.set(null);
+  }
+
+  private resetSuggestFromUrl(): void {
+    this.clearTsvCopyFeedback();
+    this.suggestSourceUrl = '';
+    this.suggestFromUrlLoading.set(false);
+    this.suggestFromUrlError.set(null);
+    this.suggestFieldsReady.set(false);
+    this.suggestFields = {};
+  }
+
+  runSuggestFromUrl(): void {
+    const url = this.suggestSourceUrl.trim();
+    if (!url) return;
+    this.suggestFromUrlLoading.set(true);
+    this.suggestFromUrlError.set(null);
+    const endpoint = `${AppConfig.api.baseUrl}/api/admin/writing-import/suggest-from-url`;
+    this.http.post<{ fields: Record<string, string> }>(endpoint, { url }).subscribe({
+      next: res => {
+        const row: Record<string, string> = {};
+        for (const k of WRITING_IMPORT_KEYS) {
+          row[k] = (res.fields && res.fields[k] != null ? String(res.fields[k]) : '').trim();
+        }
+        this.suggestFields = row;
+        this.suggestFieldsReady.set(true);
+        this.suggestFromUrlLoading.set(false);
+      },
+      error: err => {
+        const body = err?.error;
+        const msg =
+          typeof body?.message === 'string'
+            ? body.message
+            : typeof body === 'string'
+              ? body
+              : err?.message ?? 'Không lấy được gợi ý.';
+        this.suggestFromUrlError.set(msg);
+        this.suggestFieldsReady.set(false);
+        this.suggestFromUrlLoading.set(false);
+      }
+    });
+  }
+
+  private tsvCell(value: string): string {
+    return (value ?? '').replace(/\r\n|\r|\n|\t/g, ' ').trim();
+  }
+
+  copySuggestRowAsTsv(): void {
+    const parts = WRITING_IMPORT_KEYS.map(k => this.tsvCell(this.suggestFields[k] ?? ''));
+    const line = parts.join('\t');
+    this.clearTsvCopyFeedbackTimer();
+    void navigator.clipboard.writeText(line).then(
+      () => {
+        this.tsvCopyFeedback.set({
+          ok: true,
+          text: 'Đã sao chép — dán vào Excel trên sheet «Bài viết» (một dòng, đúng thứ tự cột dòng 2).'
+        });
+        this.tsvCopyFeedbackTimer = setTimeout(() => {
+          this.tsvCopyFeedback.set(null);
+          this.tsvCopyFeedbackTimer = null;
+        }, 4000);
+      },
+      () => {
+        this.tsvCopyFeedback.set({
+          ok: false,
+          text: 'Chưa sao chép được — thử lại trên HTTPS hoặc cấp quyền clipboard cho trang này.'
+        });
+        this.tsvCopyFeedbackTimer = setTimeout(() => {
+          this.tsvCopyFeedback.set(null);
+          this.tsvCopyFeedbackTimer = null;
+        }, 6000);
+      }
+    );
   }
 
   async downloadImportTemplate(): Promise<void> {
