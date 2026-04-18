@@ -30,11 +30,13 @@
     "@angular/router": "^20.3.0",
     "bootstrap": "^5.3.0",
     "chart.js": "^4.4.0",
+    "exceljs": "^4.4.0",
     "firebase": "^10.13.0",
     "flatpickr": "^4.6.13",
     "quill": "^2.0.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
+    "xlsx": "^0.18.5",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {

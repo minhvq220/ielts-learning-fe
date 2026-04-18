@@ -1,7 +1,12 @@
 import { Component, signal, computed, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { WritingTaskService } from '../../services/writing-task.service';
+import {
+  downloadWritingTasksTemplate,
+  parseWritingTasksExcel
+} from '../../utils/writing-tasks-excel.util';
 import { WritingFormComponent } from '../../components/writing-form/writing-form.component';
 import { 
   WritingTask, 
@@ -262,6 +267,49 @@ import {
         (save)="onSaveTask($event)"
         (cancel)="onCancelModal()">
       </app-writing-form>
+
+      <!-- Import Excel modal -->
+      <div class="import-modal-overlay" *ngIf="showImportModal()" (click)="closeImportModal()">
+        <div class="import-modal" (click)="$event.stopPropagation()">
+          <div class="import-modal-header">
+            <h2>Nhập bài viết từ Excel</h2>
+            <button type="button" class="import-close" (click)="closeImportModal()" aria-label="Đóng">×</button>
+          </div>
+          <div class="import-modal-body">
+            <p class="import-intro">
+              Sheet <strong>Bài viết</strong>: dòng 1 là mô tả tiếng Việt, dòng 2 là tên cột tiếng Anh (trùng API/DB),
+              từ dòng 3 là dữ liệu. Xem sheet <strong>Chú thích</strong> trong file mẫu để biết giá trị cho phép.
+            </p>
+            <div class="import-actions">
+              <button type="button" class="btn btn-primary" (click)="downloadImportTemplate()">
+                Tải file mẫu (.xlsx)
+              </button>
+            </div>
+            <label class="import-file-label">
+              <span>Chọn file Excel đã điền</span>
+              <input
+                type="file"
+                accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                [disabled]="importing()"
+                (change)="onImportExcelFile($event)">
+            </label>
+            <p *ngIf="importing()" class="import-status">Đang xử lý…</p>
+            <p *ngIf="importBannerMessage()" class="import-error-banner">{{ importBannerMessage() }}</p>
+            <div *ngIf="importSummary()" class="import-summary">
+              <p><strong>Thành công:</strong> {{ importSummary()!.success }}</p>
+              <div *ngIf="importSummary()!.failed.length">
+                <strong>Lỗi ({{ importSummary()!.failed.length }}):</strong>
+                <ul>
+                  <li *ngFor="let f of importSummary()!.failed">Dòng {{ f.row }}: {{ f.msg }}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="import-modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeImportModal()">Đóng</button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
@@ -623,6 +671,116 @@ import {
       box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
     }
 
+    .import-modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      z-index: 1100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .import-modal {
+      background: #fff;
+      max-width: 560px;
+      width: 100%;
+      max-height: 90vh;
+      overflow: auto;
+      border-radius: 0;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    }
+
+    .import-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #e5e7eb;
+      background: #0d9488;
+      color: #fff;
+    }
+
+    .import-modal-header h2 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 600;
+    }
+
+    .import-close {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 1.75rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0 0.25rem;
+    }
+
+    .import-modal-body {
+      padding: 1.25rem;
+    }
+
+    .import-intro {
+      margin: 0 0 1rem 0;
+      font-size: 0.9rem;
+      color: #374151;
+      line-height: 1.5;
+    }
+
+    .import-actions {
+      margin-bottom: 1rem;
+    }
+
+    .import-file-label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #1f2937;
+    }
+
+    .import-file-label input[type="file"] {
+      font-size: 0.85rem;
+    }
+
+    .import-status {
+      margin: 0.75rem 0 0 0;
+      color: #0d9488;
+      font-weight: 500;
+    }
+
+    .import-error-banner {
+      margin: 0.75rem 0 0 0;
+      padding: 0.75rem;
+      background: #fef2f2;
+      color: #b91c1c;
+      font-size: 0.875rem;
+      white-space: pre-wrap;
+    }
+
+    .import-summary {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      font-size: 0.875rem;
+    }
+
+    .import-summary ul {
+      margin: 0.5rem 0 0 1rem;
+      padding: 0;
+    }
+
+    .import-modal-footer {
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      justify-content: flex-end;
+    }
+
     @media (max-width: 768px) {
       .writing-admin-container {
         padding: 1rem;
@@ -685,6 +843,11 @@ export class WritingAdminComponent implements OnInit {
   // Modal state
   showModal = signal(false);
   selectedTask = signal<WritingTask | null>(null);
+
+  showImportModal = signal(false);
+  importing = signal(false);
+  importBannerMessage = signal<string | null>(null);
+  importSummary = signal<{ success: number; failed: { row: number; msg: string }[] } | null>(null);
 
   /** 1-based current page for UI */
   currentPage = computed(() => this.currentPageNumber() + 1);
@@ -890,7 +1053,70 @@ export class WritingAdminComponent implements OnInit {
   }
 
   openImportModal(): void {
-    // TODO: Implement import modal
-    console.log('Open import modal');
+    this.importBannerMessage.set(null);
+    this.importSummary.set(null);
+    this.showImportModal.set(true);
+  }
+
+  closeImportModal(): void {
+    this.showImportModal.set(false);
+  }
+
+  async downloadImportTemplate(): Promise<void> {
+    await downloadWritingTasksTemplate();
+  }
+
+  async onImportExcelFile(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.importing.set(true);
+    this.importBannerMessage.set(null);
+    this.importSummary.set(null);
+
+    try {
+      const results = await parseWritingTasksExcel(file);
+      const global = results.find(r => r.excelRow === 0 && r.parseError);
+      if (global?.parseError) {
+        this.importBannerMessage.set(global.parseError);
+        return;
+      }
+
+      const failed: { row: number; msg: string }[] = [];
+      let success = 0;
+
+      for (const r of results) {
+        if (r.parseError && !r.task) {
+          failed.push({ row: r.excelRow, msg: r.parseError });
+          continue;
+        }
+        if (!r.task) continue;
+        try {
+          await firstValueFrom(this.writingService.createTask(r.task));
+          success++;
+        } catch (err: unknown) {
+          const msg =
+            err && typeof err === 'object' && 'error' in err
+              ? JSON.stringify((err as { error?: unknown }).error)
+              : err instanceof Error
+                ? err.message
+                : 'Lỗi khi tạo bài trên server';
+          failed.push({ row: r.excelRow, msg: String(msg) });
+        }
+      }
+
+      this.importSummary.set({ success, failed });
+
+      if (success > 0) {
+        this.writingService.loadTasks(this.writingService.currentPageNumber(), this.pageSize);
+        this.writingService.loadStatistics();
+      }
+    } catch {
+      this.importBannerMessage.set('Không đọc được file Excel. Kiểm tra định dạng .xlsx / .xls.');
+    } finally {
+      this.importing.set(false);
+      input.value = '';
+    }
   }
 }
