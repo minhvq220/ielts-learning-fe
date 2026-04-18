@@ -60,6 +60,14 @@ export interface WritingTaskStatsDto {
   recentTasks: WritingTaskDto[];
 }
 
+export interface WritingBulkSetActiveResponse {
+  updated: number;
+}
+
+export interface WritingBulkDeleteResponse {
+  deleted: number;
+}
+
 import { AppConfig } from '../config/app.config';
 
 @Injectable({
@@ -67,6 +75,7 @@ import { AppConfig } from '../config/app.config';
 })
 export class WritingTaskApiService {
   private readonly apiUrl = `${AppConfig.api.baseUrl}/api/writing-tasks`;
+  private readonly adminWritingTasksUrl = `${AppConfig.api.baseUrl}/api/admin/writing-tasks`;
 
   constructor(private http: HttpClient) {}
 
@@ -87,6 +96,19 @@ export class WritingTaskApiService {
   // Get task by ID
   getTaskById(id: number): Observable<WritingTaskDto> {
     return this.http.get<WritingTaskDto>(`${this.apiUrl}/${id}`);
+  }
+
+  /** Admin: bật/tắt nhiều bài (is_active) */
+  bulkSetActive(ids: number[], isActive: boolean): Observable<WritingBulkSetActiveResponse> {
+    return this.http.post<WritingBulkSetActiveResponse>(`${this.adminWritingTasksUrl}/bulk-set-active`, {
+      ids,
+      isActive
+    });
+  }
+
+  /** Admin: xóa nhiều bài */
+  bulkDelete(ids: number[]): Observable<WritingBulkDeleteResponse> {
+    return this.http.post<WritingBulkDeleteResponse>(`${this.adminWritingTasksUrl}/bulk-delete`, { ids });
   }
 
   // Create Task 1

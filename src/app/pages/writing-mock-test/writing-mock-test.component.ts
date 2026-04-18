@@ -1027,7 +1027,8 @@ export class WritingMockTestComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     
     try {
-      // Ensure tasks are loaded first
+      // Chỉ tải bài đang active (khớp trang Writing công khai)
+      this.writingService.setFilter({ isActive: true });
       this.writingService.loadTasks();
       
       // Wait a bit for the API call to start

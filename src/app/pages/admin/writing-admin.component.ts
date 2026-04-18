@@ -166,11 +166,30 @@ import {
           </div>
         </div>
 
+        <div class="bulk-bar" *ngIf="selectedBulkCount() > 0">
+          <span class="bulk-bar-text">Đã chọn <strong>{{ selectedBulkCount() }}</strong> bài trên trang này</span>
+          <div class="bulk-bar-actions">
+            <button type="button" class="btn btn-sm btn-primary" [disabled]="bulkBusy()" (click)="runBulkSetActive(true)">Bật (hiện trên site)</button>
+            <button type="button" class="btn btn-sm btn-secondary" [disabled]="bulkBusy()" (click)="runBulkSetActive(false)">Tắt (ẩn khỏi site)</button>
+            <button type="button" class="btn btn-sm btn-danger" [disabled]="bulkBusy()" (click)="runBulkDelete()">Xóa đã chọn</button>
+            <button type="button" class="btn btn-sm btn-secondary" [disabled]="bulkBusy()" (click)="clearBulkSelection()">Bỏ chọn</button>
+          </div>
+        </div>
+        <p *ngIf="bulkFeedback()" class="bulk-feedback" role="status">{{ bulkFeedback() }}</p>
+
         <div class="table-wrapper">
           <div *ngIf="loading()" class="table-loading">Đang tải...</div>
           <table class="tasks-table" *ngIf="!loading()">
             <thead>
               <tr>
+                <th class="th-checkbox">
+                  <input
+                    type="checkbox"
+                    [checked]="isAllOnPageSelected()"
+                    (change)="onHeaderSelectAllChange($event)"
+                    title="Chọn / bỏ chọn tất cả bài trên trang này"
+                    aria-label="Chọn tất cả bài trên trang">
+                </th>
                 <th>Tiêu đề</th>
                 <th>Loại</th>
                 <th>Dạng đề</th>
@@ -184,6 +203,13 @@ import {
             </thead>
             <tbody>
               <tr *ngFor="let task of currentPageTasks()" class="task-row">
+                <td class="td-checkbox">
+                  <input
+                    type="checkbox"
+                    [checked]="isTaskSelected(task.id)"
+                    (change)="toggleTaskSelected(task.id, $event)"
+                    [attr.aria-label]="'Chọn ' + task.title">
+                </td>
                 <td class="task-title">
                   <div class="title-content">
                     <h4>{{ task.title }}</h4>
@@ -551,6 +577,49 @@ import {
       display: flex;
       gap: 0.5rem;
       align-items: center;
+    }
+
+    .bulk-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin: 0 1.5rem 0.75rem 1.5rem;
+      padding: 0.65rem 1rem;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      font-size: 0.9rem;
+    }
+
+    .bulk-bar-text {
+      color: #065f46;
+    }
+
+    .bulk-bar-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .bulk-feedback {
+      margin: 0 1.5rem 0.75rem 1.5rem;
+      font-size: 0.85rem;
+      color: #047857;
+    }
+
+    .th-checkbox,
+    .td-checkbox {
+      width: 44px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .th-checkbox input,
+    .td-checkbox input {
+      width: 1.1rem;
+      height: 1.1rem;
+      cursor: pointer;
     }
 
     .table-wrapper {
@@ -998,6 +1067,12 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
   /** 1-based current page for UI */
   currentPage = computed(() => this.currentPageNumber() + 1);
 
+  /** Checkbox chọn nhiều bài (theo id string, chỉ trang hiện tại). */
+  selectedTaskIds = signal<Set<string>>(new Set());
+  bulkBusy = signal(false);
+  bulkFeedback = signal<string | null>(null);
+  selectedBulkCount = computed(() => this.selectedTaskIds().size);
+
   ngOnInit(): void {
     this.applyFilterAndSort();
     this.writingService.loadTasks(0, this.pageSize);
@@ -1017,6 +1092,7 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
   }
 
   onSortChange(): void {
+    this.clearBulkSelection();
     this.writingService.setSort({
       field: this.sortField as any,
       direction: this.sortDirection
@@ -1030,6 +1106,7 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
   }
 
   private applyFilterAndSort(): void {
+    this.clearBulkSelection();
     const filter: WritingTaskFilter = {};
     if (this.searchTerm) filter.search = this.searchTerm;
     if (this.selectedType) filter.type = this.selectedType as any;
@@ -1045,6 +1122,7 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
   }
 
   clearFilters(): void {
+    this.clearBulkSelection();
     this.searchTerm = '';
     this.selectedType = '';
     this.selectedTask1Type = '';
@@ -1058,10 +1136,99 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
   }
 
   goToPage(page: number): void {
+    this.clearBulkSelection();
     const total = this.totalPages();
     if (total === 0) return;
     const target = Math.min(Math.max(page, 1), total);
     this.writingService.loadTasks(target - 1, this.pageSize);
+  }
+
+  clearBulkSelection(clearMessage = true): void {
+    this.selectedTaskIds.set(new Set());
+    if (clearMessage) {
+      this.bulkFeedback.set(null);
+    }
+  }
+
+  isTaskSelected(taskId: string): boolean {
+    return this.selectedTaskIds().has(taskId);
+  }
+
+  isAllOnPageSelected(): boolean {
+    const tasks = this.currentPageTasks();
+    if (tasks.length === 0) return false;
+    const sel = this.selectedTaskIds();
+    return tasks.every(t => sel.has(t.id));
+  }
+
+  onHeaderSelectAllChange(ev: Event): void {
+    const checked = (ev.target as HTMLInputElement).checked;
+    const tasks = this.currentPageTasks();
+    const next = new Set(this.selectedTaskIds());
+    if (checked) {
+      tasks.forEach(t => next.add(t.id));
+    } else {
+      tasks.forEach(t => next.delete(t.id));
+    }
+    this.selectedTaskIds.set(next);
+    this.bulkFeedback.set(null);
+  }
+
+  toggleTaskSelected(taskId: string, ev: Event): void {
+    const checked = (ev.target as HTMLInputElement).checked;
+    const next = new Set(this.selectedTaskIds());
+    if (checked) {
+      next.add(taskId);
+    } else {
+      next.delete(taskId);
+    }
+    this.selectedTaskIds.set(next);
+    this.bulkFeedback.set(null);
+  }
+
+  async runBulkSetActive(isActive: boolean): Promise<void> {
+    const ids = Array.from(this.selectedTaskIds());
+    if (ids.length === 0) return;
+    this.bulkBusy.set(true);
+    this.bulkFeedback.set(null);
+    try {
+      const res = await firstValueFrom(this.writingService.bulkSetActive(ids, isActive));
+      this.clearBulkSelection(false);
+      this.bulkFeedback.set(`Đã cập nhật ${res.updated} bài (${isActive ? 'bật' : 'tắt'}).`);
+      this.writingService.loadTasks(this.writingService.currentPageNumber(), this.pageSize);
+      this.writingService.loadStatistics();
+    } catch (err: unknown) {
+      const body = err && typeof err === 'object' && 'error' in err ? (err as { error?: { message?: string } }).error : undefined;
+      const msg = typeof body?.message === 'string' ? body.message : 'Không cập nhật được. Thử lại sau.';
+      this.bulkFeedback.set(msg);
+    } finally {
+      this.bulkBusy.set(false);
+    }
+  }
+
+  async runBulkDelete(): Promise<void> {
+    const ids = Array.from(this.selectedTaskIds());
+    if (ids.length === 0) return;
+    const ok = confirm(
+      `Xóa vĩnh viễn ${ids.length} bài đã chọn? Hành động này không hoàn tác.\n` +
+        '(Nếu còn lịch sử làm bài gắn với các đề này, server có thể từ chối xóa.)'
+    );
+    if (!ok) return;
+    this.bulkBusy.set(true);
+    this.bulkFeedback.set(null);
+    try {
+      const res = await firstValueFrom(this.writingService.bulkDelete(ids));
+      this.clearBulkSelection(false);
+      this.bulkFeedback.set(`Đã xóa ${res.deleted} bài.`);
+      this.writingService.loadTasks(this.writingService.currentPageNumber(), this.pageSize);
+      this.writingService.loadStatistics();
+    } catch (err: unknown) {
+      const body = err && typeof err === 'object' && 'error' in err ? (err as { error?: { message?: string } }).error : undefined;
+      const msg = typeof body?.message === 'string' ? body.message : 'Không xóa được (kiểm tra ràng buộc dữ liệu hoặc thử lại).';
+      this.bulkFeedback.set(msg);
+    } finally {
+      this.bulkBusy.set(false);
+    }
   }
 
   getPageNumbers(): number[] {

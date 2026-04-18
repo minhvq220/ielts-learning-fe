@@ -10,7 +10,15 @@ import {
   Task1Type,
   Task2Type
 } from '../models/writing-task.model';
-import { WritingTaskApiService, WritingTaskDto, WritingTask1Dto, WritingTask2Dto, WritingTaskStatsDto } from './writing-task-api.service';
+import {
+  WritingTaskApiService,
+  WritingTaskDto,
+  WritingTask1Dto,
+  WritingTask2Dto,
+  WritingTaskStatsDto,
+  WritingBulkSetActiveResponse,
+  WritingBulkDeleteResponse
+} from './writing-task-api.service';
 
 /** Admin stats from API (total counts), not from current page */
 export interface AdminStats {
@@ -332,6 +340,17 @@ export class WritingTaskService {
         map(updatedDto => this.convertDtoToModel(updatedDto))
       );
     }
+  }
+
+  /** Admin: cập nhật is_active cho nhiều bài */
+  bulkSetActive(ids: string[], isActive: boolean): Observable<WritingBulkSetActiveResponse> {
+    const numeric = ids.map(id => Number(id)).filter(n => Number.isFinite(n) && n > 0);
+    return this.apiService.bulkSetActive(numeric, isActive);
+  }
+
+  bulkDelete(ids: string[]): Observable<WritingBulkDeleteResponse> {
+    const numeric = ids.map(id => Number(id)).filter(n => Number.isFinite(n) && n > 0);
+    return this.apiService.bulkDelete(numeric);
   }
 
   deleteTask(id: string): Observable<void> {
