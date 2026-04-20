@@ -5,7 +5,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { WritingHistoryService } from '../../services/writing-history.service';
-import { WritingTaskService } from '../../services/writing-task.service';
+import { WritingTaskService, writingTaskTypeApiToKebab } from '../../services/writing-task.service';
 import { WritingTaskApiService } from '../../services/writing-task-api.service';
 import { WritingHistoryApiService, AiCorrection, WritingHistoryDto, WritingStatistics, DetailedIeltsScores, LinkingWord, WordRepetition } from '../../services/writing-history-api.service';
 import { AppConfig } from '../../config/app.config';
@@ -2480,7 +2480,7 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
       return {
         ...baseTask,
         type: 'task1' as const,
-        task1Type: (dto.task1Type?.toLowerCase().replace('_', '-') || 'line-graph') as any,
+        task1Type: (writingTaskTypeApiToKebab(dto.task1Type) || 'line-graph') as any,
         description: dto.description || '',
         imageUrl: dto.imageUrl || '',
         data: dto.data || {}
@@ -2489,7 +2489,7 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
       return {
         ...baseTask,
         type: 'task2' as const,
-        task2Type: (dto.task2Type?.toLowerCase().replace('_', '-') || 'agree-disagree') as any,
+        task2Type: (writingTaskTypeApiToKebab(dto.task2Type) || 'agree-disagree') as any,
         question: dto.question || '',
         additionalQuestions: dto.additionalQuestions || []
       } as WritingTask2;

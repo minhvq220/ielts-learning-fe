@@ -2,8 +2,19 @@ import { Component, signal, computed, inject, OnInit, OnDestroy } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { WritingTaskService } from '../../services/writing-task.service';
+import { firstValueFrom, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import {
+  WritingTaskService,
+  writingTaskTypeApiToKebab,
+  formatTaskTypeKebabForDisplay
+} from '../../services/writing-task.service';
+import {
+  WritingTaskApiService,
+  WritingTaskTypeOptionDto,
+  FALLBACK_TASK1_TYPE_OPTIONS,
+  FALLBACK_TASK2_TYPE_OPTIONS
+} from '../../services/writing-task-api.service';
 import {
   downloadWritingTasksTemplate,
   parseWritingTasksExcel,
@@ -16,9 +27,7 @@ import {
   WritingTask1, 
   WritingTask2, 
   WritingTaskFilter,
-  WritingTaskSort,
-  Task1Type,
-  Task2Type
+  WritingTaskSort
 } from '../../models/writing-task.model';
 
 @Component({
@@ -100,23 +109,12 @@ import {
 
           <select [(ngModel)]="selectedTask1Type" (change)="onFilterChange()" *ngIf="selectedType === 'task1'">
             <option value="">Tất cả dạng Task 1</option>
-            <option value="line-graph">Line Graph</option>
-            <option value="bar-chart">Bar Chart</option>
-            <option value="pie-chart">Pie Chart</option>
-            <option value="table">Table</option>
-            <option value="mixed-graph">Mixed Graph</option>
-            <option value="map">Map</option>
-            <option value="process">Process</option>
+            <option *ngFor="let o of task1TypeFilterOptions()" [value]="typeOptionKebab(o)">{{ o.label }}</option>
           </select>
 
           <select [(ngModel)]="selectedTask2Type" (change)="onFilterChange()" *ngIf="selectedType === 'task2'">
             <option value="">Tất cả dạng Task 2</option>
-            <option value="agree-disagree">Agree or Disagree</option>
-            <option value="discussion">Discussion</option>
-            <option value="advantages-disadvantages">Advantages and Disadvantages</option>
-            <option value="causes-problems-solutions">Causes, Problems and Solutions</option>
-            <option value="two-part-question">Two-Part Question</option>
-            <option value="positive-negative-development">Positive or Negative Development</option>
+            <option *ngFor="let o of task2TypeFilterOptions()" [value]="typeOptionKebab(o)">{{ o.label }}</option>
           </select>
 
           <select [(ngModel)]="selectedDifficulty" (change)="onFilterChange()">
@@ -312,25 +310,81 @@ import {
             <div class="import-url-suggest">
               <h3 class="import-url-suggest-title">Gợi ý từ URL (Engnovate)</h3>
               <p class="import-url-suggest-hint">
-                Dán URL trang bài (https, host được phép trên server). AI điền các cột giống nhập Excel — bạn kiểm tra rồi dán TSV hoặc nhập Excel.
+                Dán một hoặc nhiều URL (mỗi dòng một link, hoặc cách nhau bằng dấu phẩy / chấm phẩy). Host phải được phép trên server.
+                Tối đa 25 URL mỗi lần. AI điền các cột giống nhập Excel — kiểm tra rồi sao chép TSV hoặc dùng Excel.
               </p>
-              <div class="import-url-row">
-                <input
-                  type="url"
-                  class="import-url-input"
-                  placeholder="https://engnovate.com/..."
+              <div class="import-url-row import-url-row--stack">
+                <textarea
+                  class="import-url-textarea"
+                  rows="4"
+                  placeholder="https://engnovate.com/...&#10;https://engnovate.com/..."
                   [(ngModel)]="suggestSourceUrl"
                   [disabled]="suggestFromUrlLoading()"
-                  name="suggestSourceUrl">
+                  name="suggestSourceUrl"></textarea>
                 <button
                   type="button"
-                  class="btn btn-primary btn-sm"
+                  class="btn btn-primary btn-sm import-url-submit"
                   [disabled]="suggestFromUrlLoading() || !suggestSourceUrl.trim()"
                   (click)="runSuggestFromUrl()">
                   {{ suggestFromUrlLoading() ? 'Đang gọi AI…' : 'Lấy gợi ý' }}
                 </button>
               </div>
+              <p *ngIf="suggestFromUrlBatchNote()" class="import-url-batch-note">{{ suggestFromUrlBatchNote() }}</p>
               <p *ngIf="suggestFromUrlError()" class="import-error-banner">{{ suggestFromUrlError() }}</p>
+              <div *ngIf="suggestBatchRows().length" class="suggest-batch-block">
+                <p class="suggest-batch-summary">
+                  <strong>Kết quả lô:</strong> {{ suggestBatchOkCount() }} thành công /
+                  {{ suggestBatchRows().length }} URL
+                  <span *ngIf="suggestBatchFailCount()"> ({{ suggestBatchFailCount() }} lỗi)</span>
+                </p>
+                <div class="suggest-batch-actions">
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    [disabled]="!suggestBatchOkCount()"
+                    (click)="copySuggestBatchAllTsv()">
+                    Sao chép tất cả dòng TSV (các bài thành công)
+                  </button>
+                </div>
+                <div class="suggest-batch-table-wrap">
+                  <table class="suggest-batch-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>URL</th>
+                        <th>Trạng thái</th>
+                        <th></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let row of suggestBatchRows(); let i = index">
+                        <td>{{ i + 1 }}</td>
+                        <td class="suggest-batch-url" [title]="row.sourceUrl">{{ row.sourceUrl }}</td>
+                        <td>
+                          <span *ngIf="!row.error" class="suggest-batch-ok">OK</span>
+                          <span *ngIf="row.error" class="suggest-batch-err">{{ row.error }}</span>
+                        </td>
+                        <td class="suggest-batch-actions-cell">
+                          <button
+                            type="button"
+                            class="btn btn-secondary btn-sm suggest-batch-mini"
+                            *ngIf="!row.error"
+                            (click)="copySuggestBatchRowTsv(i)">
+                            TSV
+                          </button>
+                          <button
+                            type="button"
+                            class="btn btn-secondary btn-sm suggest-batch-mini"
+                            *ngIf="!row.error"
+                            (click)="loadSuggestBatchRowIntoEditor(i)">
+                            Sửa
+                          </button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
               <div *ngIf="suggestFieldsReady()" class="suggest-fields-block">
                 <div class="suggest-fields-actions">
                   <button type="button" class="btn btn-secondary btn-sm" (click)="copySuggestRowAsTsv()">Sao chép một dòng TSV</button>
@@ -920,15 +974,108 @@ import {
       display: flex;
       gap: 0.5rem;
       flex-wrap: wrap;
-      align-items: center;
+      align-items: flex-start;
     }
 
-    .import-url-input {
-      flex: 1;
-      min-width: 200px;
+    .import-url-row--stack {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .import-url-textarea {
+      width: 100%;
+      min-height: 5.5rem;
       padding: 0.5rem 0.65rem;
       border: 1px solid #d1d5db;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      font-family: inherit;
+      line-height: 1.4;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+
+    .import-url-submit {
+      align-self: flex-start;
+    }
+
+    .import-url-batch-note {
+      margin: 0.35rem 0 0 0;
+      font-size: 0.8rem;
+      color: #92400e;
+    }
+
+    .suggest-batch-block {
+      margin-top: 0.75rem;
+      padding: 0.5rem 0;
+      border-top: 1px dashed #e5e7eb;
+    }
+
+    .suggest-batch-summary {
+      margin: 0 0 0.5rem 0;
+      font-size: 0.85rem;
+      color: #374151;
+    }
+
+    .suggest-batch-actions {
+      margin-bottom: 0.5rem;
+    }
+
+    .suggest-batch-table-wrap {
+      max-height: 200px;
+      overflow: auto;
+      border: 1px solid #e5e7eb;
+      background: #fff;
+    }
+
+    .suggest-batch-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+    }
+
+    .suggest-batch-table th,
+    .suggest-batch-table td {
+      padding: 0.35rem 0.45rem;
+      border-bottom: 1px solid #f3f4f6;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .suggest-batch-table th {
+      background: #f9fafb;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .suggest-batch-url {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      word-break: break-all;
+    }
+
+    .suggest-batch-ok {
+      color: #047857;
+      font-weight: 600;
+    }
+
+    .suggest-batch-err {
+      color: #b91c1c;
+      display: block;
+      max-width: 280px;
+      white-space: normal;
+      line-height: 1.35;
+    }
+
+    .suggest-batch-actions-cell {
+      white-space: nowrap;
+    }
+
+    .suggest-batch-mini {
+      padding: 0.15rem 0.4rem;
+      font-size: 0.72rem;
+      margin-right: 0.25rem;
     }
 
     .suggest-fields-block {
@@ -1019,7 +1166,11 @@ import {
 })
 export class WritingAdminComponent implements OnInit, OnDestroy {
   private writingService = inject(WritingTaskService);
+  private writingTaskApi = inject(WritingTaskApiService);
   private http = inject(HttpClient);
+
+  task1TypeFilterOptions = signal<WritingTaskTypeOptionDto[]>(FALLBACK_TASK1_TYPE_OPTIONS);
+  task2TypeFilterOptions = signal<WritingTaskTypeOptionDto[]>(FALLBACK_TASK2_TYPE_OPTIONS);
 
   readonly pageSize = 10;
   readonly importKeys = [...WRITING_IMPORT_KEYS];
@@ -1056,9 +1207,16 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
   suggestSourceUrl = '';
   suggestFromUrlLoading = signal(false);
   suggestFromUrlError = signal<string | null>(null);
+  suggestFromUrlBatchNote = signal<string | null>(null);
+  /** Một dòng = một URL sau khi gọi API batch. */
+  suggestBatchRows = signal<{ sourceUrl: string; fields: Record<string, string>; error: string | null }[]>([]);
+  suggestBatchOkCount = computed(() => this.suggestBatchRows().filter(r => !r.error).length);
+  suggestBatchFailCount = computed(() => this.suggestBatchRows().filter(r => !!r.error).length);
   suggestFieldsReady = signal(false);
   /** Editable copy of AI-suggested row (keys = WRITING_IMPORT_KEYS) */
   suggestFields: Record<string, string> = {};
+
+  private readonly maxSuggestUrls = 25;
 
   /** User feedback after TSV copy (auto-clears). */
   tsvCopyFeedback = signal<{ text: string; ok: boolean } | null>(null);
@@ -1074,9 +1232,24 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
   selectedBulkCount = computed(() => this.selectedTaskIds().size);
 
   ngOnInit(): void {
+    this.loadTypeCatalog();
     this.applyFilterAndSort();
     this.writingService.loadTasks(0, this.pageSize);
     this.writingService.loadStatistics();
+  }
+
+  typeOptionKebab(o: WritingTaskTypeOptionDto): string {
+    return writingTaskTypeApiToKebab(o.code);
+  }
+
+  private loadTypeCatalog(): void {
+    forkJoin({
+      t1: this.writingTaskApi.getTask1Types().pipe(catchError(() => of([] as WritingTaskTypeOptionDto[]))),
+      t2: this.writingTaskApi.getTask2Types().pipe(catchError(() => of([] as WritingTaskTypeOptionDto[])))
+    }).subscribe(({ t1, t2 }) => {
+      this.task1TypeFilterOptions.set(t1?.length ? t1 : FALLBACK_TASK1_TYPE_OPTIONS);
+      this.task2TypeFilterOptions.set(t2?.length ? t2 : FALLBACK_TASK2_TYPE_OPTIONS);
+    });
   }
 
   ngOnDestroy(): void {
@@ -1241,7 +1414,7 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
 
   getTaskSubtypeLabel(task: WritingTask): string {
     if (task.type === 'task1') {
-      const labels: Record<Task1Type, string> = {
+      const labels: Record<string, string> = {
         'line-graph': 'Line Graph',
         'bar-chart': 'Bar Chart',
         'pie-chart': 'Pie Chart',
@@ -1250,18 +1423,17 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
         'map': 'Map',
         'process': 'Process'
       };
-      return labels[task.task1Type];
-    } else {
-      const labels: Record<Task2Type, string> = {
-        'agree-disagree': 'Agree/Disagree',
-        'discussion': 'Discussion',
-        'advantages-disadvantages': 'Advantages/Disadvantages',
-        'causes-problems-solutions': 'Causes/Problems/Solutions',
-        'two-part-question': 'Two-Part Question',
-        'positive-negative-development': 'Positive/Negative Development'
-      };
-      return labels[task.task2Type];
+      return labels[task.task1Type] ?? formatTaskTypeKebabForDisplay(task.task1Type);
     }
+    const labels: Record<string, string> = {
+      'agree-disagree': 'Agree/Disagree',
+      'discussion': 'Discussion',
+      'advantages-disadvantages': 'Advantages/Disadvantages',
+      'causes-problems-solutions': 'Causes/Problems/Solutions',
+      'two-part-question': 'Two-Part Question',
+      'positive-negative-development': 'Positive/Negative Development'
+    };
+    return labels[(task as WritingTask2).task2Type] ?? formatTaskTypeKebabForDisplay((task as WritingTask2).task2Type);
   }
 
   getDifficultyLabel(difficulty: string): string {
@@ -1398,39 +1570,157 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
     this.suggestSourceUrl = '';
     this.suggestFromUrlLoading.set(false);
     this.suggestFromUrlError.set(null);
+    this.suggestFromUrlBatchNote.set(null);
+    this.suggestBatchRows.set([]);
     this.suggestFieldsReady.set(false);
     this.suggestFields = {};
   }
 
+  /** Tách URL từ nhiều dòng hoặc phẩy / chấm phẩy; giữ thứ tự, bỏ trùng. */
+  private parseSourceUrls(text: string): string[] {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const rawLine of text.split(/\r?\n/)) {
+      const line = rawLine.trim();
+      if (!line) continue;
+      for (const segment of line.split(/[,;]\s*/)) {
+        const u = segment.trim();
+        if (!u || seen.has(u)) continue;
+        seen.add(u);
+        out.push(u);
+      }
+    }
+    return out;
+  }
+
+  private normalizeSuggestFields(fields: Record<string, string> | null | undefined): Record<string, string> {
+    const row: Record<string, string> = {};
+    for (const k of WRITING_IMPORT_KEYS) {
+      row[k] = (fields && fields[k] != null ? String(fields[k]) : '').trim();
+    }
+    return row;
+  }
+
   runSuggestFromUrl(): void {
-    const url = this.suggestSourceUrl.trim();
-    if (!url) return;
+    let urls = this.parseSourceUrls(this.suggestSourceUrl);
+    if (!urls.length) {
+      this.suggestFromUrlError.set('Chưa có URL hợp lệ. Dán link https (mỗi dòng hoặc cách nhau bằng dấu phẩy).');
+      return;
+    }
+    this.suggestFromUrlBatchNote.set(null);
+    if (urls.length > this.maxSuggestUrls) {
+      this.suggestFromUrlBatchNote.set(`Chỉ xử lý ${this.maxSuggestUrls} URL đầu tiên (giới hạn mỗi lần).`);
+      urls = urls.slice(0, this.maxSuggestUrls);
+    }
     this.suggestFromUrlLoading.set(true);
     this.suggestFromUrlError.set(null);
-    const endpoint = `${AppConfig.api.baseUrl}/api/admin/writing-import/suggest-from-url`;
-    this.http.post<{ fields: Record<string, string> }>(endpoint, { url }).subscribe({
-      next: res => {
-        const row: Record<string, string> = {};
-        for (const k of WRITING_IMPORT_KEYS) {
-          row[k] = (res.fields && res.fields[k] != null ? String(res.fields[k]) : '').trim();
+    this.suggestBatchRows.set([]);
+    const endpoint = `${AppConfig.api.baseUrl}/api/admin/writing-import/suggest-from-urls`;
+    this.http
+      .post<{ items: { sourceUrl: string; fields: Record<string, string>; error: string | null }[] }>(endpoint, {
+        urls
+      })
+      .subscribe({
+        next: res => {
+          const items = Array.isArray(res?.items) ? res.items : [];
+          const rows = items.map(it => ({
+            sourceUrl: (it.sourceUrl ?? '').trim(),
+            fields: this.normalizeSuggestFields(it.fields),
+            error: it.error != null && String(it.error).trim() !== '' ? String(it.error).trim() : null
+          }));
+          this.suggestBatchRows.set(rows);
+          const firstOk = rows.findIndex(r => !r.error);
+          if (firstOk >= 0) {
+            this.loadSuggestBatchRowIntoEditor(firstOk);
+          } else {
+            this.suggestFields = {};
+            this.suggestFieldsReady.set(false);
+          }
+          this.suggestFromUrlLoading.set(false);
+        },
+        error: err => {
+          const body = err?.error;
+          const msg =
+            typeof body?.message === 'string'
+              ? body.message
+              : typeof body === 'string'
+                ? body
+                : err?.message ?? 'Không lấy được gợi ý.';
+          this.suggestFromUrlError.set(msg);
+          this.suggestBatchRows.set([]);
+          this.suggestFieldsReady.set(false);
+          this.suggestFromUrlLoading.set(false);
         }
-        this.suggestFields = row;
-        this.suggestFieldsReady.set(true);
-        this.suggestFromUrlLoading.set(false);
+      });
+  }
+
+  loadSuggestBatchRowIntoEditor(index: number): void {
+    const row = this.suggestBatchRows()[index];
+    if (!row || row.error) return;
+    this.suggestFields = { ...row.fields };
+    this.suggestFieldsReady.set(true);
+  }
+
+  copySuggestBatchRowTsv(index: number): void {
+    const row = this.suggestBatchRows()[index];
+    if (!row || row.error) return;
+    const parts = WRITING_IMPORT_KEYS.map(k => this.tsvCell(row.fields[k] ?? ''));
+    const line = parts.join('\t');
+    this.clearTsvCopyFeedbackTimer();
+    void navigator.clipboard.writeText(line).then(
+      () => {
+        this.tsvCopyFeedback.set({
+          ok: true,
+          text: 'Đã sao chép một dòng TSV cho bài đã chọn.'
+        });
+        this.tsvCopyFeedbackTimer = setTimeout(() => {
+          this.tsvCopyFeedback.set(null);
+          this.tsvCopyFeedbackTimer = null;
+        }, 3500);
       },
-      error: err => {
-        const body = err?.error;
-        const msg =
-          typeof body?.message === 'string'
-            ? body.message
-            : typeof body === 'string'
-              ? body
-              : err?.message ?? 'Không lấy được gợi ý.';
-        this.suggestFromUrlError.set(msg);
-        this.suggestFieldsReady.set(false);
-        this.suggestFromUrlLoading.set(false);
+      () => {
+        this.tsvCopyFeedback.set({
+          ok: false,
+          text: 'Chưa sao chép được — thử lại trên HTTPS hoặc cấp quyền clipboard.'
+        });
+        this.tsvCopyFeedbackTimer = setTimeout(() => {
+          this.tsvCopyFeedback.set(null);
+          this.tsvCopyFeedbackTimer = null;
+        }, 5000);
       }
-    });
+    );
+  }
+
+  copySuggestBatchAllTsv(): void {
+    const okRows = this.suggestBatchRows().filter(r => !r.error);
+    if (!okRows.length) return;
+    const lines = okRows.map(row =>
+      WRITING_IMPORT_KEYS.map(k => this.tsvCell(row.fields[k] ?? '')).join('\t')
+    );
+    const text = lines.join('\n');
+    this.clearTsvCopyFeedbackTimer();
+    void navigator.clipboard.writeText(text).then(
+      () => {
+        this.tsvCopyFeedback.set({
+          ok: true,
+          text: `Đã sao chép ${okRows.length} dòng TSV — dán vào Excel (sheet «Bài viết», từ dòng trống tiếp theo).`
+        });
+        this.tsvCopyFeedbackTimer = setTimeout(() => {
+          this.tsvCopyFeedback.set(null);
+          this.tsvCopyFeedbackTimer = null;
+        }, 4500);
+      },
+      () => {
+        this.tsvCopyFeedback.set({
+          ok: false,
+          text: 'Chưa sao chép được — thử lại trên HTTPS hoặc cấp quyền clipboard.'
+        });
+        this.tsvCopyFeedbackTimer = setTimeout(() => {
+          this.tsvCopyFeedback.set(null);
+          this.tsvCopyFeedbackTimer = null;
+        }, 5000);
+      }
+    );
   }
 
   private tsvCell(value: string): string {

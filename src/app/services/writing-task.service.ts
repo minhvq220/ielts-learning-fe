@@ -20,6 +20,41 @@ import {
   WritingBulkDeleteResponse
 } from './writing-task-api.service';
 
+/** API UPPER_SNAKE → kebab trong model FE (đồng bộ backend normalizeTypeCode). */
+export function writingTaskTypeApiToKebab(raw: string | undefined | null): string {
+  if (raw == null) return '';
+  let s = String(raw).trim().toUpperCase().replace(/-/g, '_');
+  s = s.replace(/[^A-Z0-9_]/g, '_');
+  s = s.replace(/_+/g, '_');
+  if (s.startsWith('_')) s = s.substring(1);
+  if (s.endsWith('_')) s = s.substring(0, s.length - 1);
+  if (!s) return '';
+  if (s.length > 64) s = s.substring(0, 64);
+  return s.toLowerCase().replace(/_/g, '-');
+}
+
+/** Kebab model → mã gửi API (UPPER_SNAKE). */
+export function writingTaskTypeKebabToApi(raw: string | undefined | null): string {
+  if (raw == null) return '';
+  let s = String(raw).trim().toUpperCase().replace(/-/g, '_');
+  s = s.replace(/[^A-Z0-9_]/g, '_');
+  s = s.replace(/_+/g, '_');
+  if (s.startsWith('_')) s = s.substring(1);
+  if (s.endsWith('_')) s = s.substring(0, s.length - 1);
+  if (s.length > 64) s = s.substring(0, 64);
+  return s;
+}
+
+/** Hiển thị nhãn khi không có trong map cố định. */
+export function formatTaskTypeKebabForDisplay(kebab: string): string {
+  if (!kebab?.trim()) return '';
+  return kebab
+    .split('-')
+    .filter(Boolean)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' / ');
+}
+
 /** Admin stats from API (total counts), not from current page */
 export interface AdminStats {
   totalTasks: number;
@@ -108,6 +143,8 @@ export class WritingTaskService {
 
   public stats = computed(() => {
     const tasks = this._tasks();
+    const byTask1Type: Record<string, number> = {};
+    const byTask2Type: Record<string, number> = {};
     const stats: WritingTaskStats = {
       totalTasks: tasks.length,
       task1Count: tasks.filter(t => t.type === 'task1').length,
@@ -117,34 +154,20 @@ export class WritingTaskService {
         medium: tasks.filter(t => t.difficulty === 'medium').length,
         hard: tasks.filter(t => t.difficulty === 'hard').length
       },
-      byTask1Type: {
-        'line-graph': 0,
-        'bar-chart': 0,
-        'pie-chart': 0,
-        'table': 0,
-        'mixed-graph': 0,
-        'map': 0,
-        'process': 0
-      },
-      byTask2Type: {
-        'agree-disagree': 0,
-        'discussion': 0,
-        'advantages-disadvantages': 0,
-        'causes-problems-solutions': 0,
-        'two-part-question': 0,
-        'positive-negative-development': 0
-      },
+      byTask1Type,
+      byTask2Type,
       recentTasks: tasks
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 5)
     };
 
-    // Count by task types
     tasks.forEach(task => {
       if (task.type === 'task1') {
-        stats.byTask1Type[task.task1Type]++;
+        const k = task.task1Type || '';
+        byTask1Type[k] = (byTask1Type[k] ?? 0) + 1;
       } else if (task.type === 'task2') {
-        stats.byTask2Type[task.task2Type]++;
+        const k = task.task2Type || '';
+        byTask2Type[k] = (byTask2Type[k] ?? 0) + 1;
       }
     });
 
@@ -438,7 +461,7 @@ export class WritingTaskService {
       return {
         ...baseTask,
         type: 'task1' as const,
-        task1Type: (dto as WritingTask1Dto).task1Type.toLowerCase().replace('_', '-') as Task1Type,
+        task1Type: writingTaskTypeApiToKebab((dto as WritingTask1Dto).task1Type) as Task1Type,
         description: (dto as WritingTask1Dto).description || '',
         imageUrl: (dto as WritingTask1Dto).imageUrl || '',
         data: (dto as WritingTask1Dto).data || {}
@@ -447,7 +470,7 @@ export class WritingTaskService {
       return {
         ...baseTask,
         type: 'task2' as const,
-        task2Type: (dto as WritingTask2Dto).task2Type.toLowerCase().replace('_', '-') as Task2Type,
+        task2Type: writingTaskTypeApiToKebab((dto as WritingTask2Dto).task2Type) as Task2Type,
         question: (dto as WritingTask2Dto).question || '',
         additionalQuestions: (dto as WritingTask2Dto).additionalQuestions || []
       } as WritingTask2;
@@ -458,7 +481,7 @@ export class WritingTaskService {
     return {
       title: task.title,
       instruction: task.instruction,
-      task1Type: task.task1Type.toUpperCase().replace('-', '_') as any,
+      task1Type: writingTaskTypeKebabToApi(task.task1Type),
       difficulty: task.difficulty.toUpperCase() as any,
       timeLimit: task.timeLimit,
       wordCount: task.wordCount,
@@ -478,7 +501,7 @@ export class WritingTaskService {
     return {
       title: task.title,
       instruction: task.instruction,
-      task2Type: task.task2Type.toUpperCase().replace('-', '_') as any,
+      task2Type: writingTaskTypeKebabToApi(task.task2Type),
       difficulty: task.difficulty.toUpperCase() as any,
       timeLimit: task.timeLimit,
       wordCount: task.wordCount,

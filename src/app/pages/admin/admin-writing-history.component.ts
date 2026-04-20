@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { WritingHistoryApiService, WritingHistoryDto, Page } from '../../services/writing-history-api.service';
-import { WritingTaskService } from '../../services/writing-task.service';
+import { WritingTaskService, formatTaskTypeKebabForDisplay } from '../../services/writing-task.service';
 import { WritingTask } from '../../models/writing-task.model';
 import { AuthService } from '../../services/auth.service';
 import { AppConfig } from '../../config/app.config';
@@ -962,7 +962,7 @@ export class AdminWritingHistoryComponent implements OnInit, AfterViewInit, OnDe
         'map': 'Map',
         'process': 'Process'
       };
-      return labels[task.task1Type] || null;
+      return labels[task.task1Type] ?? formatTaskTypeKebabForDisplay(task.task1Type);
     }
 
     if (task.type === 'task2') {
@@ -974,7 +974,7 @@ export class AdminWritingHistoryComponent implements OnInit, AfterViewInit, OnDe
         'two-part-question': 'Two-Part Question',
         'positive-negative-development': 'Positive/Negative Development'
       };
-      return labels[task.task2Type] || null;
+      return labels[task.task2Type] ?? formatTaskTypeKebabForDisplay(task.task2Type);
     }
 
     return null;

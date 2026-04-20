@@ -1,13 +1,20 @@
-import { Component, Input, Output, EventEmitter, signal, computed, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, Output, EventEmitter, signal, computed, OnInit, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { 
   WritingTask, 
   WritingTask1, 
-  WritingTask2, 
-  Task1Type, 
-  Task2Type 
+  WritingTask2
 } from '../../models/writing-task.model';
+import {
+  WritingTaskApiService,
+  WritingTaskTypeOptionDto,
+  FALLBACK_TASK1_TYPE_OPTIONS,
+  FALLBACK_TASK2_TYPE_OPTIONS
+} from '../../services/writing-task-api.service';
+import { writingTaskTypeApiToKebab } from '../../services/writing-task.service';
 import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.component';
 
 @Component({
@@ -46,13 +53,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                 name="task1Type" 
                 required
                 class="form-control">
-                <option value="line-graph">Line Graph</option>
-                <option value="bar-chart">Bar Chart</option>
-                <option value="pie-chart">Pie Chart</option>
-                <option value="table">Table</option>
-                <option value="mixed-graph">Mixed Graph</option>
-                <option value="map">Map</option>
-                <option value="process">Process</option>
+                <option *ngFor="let o of task1TypeOptions()" [value]="typeOptionKebab(o)">{{ o.label }}</option>
               </select>
             </div>
 
@@ -63,12 +64,7 @@ import { RichTextEditorComponent } from '../rich-text-editor/rich-text-editor.co
                 name="task2Type" 
                 required
                 class="form-control">
-                <option value="agree-disagree">Agree or Disagree</option>
-                <option value="discussion">Discussion</option>
-                <option value="advantages-disadvantages">Advantages and Disadvantages</option>
-                <option value="causes-problems-solutions">Causes, Problems and Solutions</option>
-                <option value="two-part-question">Two-Part Question</option>
-                <option value="positive-negative-development">Positive or Negative Development</option>
+                <option *ngFor="let o of task2TypeOptions()" [value]="typeOptionKebab(o)">{{ o.label }}</option>
               </select>
             </div>
 
@@ -619,6 +615,14 @@ export class WritingFormComponent implements OnInit, OnChanges {
   @Output() save = new EventEmitter<WritingTask>();
   @Output() cancel = new EventEmitter<void>();
 
+  private writingTaskApi = inject(WritingTaskApiService);
+  task1TypeOptions = signal<WritingTaskTypeOptionDto[]>(FALLBACK_TASK1_TYPE_OPTIONS);
+  task2TypeOptions = signal<WritingTaskTypeOptionDto[]>(FALLBACK_TASK2_TYPE_OPTIONS);
+
+  typeOptionKebab(o: WritingTaskTypeOptionDto): string {
+    return writingTaskTypeApiToKebab(o.code);
+  }
+
   // Form data
   taskData: any = {
     type: 'task1',
@@ -633,8 +637,8 @@ export class WritingFormComponent implements OnInit, OnChanges {
     tips: [],
     sampleAnswer: '',
     writingGuide: '',
-    task1Type: 'line-graph',
-    task2Type: 'agree-disagree',
+    task1Type: this.defaultTask1Kebab(),
+    task2Type: this.defaultTask2Kebab(),
     description: '',
     question: '',
     additionalQuestions: [],
@@ -648,7 +652,26 @@ export class WritingFormComponent implements OnInit, OnChanges {
   isEditMode = computed(() => !!this.task);
 
   ngOnInit() {
+    this.loadTypeCatalog();
     this.syncTaskToForm();
+  }
+
+  private defaultTask1Kebab(): string {
+    return writingTaskTypeApiToKebab(this.task1TypeOptions()[0]?.code) || 'line-graph';
+  }
+
+  private defaultTask2Kebab(): string {
+    return writingTaskTypeApiToKebab(this.task2TypeOptions()[0]?.code) || 'agree-disagree';
+  }
+
+  private loadTypeCatalog(): void {
+    forkJoin({
+      t1: this.writingTaskApi.getTask1Types().pipe(catchError(() => of([] as WritingTaskTypeOptionDto[]))),
+      t2: this.writingTaskApi.getTask2Types().pipe(catchError(() => of([] as WritingTaskTypeOptionDto[])))
+    }).subscribe(({ t1, t2 }) => {
+      this.task1TypeOptions.set(t1?.length ? t1 : FALLBACK_TASK1_TYPE_OPTIONS);
+      this.task2TypeOptions.set(t2?.length ? t2 : FALLBACK_TASK2_TYPE_OPTIONS);
+    });
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -695,8 +718,8 @@ export class WritingFormComponent implements OnInit, OnChanges {
       tips: [],
       sampleAnswer: '',
       writingGuide: '',
-      task1Type: 'line-graph',
-      task2Type: 'agree-disagree',
+      task1Type: this.defaultTask1Kebab(),
+      task2Type: this.defaultTask2Kebab(),
       description: '',
       question: '',
       additionalQuestions: [],
@@ -713,11 +736,11 @@ export class WritingFormComponent implements OnInit, OnChanges {
         ...this.taskData,
         timeLimit: 20,
         wordCount: 150,
-        task2Type: 'agree-disagree',
+        task2Type: this.defaultTask2Kebab(),
         question: '',
         additionalQuestions: [],
         // Keep Task 1 fields
-        task1Type: this.taskData.task1Type || 'line-graph',
+        task1Type: this.taskData.task1Type || this.defaultTask1Kebab(),
         description: this.taskData.description || '',
         data: this.taskData.data || {},
         imageUrl: this.taskData.imageUrl || ''
@@ -728,12 +751,12 @@ export class WritingFormComponent implements OnInit, OnChanges {
         ...this.taskData,
         timeLimit: 40,
         wordCount: 250,
-        task1Type: 'line-graph',
+        task1Type: this.defaultTask1Kebab(),
         description: '',
         data: {},
         imageUrl: '', // Clear image when switching to Task 2
         // Keep Task 2 fields
-        task2Type: this.taskData.task2Type || 'agree-disagree',
+        task2Type: this.taskData.task2Type || this.defaultTask2Kebab(),
         question: this.taskData.question || '',
         additionalQuestions: this.taskData.additionalQuestions || []
       };

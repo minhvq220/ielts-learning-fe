@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Page } from '../models/page.model';
+import { AppConfig } from '../config/app.config';
 
 export interface WritingTaskFilter {
   type?: string;
@@ -38,17 +39,42 @@ export interface WritingTaskDto {
 }
 
 export interface WritingTask1Dto extends WritingTaskDto {
-  task1Type: 'LINE_GRAPH' | 'BAR_CHART' | 'PIE_CHART' | 'TABLE' | 'MIXED_GRAPH' | 'MAP' | 'PROCESS';
+  task1Type: string;
   description?: string;
   imageUrl?: string; // URL or Base64 string of the image/chart for Task 1
   data?: any;
 }
 
 export interface WritingTask2Dto extends WritingTaskDto {
-  task2Type: 'AGREE_DISAGREE' | 'DISCUSSION' | 'ADVANTAGES_DISADVANTAGES' | 'CAUSES_PROBLEMS_SOLUTIONS' | 'TWO_PART_QUESTION' | 'POSITIVE_NEGATIVE_DEVELOPMENT';
+  task2Type: string;
   question: string;
   additionalQuestions?: string[];
 }
+
+/** Một dòng catalog type (GET /task1/types, /task2/types). */
+export interface WritingTaskTypeOptionDto {
+  code: string;
+  label: string;
+}
+
+export const FALLBACK_TASK1_TYPE_OPTIONS: WritingTaskTypeOptionDto[] = [
+  { code: 'LINE_GRAPH', label: 'Line Graph' },
+  { code: 'BAR_CHART', label: 'Bar Chart' },
+  { code: 'PIE_CHART', label: 'Pie Chart' },
+  { code: 'TABLE', label: 'Table' },
+  { code: 'MIXED_GRAPH', label: 'Mixed Graph' },
+  { code: 'MAP', label: 'Map' },
+  { code: 'PROCESS', label: 'Process' }
+];
+
+export const FALLBACK_TASK2_TYPE_OPTIONS: WritingTaskTypeOptionDto[] = [
+  { code: 'AGREE_DISAGREE', label: 'Agree or Disagree' },
+  { code: 'DISCUSSION', label: 'Discussion' },
+  { code: 'ADVANTAGES_DISADVANTAGES', label: 'Advantages and Disadvantages' },
+  { code: 'CAUSES_PROBLEMS_SOLUTIONS', label: 'Causes, Problems and Solutions' },
+  { code: 'TWO_PART_QUESTION', label: 'Two-Part Question' },
+  { code: 'POSITIVE_NEGATIVE_DEVELOPMENT', label: 'Positive or Negative Development' }
+];
 
 export interface WritingTaskStatsDto {
   totalTasks: number;
@@ -67,8 +93,6 @@ export interface WritingBulkSetActiveResponse {
 export interface WritingBulkDeleteResponse {
   deleted: number;
 }
-
-import { AppConfig } from '../config/app.config';
 
 @Injectable({
   providedIn: 'root'
@@ -141,14 +165,12 @@ export class WritingTaskApiService {
     return this.http.get<WritingTaskStatsDto>(`${this.apiUrl}/stats`);
   }
 
-  // Get Task1 types
-  getTask1Types(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/task1/types`);
+  getTask1Types(): Observable<WritingTaskTypeOptionDto[]> {
+    return this.http.get<WritingTaskTypeOptionDto[]>(`${this.apiUrl}/task1/types`);
   }
 
-  // Get Task2 types
-  getTask2Types(): Observable<string[]> {
-    return this.http.get<string[]>(`${this.apiUrl}/task2/types`);
+  getTask2Types(): Observable<WritingTaskTypeOptionDto[]> {
+    return this.http.get<WritingTaskTypeOptionDto[]>(`${this.apiUrl}/task2/types`);
   }
 
   // Get difficulties

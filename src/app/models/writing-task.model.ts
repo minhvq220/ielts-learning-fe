@@ -1,21 +1,6 @@
-// Writing Task 1 Types
-export type Task1Type = 
-  | 'line-graph'
-  | 'bar-chart' 
-  | 'pie-chart'
-  | 'table'
-  | 'mixed-graph'
-  | 'map'
-  | 'process';
-
-// Writing Task 2 Types  
-export type Task2Type =
-  | 'agree-disagree'
-  | 'discussion'
-  | 'advantages-disadvantages'
-  | 'causes-problems-solutions'
-  | 'two-part-question'
-  | 'positive-negative-development';
+/** Mã dạng bài dưới dạng kebab-case (UI); API dùng UPPER_SNAKE — chuyển đổi ở service. */
+export type Task1Type = string;
+export type Task2Type = string;
 
 // Nguồn đề (source)
 export type WritingTaskSource = 'CAMBRIDGE' | 'VOL' | 'ACTUAL_TESTS' | 'FORECAST' | 'OTHERS';
@@ -151,7 +136,7 @@ export interface WritingTaskStats {
     medium: number;
     hard: number;
   };
-  byTask1Type: Record<Task1Type, number>;
-  byTask2Type: Record<Task2Type, number>;
+  byTask1Type: Record<string, number>;
+  byTask2Type: Record<string, number>;
   recentTasks: WritingTask[];
 }

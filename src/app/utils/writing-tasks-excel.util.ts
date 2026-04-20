@@ -53,55 +53,15 @@ const VI_HEADER: string[] = [
   'Câu hỏi bổ sung Task 2 — phân tách ; (additional_questions)'
 ];
 
-const TASK1_ENUM_TO_KEBAB: Record<string, Task1Type> = {
-  LINE_GRAPH: 'line-graph',
-  BAR_CHART: 'bar-chart',
-  PIE_CHART: 'pie-chart',
-  TABLE: 'table',
-  MIXED_GRAPH: 'mixed-graph',
-  MAP: 'map',
-  PROCESS: 'process',
-  'LINE-GRAPH': 'line-graph',
-  'BAR-CHART': 'bar-chart',
-  'PIE-CHART': 'pie-chart',
-  'MIXED-GRAPH': 'mixed-graph',
-  line_graph: 'line-graph',
-  bar_chart: 'bar-chart',
-  pie_chart: 'pie-chart',
-  mixed_graph: 'mixed-graph',
-  'line-graph': 'line-graph',
-  'bar-chart': 'bar-chart',
-  'pie-chart': 'pie-chart',
-  'mixed-graph': 'mixed-graph',
-  table: 'table',
-  map: 'map',
-  process: 'process'
-};
-
-const TASK2_ENUM_TO_KEBAB: Record<string, Task2Type> = {
-  AGREE_DISAGREE: 'agree-disagree',
-  DISCUSSION: 'discussion',
-  ADVANTAGES_DISADVANTAGES: 'advantages-disadvantages',
-  CAUSES_PROBLEMS_SOLUTIONS: 'causes-problems-solutions',
-  TWO_PART_QUESTION: 'two-part-question',
-  POSITIVE_NEGATIVE_DEVELOPMENT: 'positive-negative-development',
-  'AGREE-DISAGREE': 'agree-disagree',
-  'ADVANTAGES-DISADVANTAGES': 'advantages-disadvantages',
-  'CAUSES-PROBLEMS-SOLUTIONS': 'causes-problems-solutions',
-  'TWO-PART-QUESTION': 'two-part-question',
-  'POSITIVE-NEGATIVE-DEVELOPMENT': 'positive-negative-development',
-  agree_disagree: 'agree-disagree',
-  advantages_disadvantages: 'advantages-disadvantages',
-  causes_problems_solutions: 'causes-problems-solutions',
-  two_part_question: 'two-part-question',
-  positive_negative_development: 'positive-negative-development',
-  'agree-disagree': 'agree-disagree',
-  discussion: 'discussion',
-  'advantages-disadvantages': 'advantages-disadvantages',
-  'causes-problems-solutions': 'causes-problems-solutions',
-  'two-part-question': 'two-part-question',
-  'positive-negative-development': 'positive-negative-development'
-};
+/** Chuẩn hóa mã type từ Excel (SNAKE / kebab / hỗn hợp) → kebab-case cho model FE. */
+function snakeToKebabTypeCode(raw: string): string {
+  if (!raw) return '';
+  let s = raw.trim().toUpperCase().replace(/-/g, '_');
+  s = s.replace(/[^A-Z0-9_]/g, '_');
+  s = s.replace(/_+/g, '_').replace(/^_|_$/g, '');
+  if (!s || s.length > 64) return '';
+  return s.toLowerCase().replace(/_/g, '-');
+}
 
 export interface WritingImportRowResult {
   /** Số dòng trên sheet Excel (1-based) */
@@ -147,19 +107,13 @@ function parseSource(s: string): WritingTaskSource | undefined {
 }
 
 function normalizeTask1Type(raw: string): Task1Type | null {
-  if (!raw) return null;
-  const k = raw.trim();
-  if (TASK1_ENUM_TO_KEBAB[k]) return TASK1_ENUM_TO_KEBAB[k];
-  const up = k.toUpperCase().replace(/-/g, '_');
-  return TASK1_ENUM_TO_KEBAB[up] ?? null;
+  const kebab = snakeToKebabTypeCode(raw);
+  return kebab || null;
 }
 
 function normalizeTask2Type(raw: string): Task2Type | null {
-  if (!raw) return null;
-  const k = raw.trim();
-  if (TASK2_ENUM_TO_KEBAB[k]) return TASK2_ENUM_TO_KEBAB[k];
-  const up = k.toUpperCase().replace(/-/g, '_');
-  return TASK2_ENUM_TO_KEBAB[up] ?? null;
+  const kebab = snakeToKebabTypeCode(raw);
+  return kebab || null;
 }
 
 function buildColMap(headerRow: unknown[]): Map<string, number> {
@@ -289,7 +243,7 @@ export async function parseWritingTasksExcel(file: File): Promise<WritingImportR
         out.push({
           excelRow,
           task: null,
-          parseError: `task1_type không hợp lệ (dòng ${excelRow}). Ví dụ: LINE_GRAPH, BAR_CHART...`
+          parseError: `task1_type không hợp lệ (dòng ${excelRow}). Dùng mã A–Z, 0–9, gạch ngang/gạch dưới (ví dụ LINE_GRAPH hoặc line-graph), tối đa 64 ký tự sau chuẩn hóa.`
         });
         continue;
       }
@@ -309,7 +263,7 @@ export async function parseWritingTasksExcel(file: File): Promise<WritingImportR
         out.push({
           excelRow,
           task: null,
-          parseError: `task2_type không hợp lệ (dòng ${excelRow}).`
+          parseError: `task2_type không hợp lệ (dòng ${excelRow}). Dùng mã A–Z, 0–9, gạch ngang/gạch dưới, tối đa 64 ký tự sau chuẩn hóa.`
         });
         continue;
       }
@@ -441,16 +395,7 @@ export async function downloadWritingTasksTemplate(): Promise<void> {
   listDv('D', 'EASY,MEDIUM,HARD', 'Độ khó bài.');
   listDv('G', 'CAMBRIDGE,VOL,ACTUAL_TESTS,FORECAST,OTHERS', 'Nguồn đề (có thể để trống nếu không áp).');
   listDv('H', 'TRUE,FALSE', 'TRUE = hiển thị cho học viên, FALSE = ẩn.');
-  listDv(
-    'M',
-    'LINE_GRAPH,BAR_CHART,PIE_CHART,TABLE,MIXED_GRAPH,MAP,PROCESS',
-    'Chỉ dùng khi task_kind = TASK1 (có thể để trống nếu là TASK2).'
-  );
-  listDv(
-    'P',
-    'AGREE_DISAGREE,DISCUSSION,ADVANTAGES_DISADVANTAGES,CAUSES_PROBLEMS_SOLUTIONS,TWO_PART_QUESTION,POSITIVE_NEGATIVE_DEVELOPMENT',
-    'Chỉ dùng khi task_kind = TASK2 (có thể để trống nếu là TASK1).'
-  );
+  // task1_type / task2_type: không gắn dropdown cố định — cho phép mã mới (catalog tự bổ sung trên server).
 
   const legend = wb.addWorksheet('Chú thích');
   legend.getColumn(1).width = 96;
@@ -458,7 +403,7 @@ export async function downloadWritingTasksTemplate(): Promise<void> {
   legend.getRow(1).font = { bold: true, size: 12 };
   legend.addRow([]);
   legend.addRow([
-    'Trên sheet "Bài viết", các cột task_kind (A), difficulty (D), source (G), is_active (H), task1_type (M), task2_type (P) đã có sẵn dropdown từ dòng 3 đến 2000 — bạn không cần mở sheet này để tra enum.'
+    'Trên sheet "Bài viết", các cột task_kind (A), difficulty (D), source (G), is_active (H) có dropdown từ dòng 3 đến 2000. Cột task1_type (M) và task2_type (P) nhập mã tự do (UPPER_SNAKE hoặc kebab-case); server chuẩn hóa và thêm vào danh mục type nếu chưa có.'
   ]);
   legend.addRow([]);
   legend.addRow([
