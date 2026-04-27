@@ -843,7 +843,7 @@ export class AdminWritingHistoryComponent implements OnInit, AfterViewInit, OnDe
     }
 
     // Use admin endpoint
-    this.http.get<Page<AdminWritingHistoryDto>>(`${AppConfig.api.baseUrl}/api/admin/writing-history/history`, { params }).subscribe({
+    this.http.get<Page<AdminWritingHistoryDto>>(`${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/admin/writing-history/history`, { params }).subscribe({
       next: (page) => {
         this.historyPage.set(page);
         this.loading.set(false);
@@ -851,7 +851,7 @@ export class AdminWritingHistoryComponent implements OnInit, AfterViewInit, OnDe
       error: (err) => {
         console.warn('Admin endpoint not available, trying alternative:', err);
         // Alternative: try different endpoint pattern
-        this.http.get<Page<AdminWritingHistoryDto>>(`${AppConfig.api.baseUrl}/api/writing-history/all/page`, { params }).subscribe({
+        this.http.get<Page<AdminWritingHistoryDto>>(`${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/writing-history/all/page`, { params }).subscribe({
           next: (page) => {
             this.historyPage.set(page);
             this.loading.set(false);

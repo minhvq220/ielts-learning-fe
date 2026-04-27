@@ -930,7 +930,7 @@ export class WritingMockTestComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private http = inject(HttpClient);
   private sanitizer = inject(DomSanitizer);
-  private readonly apiUrl = `${AppConfig.api.baseUrl}/api/writing-history`;
+  private readonly apiUrl = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/writing-history`;
   private destroy$ = new Subject<void>();
   private timerInterval: any = null;
 

@@ -33,7 +33,7 @@ export interface AuthState {
   providedIn: 'root',
 })
 export class AuthService {
-  private readonly API_URL = `${AppConfig.api.baseUrl}/api/auth`;
+  private readonly API_URL = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/auth`;
   
   private authState = signal<AuthState>({
     isAuthenticated: false,

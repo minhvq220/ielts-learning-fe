@@ -28,6 +28,8 @@ export const AppConfig = {
     // Or: http://27.71.28.47:8081 (direct IP access)
     // Note: With Cloudflare Tunnel, use HTTPS domain instead of IP
     baseUrl: 'https://app.essayrater-test.online',
+    /** Must match backend ApiConstants.API_BASE */
+    apiBasePath: '/essayrater/api',
   },
 };
 

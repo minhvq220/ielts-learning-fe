@@ -2,6 +2,7 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
+import { AppConfig } from '../config/app.config';
 import { AuthService } from '../services/auth.service';
 
 /**
@@ -17,7 +18,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   // Clone request and add Authorization header if token exists
   // Skip adding token for auth endpoints
-  if (token && !req.url.includes('/api/auth/')) {
+  if (token && !req.url.includes(`${AppConfig.api.apiBasePath}/auth`)) {
     req = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`,

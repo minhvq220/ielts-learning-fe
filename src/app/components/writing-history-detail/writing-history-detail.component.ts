@@ -2507,7 +2507,7 @@ export class WritingHistoryDetailComponent implements OnInit, AfterViewInit, OnD
     
     if (isAdmin) {
       // For admin route, use admin endpoint
-      this.http.get<WritingHistoryDto>(`${AppConfig.api.baseUrl}/api/admin/writing-history/history/${historyId}`).subscribe({
+      this.http.get<WritingHistoryDto>(`${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/admin/writing-history/history/${historyId}`).subscribe({
         next: (historyItem) => {
           this.historyItem.set(historyItem);
           this.loadOriginalTask(historyItem.taskId);

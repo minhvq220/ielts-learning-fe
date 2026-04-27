@@ -48,8 +48,8 @@ export interface AdminFeedbackFilter {
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackService {
-  private readonly API_URL = `${AppConfig.api.baseUrl}/api/feedback`;
-  private readonly ADMIN_API_URL = `${AppConfig.api.baseUrl}/api/admin/feedback`;
+  private readonly API_URL = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/feedback`;
+  private readonly ADMIN_API_URL = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/admin/feedback`;
 
   constructor(private http: HttpClient) {}
 

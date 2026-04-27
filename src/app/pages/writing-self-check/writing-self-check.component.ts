@@ -410,7 +410,7 @@ export class WritingSelfCheckComponent {
 
   loadFileValidationConfig(): void {
     // Load file validation config from backend
-    this.http.get<FileValidationConfig>(`${AppConfig.api.baseUrl}/api/writing-self-check/file-validation-config`).subscribe({
+    this.http.get<FileValidationConfig>(`${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/writing-self-check/file-validation-config`).subscribe({
       next: (config) => {
         this.allowedImageTypes = config.allowedTypes.join(',');
         this.maxFileSizeBytes = config.maxSizeBytes;
@@ -546,7 +546,7 @@ export class WritingSelfCheckComponent {
       imageUrl: request.imageUrl ? '(set)' : null
     });
 
-    this.http.post<WritingSelfCheckHistoryDto>(`${AppConfig.api.baseUrl}/api/writing-self-check/score`, request).subscribe({
+    this.http.post<WritingSelfCheckHistoryDto>(`${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/writing-self-check/score`, request).subscribe({
       next: (result) => {
         console.log('Self-check scoring successful:', result);
         console.log('Result ID:', result?.id);

@@ -18,7 +18,7 @@ export interface NotificationDto {
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-  private readonly API_URL = `${AppConfig.api.baseUrl}/api/notifications`;
+  private readonly API_URL = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/notifications`;
 
   constructor(private http: HttpClient) {}
 

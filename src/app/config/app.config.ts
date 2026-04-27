@@ -33,10 +33,12 @@ export const AppConfig = {
     siteKey: '6LffgQ8sAAAAANIzqmkPZ1p7oK_91cCL9bw4o0c-',
   },
   api: {
-    // Backend API base URL
+    // Backend API base URL (scheme + host + port, no trailing slash)
     // Development: http://localhost:8081
     // Production: Update this to your production API URL (e.g., https://api.yourdomain.com)
     baseUrl: 'http://localhost:8081',
+    /** Must match backend ApiConstants.API_BASE */
+    apiBasePath: '/essayrater/api',
   },
 };
 

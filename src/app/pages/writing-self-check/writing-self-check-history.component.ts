@@ -1064,7 +1064,7 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
       params = params.set('toDate', toDateParam);
     }
 
-    this.http.get<Page<WritingSelfCheckHistoryDto>>(`${AppConfig.api.baseUrl}/api/writing-self-check/history`, { params }).subscribe({
+    this.http.get<Page<WritingSelfCheckHistoryDto>>(`${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/writing-self-check/history`, { params }).subscribe({
       next: (page) => {
         this.historyPage.set(page);
         this.loading.set(false);
@@ -1083,7 +1083,7 @@ export class WritingSelfCheckHistoryComponent implements OnInit, AfterViewInit, 
       .set('page', '0')
       .set('size', '1000'); // Large size to get all history
 
-    this.http.get<Page<WritingSelfCheckHistoryDto>>(`${AppConfig.api.baseUrl}/api/writing-self-check/history`, { params }).subscribe({
+    this.http.get<Page<WritingSelfCheckHistoryDto>>(`${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/writing-self-check/history`, { params }).subscribe({
       next: (page) => {
         this.allHistoryForStats.set(page.content);
       },

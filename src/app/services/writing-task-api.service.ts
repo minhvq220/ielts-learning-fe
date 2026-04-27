@@ -98,8 +98,8 @@ export interface WritingBulkDeleteResponse {
   providedIn: 'root'
 })
 export class WritingTaskApiService {
-  private readonly apiUrl = `${AppConfig.api.baseUrl}/api/writing-tasks`;
-  private readonly adminWritingTasksUrl = `${AppConfig.api.baseUrl}/api/admin/writing-tasks`;
+  private readonly apiUrl = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/writing-tasks`;
+  private readonly adminWritingTasksUrl = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/admin/writing-tasks`;
 
   constructor(private http: HttpClient) {}
 

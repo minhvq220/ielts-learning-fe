@@ -19,7 +19,7 @@ export interface TranslationResult {
 })
 export class TranslationService {
   // Sử dụng backend proxy endpoint để tránh CORS issues
-  private readonly translateApiUrl = `${AppConfig.api.baseUrl}/api/translation/translate`;
+  private readonly translateApiUrl = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/translation/translate`;
   
   constructor(private http: HttpClient) {}
 

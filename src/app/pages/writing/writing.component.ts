@@ -2399,7 +2399,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   private http = inject(HttpClient);
   private sanitizer = inject(DomSanitizer);
   authService = inject(AuthService);
-  private readonly apiUrl = `${AppConfig.api.baseUrl}/api/writing-history`;
+  private readonly apiUrl = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/writing-history`;
   private destroy$ = new Subject<void>();
   private isNavigating = false; // Flag to prevent navigation loops
 

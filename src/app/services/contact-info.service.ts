@@ -15,8 +15,8 @@ export interface ContactInfo {
   providedIn: 'root'
 })
 export class ContactInfoService {
-  private readonly API_URL = `${AppConfig.api.baseUrl}/api/contact-info`;
-  private readonly ADMIN_API_URL = `${AppConfig.api.baseUrl}/api/admin/contact-info`;
+  private readonly API_URL = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/contact-info`;
+  private readonly ADMIN_API_URL = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/admin/contact-info`;
   
   private contactInfo = signal<ContactInfo | null>(null);
 

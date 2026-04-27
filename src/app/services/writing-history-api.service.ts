@@ -155,8 +155,8 @@ export interface AiScoringRequest {
   providedIn: 'root'
 })
 export class WritingHistoryApiService {
-  private readonly apiUrl = `${AppConfig.api.baseUrl}/api/writing-history`;
-  private readonly aiScoringUrl = `${AppConfig.api.baseUrl}/api/ai-scoring`;
+  private readonly apiUrl = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/writing-history`;
+  private readonly aiScoringUrl = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/ai-scoring`;
 
   constructor(private http: HttpClient) {}
 

@@ -2319,8 +2319,8 @@ export class WritingSelfCheckHistoryDetailComponent implements OnInit, AfterView
     // Check if this is an admin route
     const isAdminRoute = this.router.url.includes('/admin/');
     const apiUrl = isAdminRoute 
-      ? `${AppConfig.api.baseUrl}/api/admin/writing-self-check/history/${historyId}`
-      : `${AppConfig.api.baseUrl}/api/writing-self-check/history/${historyId}`;
+      ? `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/admin/writing-self-check/history/${historyId}`
+      : `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/writing-self-check/history/${historyId}`;
 
     this.http.get<WritingSelfCheckHistoryDto>(apiUrl).subscribe({
       next: (historyItem) => {

@@ -753,7 +753,7 @@ export class AdminSelfCheckListComponent implements OnInit {
       .set('page', '0')
       .set('size', '1000'); // Load a large number to get all items
 
-    this.http.get<Page<WritingSelfCheckHistoryDto>>(`${AppConfig.api.baseUrl}/api/admin/writing-self-check/history`, { params }).subscribe({
+    this.http.get<Page<WritingSelfCheckHistoryDto>>(`${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/admin/writing-self-check/history`, { params }).subscribe({
       next: (page) => {
         this.historyList.set(page.content || []);
         this.loading.set(false);

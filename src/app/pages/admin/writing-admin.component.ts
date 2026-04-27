@@ -1615,7 +1615,7 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
     this.suggestFromUrlLoading.set(true);
     this.suggestFromUrlError.set(null);
     this.suggestBatchRows.set([]);
-    const endpoint = `${AppConfig.api.baseUrl}/api/admin/writing-import/suggest-from-urls`;
+    const endpoint = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/admin/writing-import/suggest-from-urls`;
     this.http
       .post<{ items: { sourceUrl: string; fields: Record<string, string>; error: string | null }[] }>(endpoint, {
         urls

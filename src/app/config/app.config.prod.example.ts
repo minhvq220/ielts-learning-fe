@@ -38,6 +38,7 @@ export const AppConfig = {
   api: {
     // Production API base URL
     baseUrl: 'https://api.your-production-domain.com',
+    apiBasePath: '/essayrater/api',
   },
 };
 

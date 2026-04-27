@@ -534,7 +534,7 @@ interface UpdateUserRequest {
 })
 export class AdminUsersComponent implements OnInit {
   private http = inject(HttpClient);
-  private readonly apiUrl = `${AppConfig.api.baseUrl}/api/admin/users`;
+  private readonly apiUrl = `${AppConfig.api.baseUrl}${AppConfig.api.apiBasePath}/admin/users`;
 
   loading = signal(false);
   usersPage = signal<Page<UserDto> | null>(null);
