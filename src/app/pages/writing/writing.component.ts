@@ -1,4 +1,4 @@
-import { Component, signal, computed, inject, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, signal, computed, effect, inject, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute, Router, NavigationEnd } from '@angular/router';
@@ -1589,11 +1589,12 @@ interface AIEvaluation {
 
       .writing-actions-bar {
         left: 0;
-        right: 80px; /* Leave space for reCAPTCHA badge */
+        right: 0;
         flex-direction: column;
         gap: 0.75rem; /* Reduced gap */
-        padding: 0.5rem 0.75rem; /* Reduced padding */
-        z-index: 998;
+        padding: 0.5rem 0.75rem;
+        padding-right: calc(80px + 0.75rem);
+        z-index: 1002;
       }
 
       .tools-left,
@@ -1722,27 +1723,30 @@ interface AIEvaluation {
       position: fixed;
       bottom: 0;
       left: 480px; /* Width of left-column */
-      right: 80px; /* Leave space for reCAPTCHA badge on the right */
-      background: transparent; /* Make bar invisible */
-      padding: 0.5rem 1.5rem; /* Reduced vertical padding to make it thinner */
-      padding-right: 1.5rem; /* Keep padding consistent */
-      border: none; /* Remove border */
-      box-shadow: none; /* Remove shadow */
+      right: 0; /* Nền kín tới mép viewport — chừa badge bằng padding-right (right:80px trước đây để lộ footer tím) */
+      background: #f1f5f9;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 0.5rem 1.5rem;
+      /* ~80px reCAPTCHA + padding nút */
+      padding-right: calc(80px + 1.5rem);
+      border-top: 1px solid #e5e7eb;
+      box-shadow: 0 -6px 24px rgba(15, 23, 42, 0.08);
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 1rem; /* Reduced gap */
-      z-index: 998; /* Below header and left-column but above other content */
-      transition: left 0.3s ease, right 0.3s ease;
+      z-index: 1002; /* Above left-column (999) — tránh nội dung/footer lọt xuyên thanh nút */
+      transition: left 0.3s ease, padding-right 0.3s ease;
     }
     
     .writing-interface:has(.left-collapsed) .writing-actions-bar {
       left: 60px;
     }
     
-    /* Adjust actions bar when statistics panel is visible */
+    /* Cột thống kê 320px cố định bên phải — vẫn kín nền tới mép màn hình */
     .writing-interface:has(.statistics-panel) .writing-actions-bar {
-      right: 400px; /* 320px (panel) + 80px (reCAPTCHA space) */
+      padding-right: calc(320px + 80px + 1.5rem);
     }
 
     .tools-left {
@@ -2417,6 +2421,18 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
       document.body.classList.remove('writing-detail-view');
     }
   }
+
+  /** Khớp body class + reset cuộn main khi vào màn làm bài (tránh footer lọt sau khi từ /writing/history/… “Làm lại”). */
+  private readonly _syncWritingDetailBodyClass = effect(() => {
+    const hasTask = this.selectedTask() != null;
+    this.setFooterVisibilityForDetailView(hasTask);
+    if (hasTask) {
+      queueMicrotask(() => {
+        document.querySelector('.main-content')?.scrollTo({ top: 0, behavior: 'auto' });
+      });
+    }
+  });
+
   isEvaluating = signal(false);
   currentAnswer = signal('');
   currentPage = signal(1);
