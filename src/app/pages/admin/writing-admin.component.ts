@@ -1565,6 +1565,41 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
     this.tsvCopyFeedback.set(null);
   }
 
+  /**
+   * Sao chép văn bản thuần: HTTPS / localhost dùng Clipboard API; HTTP (vd. IP server test) dùng fallback execCommand.
+   * Tránh lỗi im lặng khi `navigator.clipboard` không có hoặc gọi writeText ném lỗi ngoài Promise.
+   */
+  private copyPlainTextToClipboard(text: string): Promise<boolean> {
+    const fallbackExecCommand = (): boolean => {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        ta.style.top = '0';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        ta.setSelectionRange(0, text.length);
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+      } catch {
+        return false;
+      }
+    };
+
+    if (typeof navigator !== 'undefined' && navigator.clipboard && typeof window !== 'undefined' && window.isSecureContext) {
+      return navigator.clipboard
+        .writeText(text)
+        .then(() => true)
+        .catch(() => Promise.resolve(fallbackExecCommand()));
+    }
+    return Promise.resolve(fallbackExecCommand());
+  }
+
   private resetSuggestFromUrl(): void {
     this.clearTsvCopyFeedback();
     this.suggestSourceUrl = '';
@@ -1667,8 +1702,8 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
     const parts = WRITING_IMPORT_KEYS.map(k => this.tsvCell(row.fields[k] ?? ''));
     const line = parts.join('\t');
     this.clearTsvCopyFeedbackTimer();
-    void navigator.clipboard.writeText(line).then(
-      () => {
+    void this.copyPlainTextToClipboard(line).then(ok => {
+      if (ok) {
         this.tsvCopyFeedback.set({
           ok: true,
           text: 'Đã sao chép một dòng TSV cho bài đã chọn.'
@@ -1677,8 +1712,7 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
           this.tsvCopyFeedback.set(null);
           this.tsvCopyFeedbackTimer = null;
         }, 3500);
-      },
-      () => {
+      } else {
         this.tsvCopyFeedback.set({
           ok: false,
           text: 'Chưa sao chép được — thử lại trên HTTPS hoặc cấp quyền clipboard.'
@@ -1688,7 +1722,7 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
           this.tsvCopyFeedbackTimer = null;
         }, 5000);
       }
-    );
+    });
   }
 
   copySuggestBatchAllTsv(): void {
@@ -1699,8 +1733,8 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
     );
     const text = lines.join('\n');
     this.clearTsvCopyFeedbackTimer();
-    void navigator.clipboard.writeText(text).then(
-      () => {
+    void this.copyPlainTextToClipboard(text).then(ok => {
+      if (ok) {
         this.tsvCopyFeedback.set({
           ok: true,
           text: `Đã sao chép ${okRows.length} dòng TSV — dán vào Excel (sheet «Bài viết», từ dòng trống tiếp theo).`
@@ -1709,8 +1743,7 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
           this.tsvCopyFeedback.set(null);
           this.tsvCopyFeedbackTimer = null;
         }, 4500);
-      },
-      () => {
+      } else {
         this.tsvCopyFeedback.set({
           ok: false,
           text: 'Chưa sao chép được — thử lại trên HTTPS hoặc cấp quyền clipboard.'
@@ -1720,7 +1753,7 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
           this.tsvCopyFeedbackTimer = null;
         }, 5000);
       }
-    );
+    });
   }
 
   private tsvCell(value: string): string {
@@ -1731,8 +1764,8 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
     const parts = WRITING_IMPORT_KEYS.map(k => this.tsvCell(this.suggestFields[k] ?? ''));
     const line = parts.join('\t');
     this.clearTsvCopyFeedbackTimer();
-    void navigator.clipboard.writeText(line).then(
-      () => {
+    void this.copyPlainTextToClipboard(line).then(ok => {
+      if (ok) {
         this.tsvCopyFeedback.set({
           ok: true,
           text: 'Đã sao chép — dán vào Excel trên sheet «Bài viết» (một dòng, đúng thứ tự cột dòng 2).'
@@ -1741,8 +1774,7 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
           this.tsvCopyFeedback.set(null);
           this.tsvCopyFeedbackTimer = null;
         }, 4000);
-      },
-      () => {
+      } else {
         this.tsvCopyFeedback.set({
           ok: false,
           text: 'Chưa sao chép được — thử lại trên HTTPS hoặc cấp quyền clipboard cho trang này.'
@@ -1752,7 +1784,7 @@ export class WritingAdminComponent implements OnInit, OnDestroy {
           this.tsvCopyFeedbackTimer = null;
         }, 6000);
       }
-    );
+    });
   }
 
   async downloadImportTemplate(): Promise<void> {

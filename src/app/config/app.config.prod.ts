@@ -1,9 +1,9 @@
 /**
  * Production Configuration
- * 
+ *
  * This file is used for production builds.
  * It replaces app.config.ts when building with --configuration=production
- * 
+ *
  * ⚠️  IMPORTANT: Update the API baseUrl below to match your server IP/domain
  */
 export const AppConfig = {
@@ -27,7 +27,7 @@ export const AppConfig = {
     // Example: https://app.essayrater-test.online (with Cloudflare Tunnel)
     // Or: http://27.71.28.47:8081 (direct IP access)
     // Note: With Cloudflare Tunnel, use HTTPS domain instead of IP
-    baseUrl: 'https://app.essayrater-test.online',
+    baseUrl: 'http://103.162.30.50',
     /** Must match backend ApiConstants.API_BASE */
     apiBasePath: '/essayrater/api',
   },

@@ -1,14 +1,14 @@
 /**
  * Application Configuration
- * 
+ *
  * ⚠️  NOTE: For production deployment, update these values before building:
  *   1. Change the default values below to your production values, OR
  *   2. Use Angular's file replacement in angular.json to replace this file
- * 
+ *
  * Configuration values:
  * - Default values below are for development (localhost)
  * - For production, update the values in this file or use file replacement
- * 
+ *
  * Example file replacement in angular.json:
  *   "fileReplacements": [
  *     {
