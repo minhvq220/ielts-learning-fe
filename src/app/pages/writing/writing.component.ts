@@ -267,17 +267,17 @@ interface AIEvaluation {
                 <!-- Task-specific content -->
                 <div *ngIf="selectedTask()?.type === 'task1'" class="task1-content-compact">
                   <!-- Task 1 Image -->
-                  <div *ngIf="getTask1ImageUrl()" class="task1-image-compact">
+                  <div *ngIf="task1ImageUrl()" class="task1-image-compact">
                     <div class="section-label">Hình minh họa:</div>
                     <img 
-                      [src]="getTask1ImageUrl()" 
+                      [src]="task1ImageUrl()" 
                       alt="Task 1 Chart/Graph" 
                       class="task-image"
                       (error)="onImageError($event)"
                       (load)="onImageLoad($event)">
                   </div>
                   <!-- Debug info for missing image -->
-                  <div *ngIf="selectedTask()?.type === 'task1' && !getTask1ImageUrl()" class="image-debug" style="padding: 0.5rem; background: #fff3cd; border-radius: 0; margin: 0.5rem 0; font-size: 0.875rem;">
+                  <div *ngIf="selectedTask()?.type === 'task1' && !task1ImageUrl()" class="image-debug" style="padding: 0.5rem; background: #fff3cd; border-radius: 0; margin: 0.5rem 0; font-size: 0.875rem;">
                     <small>! Không có ảnh cho bài tập này. imageUrl: {{ getTask1ImageUrlRaw() || 'null' }}</small>
                   </div>
                   <div *ngIf="getTask1Description()" class="task-description-compact">
@@ -2449,6 +2449,11 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   showAdvancedFilters = signal(false); // Track advanced filters visibility
   isQuestionPanelCollapsed = signal(false); // State for collapsing question panel
   highlightedWord = signal<string | null>(null); // Currently highlighted word for statistics
+  readonly task1ImageUrl = computed(() => {
+    const task = this.selectedTask();
+    if (task?.type !== 'task1') return null;
+    return this.resolveTask1ImageUrl(task as WritingTask1);
+  });
 
   // Computed values
   // Note: Type, difficulty, and search filters are handled by backend API
@@ -2963,28 +2968,17 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   getTask1ImageUrl(): string | null {
-    const task = this.selectedTask();
-    if (task?.type === 'task1') {
-      const imageUrl = (task as WritingTask1).imageUrl;
-      if (!imageUrl) {
-        console.log('⚠️ Task 1 has no imageUrl:', task);
-        return null;
-      }
-      
-      // If imageUrl is already a full URL (http/https) or base64 data URI, return as is
-      if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:')) {
-        console.log('✅ Using imageUrl as-is:', imageUrl.substring(0, 50) + '...');
-        return imageUrl;
-      }
-      
-      // If imageUrl is a relative path, construct full URL using API base URL
-      // Remove leading slash if present to avoid double slashes
-      const cleanPath = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
-      const fullUrl = `${this.apiUrl}/${cleanPath}`;
-      console.log('🔗 Constructed image URL from relative path:', fullUrl);
-      return fullUrl;
+    return this.task1ImageUrl();
+  }
+
+  private resolveTask1ImageUrl(task: WritingTask1): string | null {
+    const imageUrl = task.imageUrl;
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:')) {
+      return imageUrl;
     }
-    return null;
+    const cleanPath = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+    return `${this.apiUrl}/${cleanPath}`;
   }
 
   getTask1ImageUrlRaw(): string | null {
@@ -2997,7 +2991,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
 
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
-    console.error('❌ Failed to load image:', img.src);
+    console.error('❌ Failed to load task image');
     // Optionally show a placeholder or error message
     img.style.display = 'none';
     // Show error message to user
@@ -3009,8 +3003,7 @@ export class WritingComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   onImageLoad(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    console.log('✅ Image loaded successfully:', img.src.substring(0, 50) + '...');
+    void event;
   }
 
   /**
