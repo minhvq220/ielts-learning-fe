@@ -4,6 +4,9 @@
     <p>Đang tải ứng dụng...</p>
   </div>
   <app-header></app-header>
+  @if (showMarquee()) {
+    <app-announcement-marquee></app-announcement-marquee>
+  }
   <div class="main-content">
     <app-sidebar style="display: none;"></app-sidebar>
     <main class="content-area">

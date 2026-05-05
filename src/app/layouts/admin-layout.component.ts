@@ -82,6 +82,17 @@ import { filter } from 'rxjs/operators';
           </a>
 
           <a 
+            routerLink="/admin/marquee-lines" 
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{exact: false}"
+            class="nav-item">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+            <span>Marquee thông báo</span>
+          </a>
+
+          <a 
             routerLink="/admin/contact-info" 
             routerLinkActive="active"
             [routerLinkActiveOptions]="{exact: false}"

@@ -30,7 +30,7 @@ export const routes: Routes = [
       { path: 'writing-self-check', loadComponent: () => import('./pages/admin/admin-self-check-list.component').then(m => m.AdminSelfCheckListComponent) },
       { path: 'writing-self-check/history/:id', loadComponent: () => import('./pages/writing-self-check/writing-self-check-history-detail.component').then(m => m.WritingSelfCheckHistoryDetailComponent) },
       { path: 'users', loadComponent: () => import('./pages/admin/admin-users.component').then(m => m.AdminUsersComponent) },
-      { path: 'ai-quota', loadComponent: () => import('./pages/admin/admin-ai-quota.component').then(m => m.AdminAiQuotaComponent) },
+      { path: 'marquee-lines', loadComponent: () => import('./pages/admin/admin-marquee-lines.component').then(m => m.AdminMarqueeLinesComponent) },
       { path: 'contact-info', loadComponent: () => import('./pages/admin/admin-contact-info.component').then(m => m.AdminContactInfoComponent) },
       { path: 'feedback', loadComponent: () => import('./pages/admin/admin-feedback.component').then(m => m.AdminFeedbackComponent) },
     ]
