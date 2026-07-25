@@ -26,26 +26,30 @@ import { NotificationService, NotificationDto } from '../../services/notificatio
 
         <!-- User Actions (Right) -->
         <div class="user-actions">
-          <!-- Admin link - only visible to admins -->
-          <div *ngIf="authService.isAdmin()">
-            <a routerLink="/admin/writing" class="btn btn-admin">Admin</a>
-          </div>
           <div *ngIf="!authService.isAuthenticated()" class="auth-buttons">
-            <button class="btn btn-login" (click)="goToLogin()">Đăng nhập</button>
+            <button class="btn btn-login" (click)="goToLogin()" aria-label="Đăng nhập">Đăng nhập</button>
           </div>
           <div *ngIf="authService.isAuthenticated()" class="user-info">
             <div class="notification-wrapper">
-              <button class="bell-btn" [class.has-unread]="unreadCount() > 0" (click)="toggleNotifications($event)" title="Thông báo">
+              <button
+                type="button"
+                class="bell-btn"
+                [class.has-unread]="unreadCount() > 0"
+                (click)="toggleNotifications($event)"
+                title="Thông báo"
+                aria-label="Thông báo"
+                [attr.aria-expanded]="isNotificationOpen()"
+                aria-haspopup="true">
                 <svg class="bell-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                   <path d="M15 18a3 3 0 0 1-6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
                   <path d="M18 16V11a6 6 0 1 0-12 0v5l-1.5 2h15L18 16z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
                 </svg>
                 <span class="bell-badge" *ngIf="unreadCount() > 0">{{ unreadCount() > 99 ? '99+' : unreadCount() }}</span>
               </button>
-              <div class="notification-dropdown" *ngIf="isNotificationOpen()">
+              <div class="notification-dropdown" *ngIf="isNotificationOpen()" role="menu">
                 <div class="notification-header">
                   <strong>Thông báo</strong>
-                  <button class="mark-all-btn" (click)="markAllAsRead($event)" *ngIf="unreadCount() > 0">Đánh dấu đã đọc</button>
+                  <button type="button" class="mark-all-btn" (click)="markAllAsRead($event)" *ngIf="unreadCount() > 0">Đánh dấu đã đọc</button>
                 </div>
                 <div class="notification-item" *ngFor="let n of notifications()" (click)="openNotification(n, $event)" [class.unread]="!n.isRead">
                   <div class="notification-title">{{ n.title }}</div>
@@ -54,8 +58,35 @@ import { NotificationService, NotificationDto } from '../../services/notificatio
                 <div class="notification-empty" *ngIf="!notifications().length">Chưa có thông báo mới</div>
               </div>
             </div>
-            <span class="user-name">{{ authService.getAuthState().user?.name }}</span>
-            <button class="btn btn-logout" (click)="logout()">Đăng xuất</button>
+
+            <div class="account-wrapper">
+              <button
+                type="button"
+                class="avatar-btn"
+                (click)="toggleAccountMenu($event)"
+                [attr.aria-expanded]="isAccountMenuOpen()"
+                aria-haspopup="menu"
+                [attr.aria-label]="'Tài khoản ' + (userDisplayName() || '')"
+                title="Tài khoản">
+                <span class="avatar-initials" aria-hidden="true">{{ userInitials() }}</span>
+                <span class="avatar-caret" aria-hidden="true">▾</span>
+              </button>
+              <div class="account-dropdown" *ngIf="isAccountMenuOpen()" role="menu" (click)="$event.stopPropagation()">
+                <div class="account-name" role="presentation">{{ userDisplayName() }}</div>
+                <a
+                  *ngIf="authService.isAdmin()"
+                  routerLink="/admin/writing"
+                  class="account-item"
+                  role="menuitem"
+                  (click)="closeAccountMenu()">
+                  Quản trị
+                </a>
+                <div class="account-divider" *ngIf="authService.isAdmin()" role="separator"></div>
+                <button type="button" class="account-item account-item-danger" role="menuitem" (click)="logoutFromMenu($event)">
+                  Đăng xuất
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -233,25 +264,33 @@ import { NotificationService, NotificationDto } from '../../services/notificatio
     /* User Actions */
     .user-actions {
       display: flex;
-      gap: 1rem;
+      gap: 0.5rem;
       align-items: center;
+      min-width: 0;
     }
 
     .auth-buttons {
       display: flex;
       gap: 0.5rem;
+      align-items: center;
     }
 
     .user-info {
       display: flex;
       align-items: center;
-      gap: 1rem;
+      gap: 0.35rem;
     }
-    .notification-wrapper { position: relative; }
-    .bell-btn {
+
+    .notification-wrapper,
+    .account-wrapper {
       position: relative;
-      width: 34px;
-      height: 34px;
+    }
+
+    .bell-btn,
+    .avatar-btn {
+      position: relative;
+      width: 40px;
+      height: 40px;
       border-radius: 999px;
       background: transparent;
       color: rgba(255, 255, 255, 0.95);
@@ -261,27 +300,38 @@ import { NotificationService, NotificationDto } from '../../services/notificatio
       align-items: center;
       justify-content: center;
       transition: background 0.2s ease, transform 0.15s ease, color 0.2s ease;
+      padding: 0;
     }
-    .bell-btn:hover {
+
+    .bell-btn:hover,
+    .avatar-btn:hover {
       background: rgba(255, 255, 255, 0.14);
       color: #ffffff;
       transform: translateY(-1px);
     }
-    .bell-btn:active { transform: translateY(0); }
+
+    .bell-btn:active,
+    .avatar-btn:active {
+      transform: translateY(0);
+    }
+
     .bell-btn.has-unread {
       color: #fef9c3;
       background: rgba(250, 204, 21, 0.12);
       box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.22) inset;
     }
+
     .bell-btn.has-unread .bell-icon {
       animation: bell-ring 1.8s ease-in-out infinite;
       transform-origin: top center;
     }
+
     .bell-icon {
       width: 19px;
       height: 19px;
       display: block;
     }
+
     .bell-badge {
       position: absolute;
       top: -2px;
@@ -300,22 +350,155 @@ import { NotificationService, NotificationDto } from '../../services/notificatio
       justify-content: center;
       line-height: 1;
     }
+
+    .avatar-btn {
+      gap: 0.15rem;
+      width: auto;
+      min-width: 40px;
+      padding: 0 0.35rem 0 0.15rem;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+    }
+
+    .avatar-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.45);
+    }
+
+    .avatar-initials {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: #fff;
+      color: #0d9488;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .avatar-caret {
+      font-size: 0.65rem;
+      opacity: 0.85;
+      line-height: 1;
+      margin-right: 0.15rem;
+    }
+
+    .notification-dropdown,
+    .account-dropdown {
+      position: absolute;
+      right: 0;
+      top: 48px;
+      background: #fff;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+      z-index: 1200;
+    }
+
     .notification-dropdown {
-      position: absolute; right: 0; top: 48px; width: 320px; max-height: 380px; overflow: auto;
-      background: #fff; color: #0f172a; border: 1px solid #e2e8f0; box-shadow: 0 12px 30px rgba(15,23,42,0.16); z-index: 1200;
+      width: 320px;
+      max-height: 380px;
+      overflow: auto;
     }
+
+    .account-dropdown {
+      min-width: 220px;
+      padding: 0.4rem 0;
+    }
+
+    .account-name {
+      padding: 0.65rem 0.9rem 0.55rem;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #0f172a;
+      border-bottom: 1px solid #e2e8f0;
+      word-break: break-word;
+    }
+
+    .account-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 0.7rem 0.9rem;
+      border: none;
+      background: transparent;
+      color: #334155;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .account-item:hover {
+      background: #f1f5f9;
+      color: #0d9488;
+    }
+
+    .account-item-danger:hover {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    .account-divider {
+      height: 1px;
+      margin: 0.25rem 0;
+      background: #e2e8f0;
+    }
+
     .notification-header {
-      display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.75rem; border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.6rem 0.75rem;
+      border-bottom: 1px solid #e2e8f0;
     }
+
     .mark-all-btn {
-      border: none; background: #f1f5f9; color: #0f172a; cursor: pointer; font-size: 0.78rem; padding: 0.35rem 0.5rem;
+      border: none;
+      background: #f1f5f9;
+      color: #0f172a;
+      cursor: pointer;
+      font-size: 0.78rem;
+      padding: 0.35rem 0.5rem;
     }
-    .notification-item { padding: 0.65rem 0.75rem; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
-    .notification-item.unread { background: #eff6ff; }
-    .notification-item:hover { background: #f8fafc; }
-    .notification-title { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.2rem; }
-    .notification-message { font-size: 0.82rem; color: #334155; line-height: 1.4; }
-    .notification-empty { padding: 0.75rem; color: #64748b; font-size: 0.85rem; }
+
+    .notification-item {
+      padding: 0.65rem 0.75rem;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+    }
+
+    .notification-item.unread {
+      background: #eff6ff;
+    }
+
+    .notification-item:hover {
+      background: #f8fafc;
+    }
+
+    .notification-title {
+      font-size: 0.88rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+
+    .notification-message {
+      font-size: 0.82rem;
+      color: #334155;
+      line-height: 1.4;
+    }
+
+    .notification-empty {
+      padding: 0.75rem;
+      color: #64748b;
+      font-size: 0.85rem;
+    }
+
     @keyframes bell-ring {
       0%, 72%, 100% { transform: rotate(0deg); }
       76% { transform: rotate(12deg); }
@@ -326,52 +509,29 @@ import { NotificationService, NotificationDto } from '../../services/notificatio
       96% { transform: rotate(-2deg); }
     }
 
-    .user-name {
-      font-size: 1rem;
-      color: white;
-      font-weight: 500;
-    }
-
     .btn {
-      padding: 0.6rem 1.25rem;
+      padding: 0.45rem 0.95rem;
       border: none;
       border-radius: 0;
       cursor: pointer;
       font-weight: 600;
-      transition: background 0.2s, color 0.2s;
-      font-size: 0.9rem;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+      font-size: 0.875rem;
       text-decoration: none;
       display: inline-block;
+      line-height: 1.2;
     }
 
     .btn-login {
-      background: #fff;
-      color: #0d9488;
+      background: transparent;
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      padding: 0.4rem 0.9rem;
     }
 
     .btn-login:hover {
-      background: #f1f5f9;
-      color: #0d9488;
-    }
-
-    .btn-logout {
-      background: transparent;
-      color: #fff;
-      border: 1px solid rgba(255, 255, 255, 0.4);
-    }
-
-    .btn-logout:hover {
-      background: rgba(255, 255, 255, 0.1);
-      border-color: rgba(255, 255, 255, 0.6);
-    }
-
-    .btn-admin {
-      background: #075985;
-      color: #fff;
-    }
-
-    .btn-admin:hover {
-      background: #475569;
+      background: rgba(255, 255, 255, 0.14);
+      border-color: rgba(255, 255, 255, 0.85);
       color: #fff;
     }
 
@@ -540,13 +700,33 @@ import { NotificationService, NotificationDto } from '../../services/notificatio
         font-size: 1.5rem;
       }
 
-      .btn {
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
+      .btn-login {
+        padding: 0.35rem 0.7rem;
+        font-size: 0.8rem;
       }
 
-      .user-name {
-        font-size: 0.9rem;
+      .bell-btn,
+      .avatar-btn {
+        width: 40px;
+        height: 40px;
+      }
+
+      .avatar-btn {
+        padding: 0 0.25rem 0 0.1rem;
+      }
+
+      .avatar-caret {
+        display: none;
+      }
+
+      .notification-dropdown {
+        width: min(320px, calc(100vw - 1.5rem));
+        right: -0.25rem;
+      }
+
+      .account-dropdown {
+        right: 0;
+        min-width: 200px;
       }
 
       .dropdown-menu {
@@ -564,8 +744,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
   unreadCount = signal(0);
   notifications = signal<NotificationDto[]>([]);
   isNotificationOpen = signal(false);
+  isAccountMenuOpen = signal(false);
   private lastScrollTop = 0;
   private scrollHandler: (() => void) | null = null;
+  private documentClickHandler: ((event: MouseEvent) => void) | null = null;
   private notificationPollingTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(
@@ -601,32 +783,46 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
     window.addEventListener('scroll', this.scrollHandler, true);
 
-    // Close menu when clicking outside (but not on menu items)
-    document.addEventListener('click', (event: MouseEvent) => {
+    // Close menus when clicking outside
+    this.documentClickHandler = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
       const menu = document.querySelector('.dropdown-menu');
       const hamburger = document.querySelector('.hamburger-btn');
       const bell = document.querySelector('.bell-btn');
       const notificationDropdown = document.querySelector('.notification-dropdown');
-      
-      // Don't close if clicking on menu or hamburger button
-      if (menu?.contains(target) || hamburger?.contains(target) || bell?.contains(target) || notificationDropdown?.contains(target)) {
+      const avatar = document.querySelector('.avatar-btn');
+      const accountDropdown = document.querySelector('.account-dropdown');
+
+      if (
+        menu?.contains(target) ||
+        hamburger?.contains(target) ||
+        bell?.contains(target) ||
+        notificationDropdown?.contains(target) ||
+        avatar?.contains(target) ||
+        accountDropdown?.contains(target)
+      ) {
         return;
       }
-      
+
       if (this.isMenuOpen()) {
         this.closeMenu();
       }
       if (this.isNotificationOpen()) {
         this.isNotificationOpen.set(false);
       }
-    });
+      if (this.isAccountMenuOpen()) {
+        this.isAccountMenuOpen.set(false);
+      }
+    };
+    document.addEventListener('click', this.documentClickHandler);
   }
 
   ngOnDestroy(): void {
-    // Cleanup scroll listener
     if (this.scrollHandler) {
       window.removeEventListener('scroll', this.scrollHandler, true);
+    }
+    if (this.documentClickHandler) {
+      document.removeEventListener('click', this.documentClickHandler);
     }
     if (this.notificationPollingTimer) {
       clearInterval(this.notificationPollingTimer);
@@ -648,15 +844,51 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.lastScrollTop = scrollTop;
   }
 
+  userDisplayName(): string {
+    return this.authService.getAuthState().user?.name?.trim() || 'Tài khoản';
+  }
+
+  userInitials(): string {
+    const name = this.userDisplayName();
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    if (parts.length === 1) {
+      return parts[0].slice(0, 2).toUpperCase();
+    }
+    const first = parts[0][0] || '';
+    const last = parts[parts.length - 1][0] || '';
+    return (first + last).toUpperCase();
+  }
+
   goToLogin(): void {
     this.router.navigate(['/login']);
   }
 
   async logout(): Promise<void> {
     try {
+      this.closeAccountMenu();
       await this.authService.logout();
     } catch (error) {
       console.error('Logout error:', error);
+    }
+  }
+
+  async logoutFromMenu(event: Event): Promise<void> {
+    event.stopPropagation();
+    await this.logout();
+  }
+
+  closeAccountMenu(): void {
+    this.isAccountMenuOpen.set(false);
+  }
+
+  toggleAccountMenu(event: Event): void {
+    event.stopPropagation();
+    const opening = !this.isAccountMenuOpen();
+    this.isAccountMenuOpen.set(opening);
+    if (opening) {
+      this.isNotificationOpen.set(false);
+      this.closeMenu();
     }
   }
 
@@ -675,6 +907,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
       event.stopPropagation();
     }
     this.isMenuOpen.update(open => !open);
+    if (this.isMenuOpen()) {
+      this.isNotificationOpen.set(false);
+      this.isAccountMenuOpen.set(false);
+    }
     if (!this.isMenuOpen()) {
       this.openSubmenus.set(new Set());
     }
@@ -732,6 +968,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.isNotificationOpen.set(opening);
     if (opening) {
       this.closeMenu();
+      this.isAccountMenuOpen.set(false);
       this.loadNotifications();
     }
   }
