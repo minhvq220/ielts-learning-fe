@@ -60,3 +60,8 @@ src/assets/secrets/
 *.pem
 *.key
 *.crt
+
+# Obsolete local tooling (use Documents/EssayRater/EssayRater.code-workspace)
+EssayRaterBE.code-workspace
+copy-frontend-to-deploy.bat
+SECURITY_AUDIT_REPORT.md
