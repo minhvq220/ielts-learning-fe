@@ -9,7 +9,7 @@
 export const AppConfig = {
   firebase: {
     apiKey: 'AIzaSyCgB0iZjQ8HFcKHXYmUjgnnHgnAqyPDoeo',
-    authDomain: 'ielts-learning-d80dc.firebaseapp.com',
+    authDomain: 'essayrater.online',
     projectId: 'ielts-learning-d80dc',
     storageBucket: 'ielts-learning-d80dc.firebasestorage.app',
     messagingSenderId: '10789317916',
@@ -22,12 +22,7 @@ export const AppConfig = {
     siteKey: '6LffgQ8sAAAAANIzqmkPZ1p7oK_91cCL9bw4o0c-',
   },
   api: {
-    // Production API base URL
-    // ⚠️  Update this to your server IP/domain
-    // Example: https://app.essayrater-test.online (with Cloudflare Tunnel)
-    // Or: http://27.71.28.47:8081 (direct IP access)
-    // Note: With Cloudflare Tunnel, use HTTPS domain instead of IP
-    baseUrl: 'http://103.162.30.50',
+    baseUrl: 'https://essayrater.online',
     /** Must match backend ApiConstants.API_BASE */
     apiBasePath: '/essayrater/api',
   },

@@ -1,0 +1,13 @@
+---
+description: EssayRater frontend production config — domain API, Firebase authDomain, reCAPTCHA
+alwaysApply: true
+---
+
+# EssayRater frontend
+
+- Production config: `src/app/config/app.config.prod.ts`
+- Production API must use `baseUrl: 'https://essayrater.online'` and `apiBasePath: '/essayrater/api'` — never hardcode server IP for browser calls
+- Production Firebase `authDomain` should be `essayrater.online` when Nginx proxies `/__/auth/` (not `*.firebaseapp.com` for branded Google login)
+- After changing prod config: `npm run build` and deploy `dist/EssayRater/browser/` to server `/u01/essayrater/www/`
+- Domain allowlists (Firebase Authorized domains, reCAPTCHA Domains) are console-only; no rebuild required for those
+- Backend deploy skill/checklist: sibling `backend` repo `deploy-guide/` and skill `essayrater-deploy`

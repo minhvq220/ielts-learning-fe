@@ -63,6 +63,11 @@
   margin-top: 70px; /* Space for fixed header (height: 70px) */
 }
 
+/* Marquee already offsets below the fixed header; avoid double margin */
+.app-container.has-marquee .main-content {
+  margin-top: 0;
+}
+
 .content-area {
   width: 100%;
   padding: 20px;
@@ -98,6 +103,10 @@ body.writing-detail-view app-footer {
   .main-content {
     flex-direction: column;
     margin-top: 60px; /* Smaller header on mobile (height: 60px) */
+  }
+
+  .app-container.has-marquee .main-content {
+    margin-top: 0;
   }
   
   .content-area {

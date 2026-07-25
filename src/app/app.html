@@ -1,4 +1,4 @@
-<div class="app-container" appTranslateSelection>
+<div class="app-container" [class.has-marquee]="showMarquee()" appTranslateSelection>
   <div class="simple-loading" *ngIf="loadingService.isLoading()">
     <div class="loading-spinner"></div>
     <p>Đang tải ứng dụng...</p>
